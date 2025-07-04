@@ -20,10 +20,10 @@ import java.util.UUID;
 @AllArgsConstructor
 public class RolePermissionId implements Serializable {
     @Column(name = "role_id")
-    UUID roleId;
+    Long roleId;
 
-    @Column(name = "permission_name")
-    UUID permissionName;
+    @Column(name = "permission_name_id")
+    String permissionName;
 
     @Column(name = "object_type")
     String objectType;

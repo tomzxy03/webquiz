@@ -18,11 +18,11 @@ import java.util.UUID;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserResDTO {
-    UUID id;
-    String name;
+    Long id;
+    String user_name;
     String phone;
     String email;
     Gender gender;
     String dob;
-    Set<Role> roles;
+    Set<String> roles;
 }

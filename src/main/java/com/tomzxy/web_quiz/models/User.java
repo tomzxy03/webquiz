@@ -16,14 +16,16 @@ import java.util.Set;
 @Setter
 @Table(name = "user")
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@NoArgsConstructor
+@AllArgsConstructor
 public class User extends BaseEntity {
-    @Column(name = "user_name")
+    @Column(name = "user_name", unique = true)
     String user_name;
 
     @Column(name = "phone")
     String phone;
 
-    @Column(name = "email")
+    @Column(name = "email", unique = true)
     String email;
 
     @Column(name = "gender")
@@ -31,6 +33,11 @@ public class User extends BaseEntity {
 
     @Column(name = "dob")
     Date dob;
+
+    @Column(name = "password")
+    String password;
+
+
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"),

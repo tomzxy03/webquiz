@@ -15,7 +15,7 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @Getter
 @Setter
-@Table(name = "role")
+@Table(name = "permission")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Permission{
     @Id
@@ -24,4 +24,7 @@ public class Permission{
 
     @Column(name = "description")
     String description;
+
+    @Column(name = "is_active")
+    boolean is_active = true;
 }
