@@ -28,4 +28,10 @@ public class RolePermissionObject {
     @JoinColumn(name = "permission_id")
     Permission permission;
 
+    public RolePermissionObject(Role role, Permission permission, String objectType){
+        this.role=role;
+        this.permission=permission;
+        this.rolePermissionId= new RolePermissionId(role.getId(),permission.getPermissionName(),objectType);
+    }
+
 }

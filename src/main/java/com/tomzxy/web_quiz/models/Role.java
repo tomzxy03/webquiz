@@ -3,10 +3,7 @@ package com.tomzxy.web_quiz.models;
 
 import com.tomzxy.web_quiz.models.rolepermission.RolePermissionObject;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.HashSet;
@@ -19,6 +16,8 @@ import java.util.Set;
 @Setter
 @Table(name = "role")
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@NoArgsConstructor
+@AllArgsConstructor
 public class Role extends BaseEntity{
     @Column(name = "name")
     String name;

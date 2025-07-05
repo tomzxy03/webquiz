@@ -5,10 +5,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Entity
@@ -17,6 +14,8 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @Table(name = "permission")
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@AllArgsConstructor
+@NoArgsConstructor
 public class Permission{
     @Id
     @Column(name = "permission_name")
@@ -27,4 +26,9 @@ public class Permission{
 
     @Column(name = "is_active")
     boolean is_active = true;
+
+    public Permission(String permissionName, String description){
+        this.permissionName=permissionName;
+        this.description=description;
+    }
 }
