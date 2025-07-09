@@ -20,7 +20,7 @@ import java.util.Set;
 @AllArgsConstructor
 public class User extends BaseEntity {
     @Column(name = "user_name", unique = true)
-    String user_name;
+    String userName;
 
     @Column(name = "phone")
     String phone;
@@ -29,6 +29,7 @@ public class User extends BaseEntity {
     String email;
 
     @Column(name = "gender")
+    @Enumerated(EnumType.STRING)
     Gender gender;
 
     @Column(name = "dob")

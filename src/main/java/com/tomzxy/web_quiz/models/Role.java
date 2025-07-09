@@ -26,6 +26,6 @@ public class Role extends BaseEntity{
     Set<User> user;
 
     @OneToMany(mappedBy = "role", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @Column(name = "role_permission_object")
+    @Column(name = "role_object")
     Set<RolePermissionObject> rolePermissionObjects = new HashSet<>();
 }

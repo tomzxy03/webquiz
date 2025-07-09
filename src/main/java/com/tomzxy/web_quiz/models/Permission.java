@@ -1,12 +1,13 @@
 package com.tomzxy.web_quiz.models;
 
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.tomzxy.web_quiz.models.rolepermission.RolePermissionObject;
+import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Builder
@@ -26,6 +27,10 @@ public class Permission{
 
     @Column(name = "is_active")
     boolean is_active = true;
+
+    @OneToMany(mappedBy = "permission", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @Column(name = "permission_object")
+    Set<RolePermissionObject> rolePermissionObjects = new HashSet<>();
 
     public Permission(String permissionName, String description){
         this.permissionName=permissionName;

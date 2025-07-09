@@ -76,4 +76,5 @@ public class UserServiceImpl implements UserService {
         return userRepo.findById(id).orElseThrow(()-> new NotFoundException("User not found"));
     }
 
+
 }

@@ -5,9 +5,11 @@ import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
@@ -25,5 +27,19 @@ public class ConvertToPageResDTO {
                 .items(list)
                 .build();
     }
+
+    public <T, R> PageResDTO<List<R>> convertPageResponse(Page<T> entities, Pageable pageable, Function<T, R> mapper) {
+        List<R> dtoList = entities.stream()
+                .map(mapper)
+                .toList();
+
+        return PageResDTO.<List<R>>builder()
+                .page(pageable.getPageNumber())
+                .size(pageable.getPageSize())
+                .total_page(entities.getTotalPages())
+                .items(dtoList)
+                .build();
+    }
+
 
 }

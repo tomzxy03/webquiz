@@ -23,6 +23,7 @@ public interface UserRepo extends JpaRepository<User, Long>, JpaSpecificationExe
 
     @Query("select u from User u where u.is_active = :is_active")
     Page<User> findAllByActive(@Param("is_active") boolean is_active, Pageable pageable);
+    Optional<User> findByUserName(String userName);
     boolean existsByEmail(String email);
     boolean existsByPhone(String phone);
     Optional<User> findByEmail(String email);
