@@ -15,7 +15,8 @@ public enum AppCode {
     BAD_REQUEST(400 , "Bad request"),
     UNAUTHORIZED(401 , "Unauthorized"),
     FORBIDDEN(403 , "Forbidden"),
-    INTERNAL_ERROR(500 , "Internal server error");
+    INTERNAL_ERROR(500 , "Internal server error"),
+    DATA_EXISTED(409, "Data already exists");
 
     private final int code;
     private final String message;

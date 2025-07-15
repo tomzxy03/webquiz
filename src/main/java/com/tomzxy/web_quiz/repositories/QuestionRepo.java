@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -28,5 +29,8 @@ public interface QuestionRepo extends JpaRepository<Question, Long>, JpaSpecific
     Optional<Question> findByLevel(Level level);
 
     boolean existsByQuestionName(String questionName);
+
+    @Query("SELECT q.questionName FROM Question q WHERE q.questionName IN :names")
+    List<String>  findAllExistQuestion(@Param("names") List<String> names);
 
 }

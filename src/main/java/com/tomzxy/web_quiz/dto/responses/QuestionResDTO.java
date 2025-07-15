@@ -17,9 +17,9 @@ import java.util.Set;
 public class QuestionResDTO {
     Long id;
 
-    String question_name;
+    String questionName;
 
-    QuestionAndAnswerType question_type;
+    QuestionAndAnswerType questionType;
 
     boolean is_active;
 

@@ -14,13 +14,11 @@ import java.util.Set;
 import java.util.UUID;
 
 @Getter
-public class AnswerReqDTO {
-    @NotBlank(message = "Answer name not blank")
-    String answerName;
+public class SubjectReqDTO {
+    @NotBlank(message = "Subject name not blank")
+    String subjectName;
 
-    @EnumValidate(name = "answerType", regex = "TEXT|IMAGE")
-    QuestionAndAnswerType answerType;
+    @NotBlank(message = "Subject description not blank")
+    String description;
 
-    @NotEmpty
-    boolean isCorrect;
 }

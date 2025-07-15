@@ -36,6 +36,12 @@ public class DataResDTO<T> {
                 .items(data)
                 .build();
     }
+    public static <T> DataResDTO<T> create(){
+        return DataResDTO.<T>builder()
+                .code(AppCode.CREATED.getCode())
+                .message(AppCode.CREATED.getMessage())
+                .build();
+    }
     public static <T> DataResDTO<T> update(T data){
         return DataResDTO.<T>builder()
                 .code(AppCode.UPDATE.getCode())
@@ -60,7 +66,7 @@ public class DataResDTO<T> {
     public static <T> DataResDTO<T> error(AppCode appCode , String customMessage){
         return DataResDTO.<T>builder()
                 .code(appCode.getCode())
-                .message(appCode.getMessage())
+                .message(customMessage)
                 .items(null)
                 .build();
     }

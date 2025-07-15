@@ -17,11 +17,11 @@ import java.util.Set;
 public class AnswerResDTO {
     Long id;
 
-    String answer_name;
+    String answerName;
 
-    QuestionAndAnswerType answer_type;
+    QuestionAndAnswerType answerType;
 
-    boolean is_correct;
+    boolean isCorrect;
 
     boolean is_active;
 }

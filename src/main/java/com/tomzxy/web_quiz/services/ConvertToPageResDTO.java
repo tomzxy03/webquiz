@@ -16,6 +16,8 @@ import java.util.function.Function;
 public class ConvertToPageResDTO {
     private final ModelMapper modelMapper;
 
+
+    //use modelMapper
     public <T, R> PageResDTO<List<R>> convertToPageResponse (Page<T> page, int pageRequest, int size, Class<R> classes){
         List<R> list = page.stream()
                 .map(entity -> modelMapper.map(entity, classes))
@@ -28,6 +30,7 @@ public class ConvertToPageResDTO {
                 .build();
     }
 
+    // user mapstruct
     public <T, R> PageResDTO<List<R>> convertPageResponse(Page<T> entities, Pageable pageable, Function<T, R> mapper) {
         List<R> dtoList = entities.stream()
                 .map(mapper)

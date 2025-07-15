@@ -8,17 +8,18 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 
 import java.util.List;
+import java.util.Set;
 
 @Getter
 public class QuestionReqDTO {
     @NotBlank(message = "Question name not blank")
-    String question_name;
+    String questionName;
 
     @EnumValidate(name = "level", regex = "EASY|MEDIUM|HARD")
     Level level;
-    @EnumValidate(name = "answer_type", regex = "TEXT|IMAGE")
-    QuestionAndAnswerType answer_type;
+    @EnumValidate(name = "questionType", regex = "TEXT|IMAGE")
+    QuestionAndAnswerType questionType;
 
-    List<AnswerReqDTO> answerReqDTOList;
+    Set<AnswerReqDTO> answerReqDTOList;
 
 }

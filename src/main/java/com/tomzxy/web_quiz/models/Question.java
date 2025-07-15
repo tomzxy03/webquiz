@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,8 +34,21 @@ public class Question extends BaseEntity{
     Level level;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
     Subject subject;
 
-    @OneToMany(mappedBy = "question",cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+    @OneToMany(mappedBy = "question",cascade = CascadeType.ALL, orphanRemoval = true)
     Set<Answer> answers =  new HashSet<>();
+
+    public void saveAnswers(Collection<Answer> answersList) {
+        if (answersList == null || answersList.isEmpty()) return;
+        if (answers == null) {
+            answers = new HashSet<>();
+        }
+        for (Answer answer : answersList) {
+            answers.add(answer);
+            answer.setQuestion(this);
+        }
+    }
+
 }

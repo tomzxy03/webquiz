@@ -15,7 +15,7 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @Table(name = "Answer")
 public class Answer extends BaseEntity{
-    @Column(name = "answer_name", unique = true)
+    @Column(name = "answer_name")
     String answerName;
 
     @Column(name = "answer_type")
@@ -23,8 +23,9 @@ public class Answer extends BaseEntity{
     QuestionAndAnswerType answerType;
 
     @Column(name = "is_correct")
-    boolean is_correct = false;
+    boolean isCorrect;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_id", nullable = false)
     Question question;
 }

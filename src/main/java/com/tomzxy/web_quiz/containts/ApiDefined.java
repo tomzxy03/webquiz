@@ -56,6 +56,8 @@ public abstract class ApiDefined {
 
     public static final class Question {
         public static final String BASE = API_PREFIX + "/questions";
+        public static final String SUBJECT = "/subject_text"; // filter with subject
+        public static final String ADD_LIST = "/add_list"; // add list of question
         public static final String ID = "{questionId}";
         public static final String DELETE_MANY = "/delete_many";
         public static final String ADD_ANSWER = ID + "/add-answer";

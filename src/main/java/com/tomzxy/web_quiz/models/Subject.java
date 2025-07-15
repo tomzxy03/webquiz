@@ -7,6 +7,9 @@ import jakarta.persistence.Table;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Getter
 @Setter
@@ -22,4 +25,10 @@ public class Subject extends BaseEntity{
 
     @Column(name = "description")
     String description;
+
+    @OneToMany(mappedBy = "subject", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    Set<Quiz> quizzes = new HashSet<>();
+
+    @OneToMany(mappedBy = "subject", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    Set<Question> questions = new HashSet<>();
 }

@@ -13,10 +13,10 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AnswerDetailResDTO {
 
-    String answer_name;
+    String answerName;
 
-    QuestionAndAnswerType answer_type;
+    QuestionAndAnswerType answerType;
 
-    boolean is_correct;
+    boolean isCorrect;
 
 }
