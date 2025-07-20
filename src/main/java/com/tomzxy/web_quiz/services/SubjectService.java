@@ -1,11 +1,11 @@
 package com.tomzxy.web_quiz.services;
 
 import com.tomzxy.web_quiz.dto.requests.SubjectReqDTO;
-import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.SubjectResDTO;
+import java.util.List;
 
 public interface SubjectService {
-    PageResDTO<?> get_subjects_pageable(int size , int page);
+    List<SubjectResDTO> get_all_subject();
 
     SubjectResDTO create_subject(SubjectReqDTO subjectReqDTO);
 

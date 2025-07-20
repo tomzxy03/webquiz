@@ -41,29 +41,6 @@ public class AnswerServiceImpl implements AnswerService {
     }
 
     @Override
-    public void create_Answer(AnswerReqDTO answerReqDTO) {
-        boolean flag = answerRepo.existsByAnswerName(answerReqDTO.getAnswerName());
-        if(flag){
-            throw new ExistedException("Answer has been existed");
-        }
-        Answer answer = answerMapper.toAnswer(answerReqDTO);
-        answerRepo.save(answer);
-    }
-
-    @Override
-    @Transactional
-    public void create_Answers(List<AnswerReqDTO> answerReqDTO) {
-        List<Answer> answers = answerMapper.toListAnswer(answerReqDTO);
-        List<String> incomingNames = answers.stream()
-                        .map(Answer::getAnswerName).toList();
-        List<String> existedNames = answerRepo.findAllExistAnswer(incomingNames);
-        if(!existedNames.isEmpty()){
-            throw  new ExistedException("Answer(s) already exist: "+ existedNames);
-        }
-        answerRepo.saveAll(answers);
-    }
-
-    @Override
     public AnswerResDTO update_Answer(Long answer_id, AnswerReqDTO answerReqDTO) {
         Answer answer = findAnswer(answer_id);
         answerMapper.updateAnswer(answer,answerReqDTO);
@@ -82,5 +59,17 @@ public class AnswerServiceImpl implements AnswerService {
     }
     public Answer findAnswer(Long answer_id){
         return answerRepo.findById(answer_id).orElseThrow(()->new NotFoundException("Answer not found!"));
+    }
+
+    @Override
+    public void create_Answer(AnswerReqDTO answerReqDTO) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'create_Answer'");
+    }
+
+    @Override
+    public void create_Answers(List<AnswerReqDTO> answerReqDTO) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'create_Answers'");
     }
 }

@@ -1,10 +1,11 @@
 package com.tomzxy.web_quiz.dto.responses;
 
 
+import com.tomzxy.web_quiz.dto.responses.answer.AnswerDetailResDTO;
 import com.tomzxy.web_quiz.enums.QuestionAndAnswerType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
+import jakarta.persistence.*;
 import java.util.List;
 import java.util.Set;
 

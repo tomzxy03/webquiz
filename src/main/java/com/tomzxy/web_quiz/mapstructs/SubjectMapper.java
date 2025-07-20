@@ -6,6 +6,7 @@ import com.tomzxy.web_quiz.models.Subject;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
+
 import java.util.List;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
@@ -16,6 +17,10 @@ public interface SubjectMapper {
     Subject toSubject(SubjectReqDTO subjectReqDTO);
 
     SubjectResDTO toSubjectResDTO(Subject subject);
+
+    @Mapping(target = "quizzes", ignore = true)
+    @Mapping(target = "questions", ignore = true)
+    void update_subject(@MappingTarget Subject subject, SubjectReqDTO subjectReqDTO);
 
     List<SubjectResDTO> toListSubjectResDTO(List<Subject> subjects);
 }

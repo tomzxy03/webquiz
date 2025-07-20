@@ -2,12 +2,11 @@ package com.tomzxy.web_quiz.controllers;
 
 
 import com.tomzxy.web_quiz.containts.ApiDefined;
-import com.tomzxy.web_quiz.dto.requests.QuestionReqDTO;
-
+import com.tomzxy.web_quiz.dto.requests.AnswerReqDTO;
+import com.tomzxy.web_quiz.dto.responses.AnswerResDTO;
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
-import com.tomzxy.web_quiz.dto.responses.QuestionResDTO;
-import com.tomzxy.web_quiz.services.QuestionService;
+import com.tomzxy.web_quiz.services.AnswerService;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -18,45 +17,39 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping(path = ApiDefined.Question.BASE)
+@RequestMapping(path = ApiDefined.Answer.BASE)
 
-public class QuestionController {
-    private final QuestionService questionService;
+public class AnswerController {
+    private final AnswerService answerService;
 
     @GetMapping()
-    public DataResDTO<PageResDTO<?>> getAllQuestion(@RequestParam @Min(0) int page ,@RequestParam @Min(10) int size){
-        log.info("Get all Questions");
-        return DataResDTO.ok(questionService.get_Questions_pageable(page,size));
+    public DataResDTO<PageResDTO<?>> getAllAnswer(@RequestParam @Min(0) int page ,@RequestParam @Min(10) int size){
+        log.info("Get all Answers");
+        return DataResDTO.ok(answerService.get_Answers_pageable(page,size));
     }
 
-    @GetMapping(ApiDefined.Question.ID)
-    public DataResDTO<QuestionResDTO> getQuestion(@PathVariable Long questionId){
-        log.info("get Question by {}", questionId);
-        return DataResDTO.ok(questionService.get_Question(questionId));
+    @GetMapping(ApiDefined.Answer.ID)
+    public DataResDTO<AnswerResDTO> getAnswer(@PathVariable Long answerId){
+        log.info("get Answer by {}", answerId);
+        return DataResDTO.ok(answerService.get_Answer(answerId));
     }
     @PostMapping()
-    public DataResDTO<Void> addQuestion(@Valid @RequestBody QuestionReqDTO questionReqDTO){
-        log.info("add Question");
-        questionService.create_Question(questionReqDTO);
-        return DataResDTO.create();
-    }
-    @PostMapping(ApiDefined.Question.ADD_LIST)
-    public DataResDTO<Void> addQuestionList(@Valid @RequestBody List<QuestionReqDTO> questionReqDTOList){
-        log.info("add Question List");
-        questionService.create_Questions(questionReqDTOList);
+    public DataResDTO<Void> addAnswer(@Valid @RequestBody AnswerReqDTO answerReqDTO){
+        log.info("add Answer");
+        answerService.create_Answer(answerReqDTO);
         return DataResDTO.create();
     }
 
-    @PutMapping(ApiDefined.Question.ID)
-    public DataResDTO<QuestionResDTO> updateQuestion(@PathVariable Long questionId, @RequestBody @Valid QuestionReqDTO questionReqDTO){
-        log.info("Update Question with id {}", questionId);
-        return DataResDTO.update(questionService.update_Question(questionId,questionReqDTO));
+    @PutMapping(ApiDefined.Answer.ID)
+    public DataResDTO<AnswerResDTO> updateAnswer(@PathVariable Long answerId, @RequestBody @Valid AnswerReqDTO answerReqDTO){
+        log.info("Update Answer with id {}", answerId);
+        return DataResDTO.update(answerService.update_Answer(answerId,answerReqDTO));
     }
 
-    @DeleteMapping(ApiDefined.Question.ID)
-    public DataResDTO<Void> deleteQuestion(@PathVariable Long questionId){
-        log.info("Delete Question with id {}", questionId);
-        questionService.delete_Question(questionId);
+    @DeleteMapping(ApiDefined.Answer.ID)
+    public DataResDTO<Void> deleteAnswer(@PathVariable Long answerId){
+        log.info("Delete Answer with id {}", answerId);
+        answerService.delete_Answer(answerId);
         return DataResDTO.delete();
     }
 }

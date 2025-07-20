@@ -1,6 +1,7 @@
 package com.tomzxy.web_quiz.models;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tomzxy.web_quiz.enums.Level;
 import com.tomzxy.web_quiz.enums.QuestionAndAnswerType;
 import jakarta.persistence.*;

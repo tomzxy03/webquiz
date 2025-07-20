@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -19,6 +20,9 @@ public interface SubjectRepo extends JpaRepository<Subject, Long> {
 
     @Query("select u from Subject u where u.is_active = :is_active")
     Page<Subject> findAllByActive(@Param("is_active") boolean is_active, Pageable pageable);
+
+    @Query("select u from Subject u where u.is_active = :is_active")
+    Optional<List<Subject>> findAllByActive(@Param("is_active") boolean is_active);
     
     Optional<Subject> findBySubjectName(String subjectName);
 

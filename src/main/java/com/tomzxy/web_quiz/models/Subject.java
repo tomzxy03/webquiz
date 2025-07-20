@@ -1,13 +1,13 @@
 package com.tomzxy.web_quiz.models;
 
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -27,8 +27,8 @@ public class Subject extends BaseEntity{
     String description;
 
     @OneToMany(mappedBy = "subject", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    Set<Quiz> quizzes = new HashSet<>();
+    Set<Quiz> quizzes;
 
     @OneToMany(mappedBy = "subject", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    Set<Question> questions = new HashSet<>();
+    Set<Question> questions;
 }

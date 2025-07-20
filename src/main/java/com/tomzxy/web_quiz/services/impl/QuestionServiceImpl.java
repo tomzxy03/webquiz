@@ -45,24 +45,24 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     public void create_Question(QuestionReqDTO questionReqDTO) {
-        boolean flag = questionRepo.existsByQuestionName(questionReqDTO.getQuestionName());
+        boolean flag = questionRepo.existsByQuestionName(questionReqDTO.getQuestionName()); // check if the question name is already existed
         if(flag){
             throw new ExistedException("Question has been existed");
         }
-        Question question = questionMapper.toQuestion(questionReqDTO);
-        Set<Answer> answers = answerMapper.toListAnswer(questionReqDTO.getAnswerReqDTOList());
-        question.saveAnswers(answers);
+        Question question = questionMapper.toQuestion(questionReqDTO); // convert the question request dto to question
+        Set<Answer> answers = answerMapper.toListAnswer(questionReqDTO.getAnswerReqDTOList()); // convert the answer request dto to answer
+        question.saveAnswers(answers); // save the answers to the question
 
-        questionRepo.save(question);
+        questionRepo.save(question); // save the question to the database
     }
 
     @Override
     @Transactional
     public void create_Questions(List<QuestionReqDTO> questionReqDTO) {
-        List<Question> questions = questionMapper.toListQuestion(questionReqDTO);
+        List<Question> questions = questionMapper.toListQuestion(questionReqDTO); // convert the question request dto to question
         List<String> incomingNames = questions.stream()
-                        .map(Question::getQuestionName).toList();
-        List<String> existedNames = questionRepo.findAllExistQuestion(incomingNames);
+                        .map(Question::getQuestionName).toList(); // get the question name from the question
+        List<String> existedNames = questionRepo.findAllExistQuestion(incomingNames); // check if the question name is already existed
         if(!existedNames.isEmpty()){
             throw  new ExistedException("Question(s) already exist: "+ existedNames);
         }
@@ -72,14 +72,17 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public QuestionResDTO update_Question(Long question_id, QuestionReqDTO questionReqDTO) {
         Question question = findQuestion(question_id);
-        questionMapper.updateQuestion(question,questionReqDTO);
-        
-        return null;
+        questionMapper.updateQuestion(question,questionReqDTO); // update the question
+        Set<Answer> answers = answerMapper.toListAnswer(questionReqDTO.getAnswerReqDTOList()); // convert the answer request dto to answer
+        question.saveAnswers(answers); // save the answers to the question
+        // save the question to the database
+        return questionMapper.toQuestionResDTO(questionRepo.save(question));
     }
 
     @Override
     public QuestionResDTO get_Question(Long question_id) {
-        return null;
+        Question question = findQuestion(question_id);
+        return questionMapper.toQuestionResDTO(question);
     }
 
     @Override
