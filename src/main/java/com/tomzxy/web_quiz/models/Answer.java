@@ -22,9 +22,6 @@ public class Answer extends BaseEntity{
     @Enumerated(EnumType.STRING)
     QuestionAndAnswerType answerType;
 
-    @Column(name = "is_correct")
-    boolean isCorrect;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "question_id", nullable = false)
     Question question;
