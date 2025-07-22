@@ -43,8 +43,12 @@ public class User extends BaseEntity {
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"),
                 inverseJoinColumns = @JoinColumn(name = "role_id"))
-    Set<Role> roles = new HashSet<>();
+    Set<Role> roles;
 
     @ManyToMany(mappedBy = "members")
-    private Set<Lobby> groups;
+    Set<Lobby> groups;
+
+    @OneToMany(mappedBy = "host")
+    Set<Notification> notifications;
+
 }

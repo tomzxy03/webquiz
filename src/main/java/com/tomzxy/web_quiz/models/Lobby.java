@@ -23,7 +23,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "groups")
 public class Lobby extends BaseEntity{
-
+    @Column(name = "group_name")
     private String groupName;
 
     @ManyToMany

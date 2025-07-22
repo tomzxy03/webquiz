@@ -4,6 +4,8 @@ import lombok.*;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.*;
 import lombok.experimental.FieldDefaults;
 
@@ -24,6 +26,9 @@ public class QuizQuestion extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "quiz_id")
     private Quiz quiz;
+
+    @Column(name = "custom_question")
+    String customQuestion;
 
     @ManyToOne
     @JoinColumn(name = "question_id", nullable = true)

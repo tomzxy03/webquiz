@@ -2,7 +2,8 @@ package com.tomzxy.web_quiz.models;
 
 import lombok.*;
 
-import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import lombok.experimental.FieldDefaults;
@@ -26,6 +27,7 @@ public class QuizAnswer {
 
     @ManyToOne
     @JoinColumn(name = "quiz_question_id")
+    @JsonIgnore
     private QuizQuestion quizQuestion;
 
     @ManyToOne
