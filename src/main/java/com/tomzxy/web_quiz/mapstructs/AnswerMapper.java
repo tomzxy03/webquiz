@@ -3,16 +3,14 @@ package com.tomzxy.web_quiz.mapstructs;
 import com.tomzxy.web_quiz.dto.requests.AnswerReqDTO;
 import com.tomzxy.web_quiz.dto.responses.AnswerResDTO;
 import com.tomzxy.web_quiz.models.Answer;
-import com.tomzxy.web_quiz.models.Question;
-import org.aspectj.lang.annotation.After;
+
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
 import java.util.List;
 import java.util.Set;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-        uses = Answer.class, unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring")
 public interface AnswerMapper {
     AnswerMapper MAPPER = Mappers.getMapper(AnswerMapper.class);
 

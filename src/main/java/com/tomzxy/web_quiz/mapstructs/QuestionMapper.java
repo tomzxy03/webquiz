@@ -2,20 +2,19 @@ package com.tomzxy.web_quiz.mapstructs;
 
 import com.tomzxy.web_quiz.dto.requests.QuestionReqDTO;
 import com.tomzxy.web_quiz.dto.responses.QuestionResDTO;
-import com.tomzxy.web_quiz.models.Answer;
 import com.tomzxy.web_quiz.models.Question;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
 import java.util.List;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
-        uses = AnswerMapper.class, unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring", uses = AnswerMapper.class)
 public interface QuestionMapper {
     QuestionMapper MAPPER = Mappers.getMapper(QuestionMapper.class);
 
 
     @Mapping(target = "answers", ignore = true)
+    
     Question toQuestion(QuestionReqDTO questionReqDto);
 
     @Mapping(source = "answers", target = "answers")

@@ -22,7 +22,7 @@ public class QuestionResDTO {
 
     QuestionAndAnswerType questionType;
 
-    boolean is_active;
+    boolean isActive;
 
     Set<AnswerDetailResDTO> answers;
 }

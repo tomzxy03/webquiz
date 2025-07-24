@@ -17,5 +17,5 @@ public class QuizAnswerResDTO {
     private boolean isCorrect;
     private String customAnswer;
     private Long answerId; // nullable
-    private String answerText; // nullable
+    private String answerName; // nullable
 } 
