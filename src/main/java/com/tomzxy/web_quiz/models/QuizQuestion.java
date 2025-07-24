@@ -20,8 +20,8 @@ import lombok.experimental.FieldDefaults;
 @Table(name = "quiz_question")
 public class QuizQuestion extends BaseEntity {
 
-    String question_text;
-    Boolean is_custom;
+    String questionText;
+    Boolean isCustom;
 
     @ManyToOne
     @JoinColumn(name = "quiz_id")
