@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
-import java.util.List;
+import java.util.Set;
 
 
 @Getter
@@ -29,5 +29,5 @@ public class QuizReqDTO {
     private Long groupId; // nullable
 
     @NotEmpty(message = "Questions are required")
-    private List<QuizQuestionReqDTO> questions;
+    private Set<QuizQuestionReqDTO> questions;
 } 

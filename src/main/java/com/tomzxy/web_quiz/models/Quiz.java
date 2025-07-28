@@ -1,7 +1,8 @@
 package com.tomzxy.web_quiz.models;
 
-import java.sql.Date;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.tomzxy.web_quiz.enums.QuizType;
 
@@ -44,11 +45,24 @@ public class Quiz extends BaseEntity {
     private Lobby group;
 
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL)
-    private List<QuizQuestion> questions;
+    private Set<QuizQuestion> questions;
 
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL)
-    private List<QuizResult> submissions;
+    private Set<QuizResult> submissions;
 
+    @ManyToOne
+    @JoinColumn(name = "subject_id")
+    private Subject subject;
 
+    public void saveQuestions(Collection<QuizQuestion> questionsList) {
+        if (questionsList == null || questionsList.isEmpty()) return;
+        if (questions == null) {
+            questions = new HashSet<>();
+        }
+        for (QuizQuestion question : questionsList) {
+            questions.add(question);
+            question.setQuiz(this);
+        }
+    }
     
 }

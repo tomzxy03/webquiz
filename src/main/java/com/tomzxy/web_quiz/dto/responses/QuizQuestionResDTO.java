@@ -1,7 +1,7 @@
 package com.tomzxy.web_quiz.dto.responses;
 
 import lombok.Data;
-import java.util.List;
+import java.util.Set;
 
 @Data
 public class QuizQuestionResDTO {
@@ -10,5 +10,5 @@ public class QuizQuestionResDTO {
     private Boolean isCustom;
     private String customQuestion;
     private Long questionId; // nullable
-    private List<QuizAnswerResDTO> quizAnswers;
+    private Set<QuizAnswerResDTO> quizAnswers;
 } 

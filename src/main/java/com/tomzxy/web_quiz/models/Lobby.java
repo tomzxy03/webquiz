@@ -21,7 +21,7 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "groups")
+@Table(name = "classes")
 public class Lobby extends BaseEntity{
     @Column(name = "group_name")
     private String groupName;

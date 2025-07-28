@@ -16,7 +16,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
 @Table(name = "quiz_answer")
-public class QuizAnswer {
+public class QuizAnswer extends BaseEntity {
 
 
     private boolean isCustom;

@@ -3,7 +3,7 @@ package com.tomzxy.web_quiz.dto.responses;
 import com.tomzxy.web_quiz.enums.QuizType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import java.util.List;
+import java.util.Set;
 
 
 @Builder
@@ -20,6 +20,6 @@ public class QuizResDTO {
     private QuizType quizType;
     private String hostName;
     private String groupName;
-    private List<QuizQuestionResDTO> questions;
-    private List<QuizResultResDTO> submissions;
+    private Set<QuizQuestionResDTO> questions;
+    private Set<QuizResultResDTO> submissions;
 } 

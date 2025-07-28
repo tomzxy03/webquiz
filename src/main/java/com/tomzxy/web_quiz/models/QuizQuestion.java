@@ -2,7 +2,10 @@ package com.tomzxy.web_quiz.models;
 
 import lombok.*;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.HashSet;
+
+import java.util.Set;
 
 import jakarta.persistence.*;
 import lombok.experimental.FieldDefaults;
@@ -33,7 +36,16 @@ public class QuizQuestion extends BaseEntity {
     private Question question;
 
     @OneToMany(mappedBy = "quizQuestion", cascade = CascadeType.ALL)
-    private List<QuizAnswer> quizAnswers;
+    private Set<QuizAnswer> quizAnswers;
 
-    
+    public void saveAnswers(Collection<QuizAnswer> answersList) {
+        if (answersList == null || answersList.isEmpty()) return;
+        if (quizAnswers == null) {
+            quizAnswers = new HashSet<>();
+        }
+        for (QuizAnswer answer : answersList) {
+            quizAnswers.add(answer);
+            answer.setQuizQuestion(this);
+        }
+    }
 }
