@@ -3,6 +3,7 @@ package com.tomzxy.web_quiz.controllers;
 
 import com.tomzxy.web_quiz.containts.ApiDefined;
 import com.tomzxy.web_quiz.dto.requests.UserReqDto;
+import com.tomzxy.web_quiz.dto.requests.UserProfileReqDTO;
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.UserResDTO;
@@ -46,6 +47,12 @@ public class UserController {
     public DataResDTO<UserResDTO> updateUser(@PathVariable Long userId, @RequestBody @Valid UserReqDto userReqDto){
         log.info("Update user with id {}", userId);
         return DataResDTO.update(userService.update_user(userId,userReqDto));
+    }
+
+    @PutMapping(ApiDefined.Auth.UPDATE_INFO)
+    public DataResDTO<UserResDTO> updateProfile(@RequestBody @Valid UserProfileReqDTO userProfileReqDTO){
+        log.info("Update user profile");
+        return DataResDTO.update(userService.update_profile(userProfileReqDTO));
     }
 
     @DeleteMapping(ApiDefined.User.ID)

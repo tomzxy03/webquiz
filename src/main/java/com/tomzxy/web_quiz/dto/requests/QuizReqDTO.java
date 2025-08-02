@@ -1,32 +1,55 @@
 package com.tomzxy.web_quiz.dto.requests;
 
 import com.tomzxy.web_quiz.enums.QuizType;
-
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.*;
 import lombok.Getter;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
 import java.util.Set;
 
-
 @Getter
+@Setter
 public class QuizReqDTO {
-    @NotBlank(message = "Title is required")
+    @NotBlank(message = "Quiz title is required")
+    @Size(min = 3, max = 200, message = "Title must be between 3 and 200 characters")
     private String title;
 
-    @NotBlank(message = "Description is required")
+    @Size(max = 1000, message = "Description cannot exceed 1000 characters")
     private String description;
 
-    @NotNull(message = "Total question is required")
-    private int totalQuestion;
+    @Min(value = 1, message = "Total questions must be at least 1")
+    @Max(value = 100, message = "Total questions cannot exceed 100")
+    private Integer totalQuestions = 0;
 
     @NotNull(message = "Quiz type is required")
     private QuizType quizType;
 
+    @Min(value = 1, message = "Time limit must be at least 1 minute")
+    @Max(value = 480, message = "Time limit cannot exceed 8 hours")
+    private Integer timeLimitMinutes;
+
+    @Min(value = 0, message = "Passing score cannot be negative")
+    @Max(value = 100, message = "Passing score cannot exceed 100")
+    private Integer passingScorePercentage = 60;
+
+    @Min(value = 1, message = "Max attempts must be at least 1")
+    @Max(value = 10, message = "Max attempts cannot exceed 10")
+    private Integer maxAttempts = 1;
+
+    private boolean isPublic = false;
+
+    private LocalDateTime startDate;
+
+    private LocalDateTime endDate;
+
     @NotNull(message = "Host ID is required")
     private Long hostId;
 
-    private Long groupId; // nullable
+    private Long lobbyId; // nullable
+
+    @NotNull(message = "Subject ID is required")
+    private Long subjectId;
 
     @NotEmpty(message = "Questions are required")
     private Set<QuizQuestionReqDTO> questions;

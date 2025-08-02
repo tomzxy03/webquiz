@@ -7,15 +7,15 @@ import lombok.Setter;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+
 
 @Entity
 @Getter
 @Setter
-
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "option_answers")
 public class OptionAnswer extends BaseEntity {
-    
+    String optionText;
     
 }

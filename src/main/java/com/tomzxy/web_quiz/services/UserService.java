@@ -1,6 +1,8 @@
 package com.tomzxy.web_quiz.services;
 
 import com.tomzxy.web_quiz.dto.requests.UserReqDto;
+import com.tomzxy.web_quiz.dto.requests.UserProfileReqDTO;
+import com.tomzxy.web_quiz.dto.requests.auth.LoginReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.UserResDTO;
 
@@ -17,4 +19,8 @@ public interface UserService {
     UserResDTO get_user(Long user_id);
 
     void delete_user(Long user_id);
+    
+    
+    
+    UserResDTO update_profile(UserProfileReqDTO userProfileReqDTO);
 }

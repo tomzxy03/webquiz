@@ -76,9 +76,9 @@ public class QuizServiceImpl implements QuizService {
 
             // Validate group if provided
             Lobby group = null;
-            if (dto.getGroupId() != null) {
-                group = lobbyRepo.findById(dto.getGroupId())
-                        .orElseThrow(() -> new NotFoundException("Group not found with id: " + dto.getGroupId()));
+            if (dto.getLobbyId() != null) {
+                group = lobbyRepo.findById(dto.getLobbyId())
+                        .orElseThrow(() -> new NotFoundException("Group not found with id: " + dto.getLobbyId()));
                 
                 // Validate host is member of the group
                 if (!group.getMembers().contains(host)) {
@@ -89,10 +89,10 @@ public class QuizServiceImpl implements QuizService {
             // Create quiz
             Quiz quiz = quizMapper.toEntity(dto);
             quiz.setHost(host);
-            quiz.setGroup(group);
+            quiz.setLobby(group);
             
             // Validate total questions match
-            if (dto.getQuestions() != null && dto.getQuestions().size() != dto.getTotalQuestion()) {
+            if (dto.getQuestions() != null && dto.getQuestions().size() != dto.getTotalQuestions()) {
                 throw new RuntimeException("Total questions count must match the number of questions provided");
             }
 
@@ -117,9 +117,9 @@ public class QuizServiceImpl implements QuizService {
 
             // Validate group if provided
             Lobby group = null;
-            if (dto.getGroupId() != null) {
-                group = lobbyRepo.findById(dto.getGroupId())
-                        .orElseThrow(() -> new NotFoundException("Group not found with id: " + dto.getGroupId()));
+            if (dto.getLobbyId() != null) {
+                group = lobbyRepo.findById(dto.getLobbyId())
+                        .orElseThrow(() -> new NotFoundException("Group not found with id: " + dto.getLobbyId()));
                 
                 // Validate host is member of the group
                 if (!group.getMembers().contains(host)) {
@@ -131,10 +131,10 @@ public class QuizServiceImpl implements QuizService {
             Quiz updatedQuiz = quizMapper.toEntity(dto);
             updatedQuiz.setId(existingQuiz.getId());
             updatedQuiz.setHost(host);
-            updatedQuiz.setGroup(group);
+            updatedQuiz.setLobby(group);
             
             // Validate total questions match
-            if (dto.getQuestions() != null && dto.getQuestions().size() != dto.getTotalQuestion()) {
+            if (dto.getQuestions() != null && dto.getQuestions().size() != dto.getTotalQuestions()) {
                 throw new RuntimeException("Total questions count must match the number of questions provided");
             }
 

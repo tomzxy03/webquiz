@@ -13,15 +13,15 @@ public interface QuizMapper {
 
     // Map from DTO to Entity - ignore audit fields and relationships
     @Mapping(target = "host", ignore = true)
-    @Mapping(target = "group", ignore = true)
+    @Mapping(target = "lobby", ignore = true)
     @Mapping(target = "questions", ignore = true)
-    @Mapping(target = "submissions", ignore = true)
+    @Mapping(target = "results", ignore = true)
     @Mapping(target = "subject", ignore = true)
     Quiz toEntity(QuizReqDTO dto);
 
     // Map from Entity to DTO - handle nested mappings
     @Mapping(target = "hostName", source = "host.userName")
-    @Mapping(target = "groupName", source = "group.groupName")
+    @Mapping(target = "groupName", source = "lobby.groupName")
     @Mapping(target = "questions", ignore = true) // Will be handled manually in service
     @Mapping(target = "submissions", ignore = true) // Will be handled manually in service
     QuizResDTO toDto(Quiz entity);

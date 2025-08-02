@@ -2,6 +2,8 @@ package com.tomzxy.web_quiz.services.impl;
 
 
 import com.tomzxy.web_quiz.dto.requests.UserReqDto;
+import com.tomzxy.web_quiz.dto.requests.UserProfileReqDTO;
+import com.tomzxy.web_quiz.dto.requests.auth.LoginReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.UserResDTO;
 import com.tomzxy.web_quiz.exception.NotFoundException;
@@ -32,14 +34,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public PageResDTO<?> get_users_pageable(int size, int page) {
-        Pageable pageable = PageRequest.of(size,page);
+        Pageable pageable = PageRequest.of(page, size);
         Page<User> users = userRepo.findAllByActive(true, pageable);
 
-//        List<UserResDTO> dtoList = users.stream()
-//                .map(userMapper::toUserResDTO)
-//                .toList();
-//        return new PageResDTO<>(page,size,users.getTotalPages(),dtoList);
-        return convertToPageResDTO.convertToPageResponse(users,page,size,UserResDTO.class);
+        // Use MapStruct mapper instead of ModelMapper for better performance
+        return convertToPageResDTO.convertPageResponse(users, pageable, userMapper::toUserResDTO);
     }
 
     @Override
@@ -64,12 +63,27 @@ public class UserServiceImpl implements UserService {
     @Override
     public void delete_user(Long user_id) {
         User user = findUserById(user_id);
-        user.set_active(false);
+        user.setActive(false);
         try{
             userRepo.save(user);
         }catch (Exception e){
             throw new RuntimeException("Cannot delete user: ",e);
         }
+    }
+
+    
+
+    @Override
+    public UserResDTO update_profile(UserProfileReqDTO userProfileReqDTO) {
+        // TODO: Get current user from security context
+        // For now, this is a placeholder implementation
+        // In a real application, you would get the current user from the security context
+        
+        // Placeholder: create a new user with profile data
+        User user = new User();
+        userMapper.updateUserProfile(user, userProfileReqDTO);
+        
+        return userMapper.toUserResDTO(user);
     }
 
     private User findUserById(Long id){

@@ -46,7 +46,7 @@ public class SubjectServiceImpl implements SubjectService {
     @Override      
     public void delete_subject(Long subject_id) {
         Subject subject = findSubjectById(subject_id);
-        subject.set_active(false);
+        subject.setActive(false);
         try{
             subjectRepo.save(subject);
         }catch (Exception e){
