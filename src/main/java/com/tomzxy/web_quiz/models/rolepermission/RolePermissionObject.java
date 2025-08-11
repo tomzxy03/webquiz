@@ -19,13 +19,13 @@ public class RolePermissionObject {
     RolePermissionId rolePermissionId;
 
     @ManyToOne
-    @MapsId(value = "roleId")
+    @MapsId("roleId")
     @JoinColumn(name = "role_id")
     Role role;
 
     @ManyToOne
-    @MapsId(value = "permissionName")
-    @JoinColumn(name = "permission_id")
+    @MapsId("permissionName")
+    @JoinColumn(name = "permission_name")
     Permission permission;
 
     public RolePermissionObject(Role role, Permission permission, String objectType){
@@ -33,5 +33,4 @@ public class RolePermissionObject {
         this.permission=permission;
         this.rolePermissionId= new RolePermissionId(role.getId(),permission.getPermissionName(),objectType);
     }
-
 }

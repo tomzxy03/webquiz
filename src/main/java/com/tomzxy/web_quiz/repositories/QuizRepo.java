@@ -11,79 +11,73 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface QuizRepo extends JpaRepository<Quiz, Long>, JpaSpecificationExecutor<Quiz> {
     
     // Basic CRUD with pagination
-    @Query("SELECT q FROM Quiz q WHERE q.is_active = true")
+    @Query("SELECT q FROM Quiz q WHERE q.isActive = true")
     Page<Quiz> findAllActive(Pageable pageable);
     
     // Find by host
-    @Query("SELECT q FROM Quiz q WHERE q.host.id = :hostId AND q.is_active = true")
+    @Query("SELECT q FROM Quiz q WHERE q.host.id = :hostId AND q.isActive = true")
     Page<Quiz> findByHostId(@Param("hostId") Long hostId, Pageable pageable);
     
     // Find by group
-    @Query("SELECT q FROM Quiz q WHERE q.group.id = :groupId AND q.is_active = true")
-    Page<Quiz> findByGroupId(@Param("groupId") Long groupId, Pageable pageable);
+    @Query("SELECT q FROM Quiz q WHERE q.lobby.id = :lobbyId AND q.isActive = true")
+    Page<Quiz> findByLobbyId(@Param("lobbyId") Long lobbyId, Pageable pageable);
     
     // Find by quiz type
-    @Query("SELECT q FROM Quiz q WHERE q.quizType = :quizType AND q.is_active = true")
+    @Query("SELECT q FROM Quiz q WHERE q.quizType = :quizType AND q.isActive = true")
     Page<Quiz> findByQuizType(@Param("quizType") QuizType quizType, Pageable pageable);
     
     // Search by title or description
     @Query("SELECT q FROM Quiz q WHERE (LOWER(q.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
-           "OR LOWER(q.description) LIKE LOWER(CONCAT('%', :searchTerm, '%'))) AND q.is_active = true")
+           "OR LOWER(q.description) LIKE LOWER(CONCAT('%', :searchTerm, '%'))) AND q.isActive = true")
     Page<Quiz> searchByTitleOrDescription(@Param("searchTerm") String searchTerm, Pageable pageable);
     
     // Find by host and group
-    @Query("SELECT q FROM Quiz q WHERE q.host.id = :hostId AND q.group.id = :groupId AND q.is_active = true")
-    Page<Quiz> findByHostIdAndGroupId(@Param("hostId") Long hostId, @Param("groupId") Long groupId, Pageable pageable);
+    @Query("SELECT q FROM Quiz q WHERE q.host.id = :hostId AND q.lobby.id = :lobbyId AND q.isActive = true")
+    Page<Quiz> findByHostIdAndLobbyId(@Param("hostId") Long hostId, @Param("lobbyId") Long lobbyId, Pageable pageable);
     
-    // Find by total questions range
-    @Query("SELECT q FROM Quiz q WHERE q.totalQuestion BETWEEN :minQuestions AND :maxQuestions AND q.is_active = true")
-    Page<Quiz> findByTotalQuestionRange(@Param("minQuestions") int minQuestions, 
-                                       @Param("maxQuestions") int maxQuestions, Pageable pageable);
+    // Find quizzes with results count
+    @Query("SELECT q FROM Quiz q WHERE SIZE(q.results) > 0 AND q.isActive = true")
+    Page<Quiz> findQuizzesWithResults(Pageable pageable);
     
-    // Find quizzes with submissions count
-    @Query("SELECT q FROM Quiz q WHERE SIZE(q.submissions) > 0 AND q.is_active = true")
-    Page<Quiz> findQuizzesWithSubmissions(Pageable pageable);
-    
-    // Find quizzes without submissions
-    @Query("SELECT q FROM Quiz q WHERE SIZE(q.submissions) = 0 AND q.is_active = true")
-    Page<Quiz> findQuizzesWithoutSubmissions(Pageable pageable);
+    // Find quizzes without results
+    @Query("SELECT q FROM Quiz q WHERE SIZE(q.results) = 0 AND q.isActive = true")
+    Page<Quiz> findQuizzesWithoutResults(Pageable pageable);
     
     // Find by subject
-    @Query("SELECT q FROM Quiz q WHERE q.subject.id = :subjectId AND q.is_active = true")
+    @Query("SELECT q FROM Quiz q WHERE q.subject.id = :subjectId AND q.isActive = true")
     Page<Quiz> findBySubjectId(@Param("subjectId") Long subjectId, Pageable pageable);
     
     // Count quizzes by host
-    @Query("SELECT COUNT(q) FROM Quiz q WHERE q.host.id = :hostId AND q.is_active = true")
+    @Query("SELECT COUNT(q) FROM Quiz q WHERE q.host.id = :hostId AND q.isActive = true")
     long countByHostId(@Param("hostId") Long hostId);
     
     // Count quizzes by group
-    @Query("SELECT COUNT(q) FROM Quiz q WHERE q.group.id = :groupId AND q.is_active = true")
-    long countByGroupId(@Param("groupId") Long groupId);
+    @Query("SELECT COUNT(q) FROM Quiz q WHERE q.lobby.id = :lobbyId AND q.isActive = true")
+    long countByLobbyId(@Param("lobbyId") Long lobbyId);
     
     // Find recent quizzes
-    @Query("SELECT q FROM Quiz q WHERE q.is_active = true ORDER BY q.create_at DESC")
+    @Query("SELECT q FROM Quiz q WHERE q.isActive = true ORDER BY q.createdAt DESC")
     Page<Quiz> findRecentQuizzes(Pageable pageable);
     
-    // Find popular quizzes (with most submissions)
-    @Query("SELECT q FROM Quiz q WHERE q.is_active = true ORDER BY SIZE(q.submissions) DESC")
+    // Find popular quizzes (with most results)
+    @Query("SELECT q FROM Quiz q WHERE q.isActive = true ORDER BY SIZE(q.results) DESC")
     Page<Quiz> findPopularQuizzes(Pageable pageable);
     
     // Check if quiz exists by title and host
     @Query("SELECT CASE WHEN COUNT(q) > 0 THEN true ELSE false END FROM Quiz q " +
-           "WHERE q.title = :title AND q.host.id = :hostId AND q.is_active = true")
+           "WHERE q.title = :title AND q.host.id = :hostId AND q.isActive = true")
     boolean existsByTitleAndHostId(@Param("title") String title, @Param("hostId") Long hostId);
     
     // Find all quiz types used by a host
-    @Query("SELECT DISTINCT q.quizType FROM Quiz q WHERE q.host.id = :hostId AND q.is_active = true")
+    @Query("SELECT DISTINCT q.quizType FROM Quiz q WHERE q.host.id = :hostId AND q.isActive = true")
     List<QuizType> findQuizTypesByHostId(@Param("hostId") Long hostId);
     
     // Find quizzes with questions count
-    @Query("SELECT q FROM Quiz q WHERE SIZE(q.questions) = :questionCount AND q.is_active = true")
+    @Query("SELECT q FROM Quiz q WHERE SIZE(q.questions) = :questionCount AND q.isActive = true")
     Page<Quiz> findByQuestionsCount(@Param("questionCount") int questionCount, Pageable pageable);
 } 

@@ -35,7 +35,7 @@ public class ConvertToPageResDTO {
         List<R> dtoList = entities.stream()
                 .map(mapper)
                 .toList();
-
+            
         return PageResDTO.<List<R>>builder()
                 .page(pageable.getPageNumber())
                 .size(pageable.getPageSize())

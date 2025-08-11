@@ -36,6 +36,6 @@ public class UserNotification {
     @MapsId("notificationId")
     private Notification notification;
 
-    private boolean read;
+    private boolean isRead;
     private LocalDateTime readAt;
 }

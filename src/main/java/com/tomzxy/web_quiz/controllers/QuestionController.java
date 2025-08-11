@@ -37,7 +37,7 @@ public class QuestionController {
         log.info("get Question by {}", questionId);
         return DataResDTO.ok(questionService.get_Question(questionId));
     }
-    @PostMapping()
+    @PostMapping("")
     public DataResDTO<Void> addQuestion(@Valid @RequestBody QuestionReqDTO questionReqDTO){
         log.info("add Question");
         questionService.create_Question(questionReqDTO);

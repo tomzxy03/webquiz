@@ -21,17 +21,17 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "classes")
+@Table(name = "lobbies")
 public class Lobby extends BaseEntity{
-    @Column(name = "group_name")
-    private String groupName;
+    @Column(name = "lobby_name")
+    private String lobbyName;
 
     @ManyToMany
-    @JoinTable(name = "group_user",
-        joinColumns = @JoinColumn(name = "group_id"),
+    @JoinTable(name = "lobby_user",
+        joinColumns = @JoinColumn(name = "lobby_id"),
         inverseJoinColumns = @JoinColumn(name = "user_id"))
     private Set<User> members;
 
-    @OneToMany(mappedBy = "group")
+    @OneToMany(mappedBy = "lobby")
     private List<Quiz> quizzes;
 }

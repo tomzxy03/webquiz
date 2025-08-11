@@ -19,7 +19,7 @@ public class QuizResDTO {
     private int totalQuestion;
     private QuizType quizType;
     private String hostName;
-    private String groupName;
+    private String lobbyName;
     private Set<QuizQuestionResDTO> questions;
     private Set<QuizResultResDTO> submissions;
 } 

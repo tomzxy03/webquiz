@@ -15,13 +15,17 @@ public interface AnswerMapper {
     AnswerMapper MAPPER = Mappers.getMapper(AnswerMapper.class);
 
     @Mapping(target ="question", ignore = true )
+
     Answer toAnswer(AnswerReqDTO answerReqDTO);
 
+    @Mapping(source = "active", target = "isActive")
     AnswerResDTO toAnswerResDTO(Answer answer);
 
+    @Mapping(source = "active", target = "isActive")
     List<AnswerResDTO> toListAnswerResDTO(List<Answer> answers);
 
     @Mapping(target = "question", ignore = true)
+
     Set<Answer> toListAnswer(Set<AnswerReqDTO> answers);
     
     void updateAnswer(@MappingTarget Answer answer, AnswerReqDTO answerReqDTO);

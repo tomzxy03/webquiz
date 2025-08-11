@@ -25,15 +25,9 @@ public class Permission{
     @Column(name = "description")
     String description;
 
-    @Column(name = "is_active")
-    boolean is_active = true;
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
 
     @OneToMany(mappedBy = "permission", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @Column(name = "permission_object")
     Set<RolePermissionObject> rolePermissionObjects = new HashSet<>();
-
-    public Permission(String permissionName, String description){
-        this.permissionName=permissionName;
-        this.description=description;
-    }
-}
+} 

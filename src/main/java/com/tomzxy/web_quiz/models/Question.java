@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 import jakarta.persistence.Index;
 
 import java.util.Collection;
@@ -19,7 +20,7 @@ import java.util.Set;
 @Setter
 @Getter
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Builder
+@SuperBuilder
 @Table(name = "questions", indexes = {
     @Index(name = "idx_question_subject", columnList = "subject_id"),
     @Index(name = "idx_question_type", columnList = "question_type"),
@@ -28,8 +29,8 @@ import java.util.Set;
 })
 public class Question extends BaseEntity {
 
-    @Column(name = "question_text", nullable = false, length = 1000)
-    private String questionText;
+    @Column(name = "question_name", nullable = false, length = 1000)
+    private String questionName;
 
     @Column(name = "description", length = 500)
     private String description;
@@ -45,27 +46,17 @@ public class Question extends BaseEntity {
     @Column(name = "points", nullable = false)
     private Integer points = 1;
 
-    @Column(name = "time_limit_seconds")
-    private Integer timeLimitSeconds;
-
-    @Column(name = "is_active", nullable = false)
-    private boolean isQuestionActive = true;
-
-    @Column(name = "explanation", length = 1000)
-    private String explanation;
-
-    @Column(name = "tags", length = 500)
-    private String tags;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subject_id", nullable = false)
+    @JoinColumn(name = "subject_id", nullable = true)
     @JsonIgnore
     private Subject subject;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private Set<Answer> answers = new HashSet<>();
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private Set<QuizQuestion> quizQuestions = new HashSet<>();
 
     // Business Logic Methods
@@ -76,11 +67,6 @@ public class Question extends BaseEntity {
         }
     }
 
-    public void removeAnswer(Answer answer) {
-        if (answer != null && answers.remove(answer)) {
-            answer.setQuestion(null);
-        }
-    }
 
     public void addAnswers(Collection<Answer> answersList) {
         if (answersList != null && !answersList.isEmpty()) {
@@ -89,17 +75,23 @@ public class Question extends BaseEntity {
             }
         }
     }
+    
+    public void removeAnswer(Answer answer) {
+        if (answer != null && answers.remove(answer)) {
+            answer.setQuestion(null);
+        }
+    }
 
     public Answer getCorrectAnswer() {
         return answers.stream()
-                .filter(Answer::isCorrect)
+                .filter(Answer::isImageAnswer)
                 .findFirst()
                 .orElse(null);
     }
 
     public Set<Answer> getCorrectAnswers() {
         return answers.stream()
-                .filter(Answer::isCorrect)
+                .filter(Answer::isAnswerCorrect)
                 .collect(java.util.stream.Collectors.toSet());
     }
 
@@ -129,7 +121,6 @@ public class Question extends BaseEntity {
         return correctAnswers.stream()
                 .anyMatch(answer -> answer.getId().toString().equals(userAnswer.trim()));
     }
-
     public boolean isEasy() {
         return level == Level.EASY;
     }
@@ -143,17 +134,17 @@ public class Question extends BaseEntity {
     }
 
     public void activate() {
-        this.isQuestionActive = true;
+        this.setActive(true);
         this.setUpdatedAt(java.time.LocalDateTime.now());
     }
 
     public void deactivate() {
-        this.isQuestionActive = false;
+        this.setActive(false);
         this.setUpdatedAt(java.time.LocalDateTime.now());
     }
 
     public boolean isAvailable() {
-        return isQuestionActive && isActive();
+        return isActive();
     }
 
     public int getAnswerCount() {
@@ -165,18 +156,18 @@ public class Question extends BaseEntity {
     }
 
     public boolean hasExplanation() {
-        return explanation != null && !explanation.trim().isEmpty();
+        return description != null && !description.trim().isEmpty();
     }
 
     @Override
     public String toString() {
         return "Question{" +
                 "id=" + getId() +
-                ", questionText='" + (questionText != null ? questionText.substring(0, Math.min(50, questionText.length())) + "..." : "null") + '\'' +
+                ", questionName='" + (questionName != null ? questionName.substring(0, Math.min(50, questionName.length())) + "..." : "null") + '\'' +
                 ", questionType=" + questionType +
                 ", level=" + level +
                 ", points=" + points +
-                ", isActive=" + isQuestionActive +
+                ", isActive=" + isActive() +
                 '}';
     }
 }

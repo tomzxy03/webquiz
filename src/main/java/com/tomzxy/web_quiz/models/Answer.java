@@ -1,5 +1,6 @@
 package com.tomzxy.web_quiz.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tomzxy.web_quiz.enums.QuestionAndAnswerType;
 import jakarta.persistence.*;
 
@@ -16,12 +17,12 @@ import jakarta.persistence.Index;
 @Builder
 @Table(name = "answers", indexes = {
     @Index(name = "idx_answer_question", columnList = "question_id"),
-    @Index(name = "idx_answer_correct", columnList = "is_correct")
+    @Index(name = "idx_answer_correct", columnList = "answer_correct")
 })
 public class Answer extends BaseEntity {
     
-    @Column(name = "answer_text", nullable = false, length = 500)
-    private String answerText;
+    @Column(name = "answer_name", nullable = false, length = 500)
+    private String answerName;
 
     @Column(name = "description", length = 1000)
     private String description;
@@ -30,20 +31,10 @@ public class Answer extends BaseEntity {
     @Column(name = "answer_type", nullable = false, length = 20)
     private QuestionAndAnswerType answerType;
 
-    @Column(name = "is_correct", nullable = false)
-    private boolean isCorrect = false;
+    @Column(name = "answer_correct", nullable = false)
 
-    @Column(name = "points", nullable = false)
-    private Integer points = 0;
+    private boolean answerCorrect;
 
-    @Column(name = "order_index", nullable = false)
-    private Integer orderIndex = 0;
-
-    @Column(name = "explanation", length = 1000)
-    private String explanation;
-
-    @Column(name = "is_active", nullable = false)
-    private boolean isAnswerActive = true;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "question_id", nullable = false)
@@ -62,57 +53,40 @@ public class Answer extends BaseEntity {
     }
 
     public void markAsCorrect() {
-        this.isCorrect = true;
+        this.answerCorrect = true;
         this.setUpdatedAt(java.time.LocalDateTime.now());
     }
 
     public void markAsIncorrect() {
-        this.isCorrect = false;
+        this.answerCorrect = false;
         this.setUpdatedAt(java.time.LocalDateTime.now());
     }
 
     public void activate() {
-        this.isAnswerActive = true;
+        this.setActive(true);
         this.setUpdatedAt(java.time.LocalDateTime.now());
     }
 
     public void deactivate() {
-        this.isAnswerActive = false;
+        this.setActive(false);
         this.setUpdatedAt(java.time.LocalDateTime.now());
     }
 
     public boolean isAvailable() {
-        return isAnswerActive && isActive();
-    }
-
-    public boolean hasExplanation() {
-        return explanation != null && !explanation.trim().isEmpty();
+        return isActive();
     }
 
     public boolean hasDescription() {
         return description != null && !description.trim().isEmpty();
     }
 
-    public boolean isPartialCredit() {
-        return points > 0 && points < 100;
-    }
-
-    public boolean isFullCredit() {
-        return points >= 100;
-    }
-
-    public boolean isNoCredit() {
-        return points == 0;
-    }
-
     @Override
     public String toString() {
         return "Answer{" +
                 "id=" + getId() +
-                ", answerText='" + (answerText != null ? answerText.substring(0, Math.min(30, answerText.length())) + "..." : "null") + '\'' +
-                ", isCorrect=" + isCorrect +
-                ", points=" + points +
-                ", isActive=" + isAnswerActive +
+                ", answerName='" + (answerName != null ? answerName.substring(0, Math.min(30, answerName.length())) + "..." : "null") + '\'' +
+                ", answerCorrect=" + answerCorrect +
+                ", isActive=" + isActive() +
                 '}';
     }
 }

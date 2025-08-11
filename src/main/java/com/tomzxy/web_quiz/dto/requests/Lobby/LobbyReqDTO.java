@@ -8,8 +8,8 @@ import lombok.Data;
 
 @Data
 public class LobbyReqDTO {
-    @NotBlank(message = "Group name is required")
-    private String groupName;
+    @NotBlank(message = "Lobby name is required")
+    private String lobbyName;
 
     private Set<Long> members;
 

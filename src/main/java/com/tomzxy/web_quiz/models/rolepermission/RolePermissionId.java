@@ -22,7 +22,7 @@ public class RolePermissionId implements Serializable {
     @Column(name = "role_id")
     Long roleId;
 
-    @Column(name = "permission_name_id")
+    @Column(name = "permission_name")
     String permissionName;
 
     @Column(name = "object_type")

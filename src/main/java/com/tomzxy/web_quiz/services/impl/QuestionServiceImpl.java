@@ -10,7 +10,9 @@ import com.tomzxy.web_quiz.mapstructs.AnswerMapper;
 import com.tomzxy.web_quiz.mapstructs.QuestionMapper;
 import com.tomzxy.web_quiz.models.Answer;
 import com.tomzxy.web_quiz.models.Question;
+import com.tomzxy.web_quiz.models.Subject;
 import com.tomzxy.web_quiz.repositories.QuestionRepo;
+import com.tomzxy.web_quiz.repositories.SubjectRepo;
 import com.tomzxy.web_quiz.services.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.services.QuestionService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,27 +35,35 @@ public class QuestionServiceImpl implements QuestionService {
     private final ConvertToPageResDTO convertToPageResDTO;
     private final QuestionMapper questionMapper;
     private final AnswerMapper answerMapper;
+    private final SubjectRepo subjectRepo;
 
     @Override
-    public PageResDTO<?> get_Questions_pageable(int size, int page) {
+    public PageResDTO<?> get_Questions_pageable(int page, int size) {
         Pageable pageable = PageRequest.of(page,size);
         Page<Question> questions = questionRepo.findAll(pageable);
-
         // config to use mapstruct
         return convertToPageResDTO.convertPageResponse(questions,pageable,questionMapper::toQuestionResDTO);
 
     }
 
     @Override
+    @Transactional
     public void create_Question(QuestionReqDTO questionReqDTO) {
-        boolean flag = questionRepo.existsByQuestionName(questionReqDTO.getQuestionText()); // check if the question name is already existed
+        boolean flag = questionRepo.existsByQuestionName(questionReqDTO.getQuestionName());// check if the question name is already existed
+        log.info(questionReqDTO.getAnswers().toString());
+        Subject subject = subjectRepo.findById(questionReqDTO.getSubjectId()).orElseThrow(()->new NotFoundException("Subject not found!"));
         if(flag){
             throw new ExistedException("Question has been existed");
         }
         Question question = questionMapper.toQuestion(questionReqDTO); // convert the question request dto to question
-        Set<Answer> answers = answerMapper.toListAnswer(questionReqDTO.getAnswers()); // convert the answer request dto to answer
+        question.setSubject(subject);
+        
+        System.out.println(question.toString());
+        Set<Answer> answers = answerMapper.toListAnswer(questionReqDTO.getAnswers());// convert the answer request dto to answer
+        answers.forEach(Answer::activate);
         question.addAnswers(answers); // save the answers to the question
-
+        question.activate();
+        System.out.println(question.toString()+ " " + question.getAnswers().toString());
         questionRepo.save(question); // save the question to the database
     }
 
@@ -61,8 +72,9 @@ public class QuestionServiceImpl implements QuestionService {
     public void create_Questions(List<QuestionReqDTO> questionReqDTO) {
         List<Question> questions = questionMapper.toListQuestion(questionReqDTO); // convert the question request dto to question
         List<String> incomingNames = questions.stream()
-                        .map(Question::getQuestionText).toList(); // get the question name from the question
-        List<String> existedNames = questionRepo.findAllExistQuestion(incomingNames); // check if the question name is already existed
+                        .map(Question::getQuestionName).toList(); // get the question name from the question
+        List<String> existedNames = questionRepo.findAllQuestionNames(incomingNames); // check if the question name is already existed
+        
         if(!existedNames.isEmpty()){
             throw  new ExistedException("Question(s) already exist: "+ existedNames);
         }

@@ -7,9 +7,9 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 
 @Getter
-public class AddMemberReqDTO { // add list member to group
-    @NotBlank(message = "Group ID is required")
-    private Long groupId;
+public class AddMemberReqDTO { // add list member to lobby
+    @NotBlank(message = "Lobby ID is required")
+    private Long lobbyId;
 
     @NotEmpty(message = "Member ID is required")
     private List<Long> memberIds;

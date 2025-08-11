@@ -21,8 +21,8 @@ public interface QuizMapper {
 
     // Map from Entity to DTO - handle nested mappings
     @Mapping(target = "hostName", source = "host.userName")
-    @Mapping(target = "groupName", source = "lobby.groupName")
+    @Mapping(target = "lobbyName", source = "lobby.lobbyName")
     @Mapping(target = "questions", ignore = true) // Will be handled manually in service
-    @Mapping(target = "submissions", ignore = true) // Will be handled manually in service
+    @Mapping(target = "submissions", source = "results") // Map results to submissions
     QuizResDTO toDto(Quiz entity);
 }

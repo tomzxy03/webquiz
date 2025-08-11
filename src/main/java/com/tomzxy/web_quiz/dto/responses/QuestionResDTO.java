@@ -24,5 +24,9 @@ public class QuestionResDTO {
 
     boolean isActive;
 
-    Set<AnswerDetailResDTO> answers;
+    Integer points;
+
+    String subjectName;
+
+    Set<AnswerResDTO> answers;
 }

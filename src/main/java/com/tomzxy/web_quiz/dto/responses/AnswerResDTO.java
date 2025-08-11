@@ -18,7 +18,7 @@ public class AnswerResDTO {
 
     QuestionAndAnswerType answerType;
 
-    boolean isCorrect;
+    boolean answerCorrect;
 
     boolean isActive;
 }

@@ -24,4 +24,7 @@ public class AnswerAttempt extends BaseEntity{
     @JoinColumn(name = "quiz_question_id")
     private QuizQuestion question;
     
+    @ManyToOne
+    @JoinColumn(name = "answer_id")
+    private Answer answer;
 }
