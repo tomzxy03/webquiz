@@ -26,6 +26,9 @@ public class Lobby extends BaseEntity{
     @Column(name = "lobby_name")
     private String lobbyName;
 
+    @Column(name = "host_name")
+    private String hostName;
+
     @ManyToMany
     @JoinTable(name = "lobby_user",
         joinColumns = @JoinColumn(name = "lobby_id"),

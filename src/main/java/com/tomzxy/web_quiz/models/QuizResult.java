@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import jakarta.persistence.Index;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -79,13 +80,12 @@ public class QuizResult extends BaseEntity {
         this.isCompleted = true;
         this.calculateCompletionTime();
         this.calculatePercentageScore();
-        this.checkIfPassed();
         this.setUpdatedAt(LocalDateTime.now());
     }
 
     private void calculateCompletionTime() {
         if (startedAt != null && completedAt != null) {
-            this.completionTimeMinutes = (int) java.time.Duration.between(startedAt, completedAt).toMinutes();
+            this.completionTimeMinutes = (int) Duration.between(startedAt, completedAt).toMinutes();
         }
     }
 
@@ -95,11 +95,6 @@ public class QuizResult extends BaseEntity {
         }
     }
 
-    private void checkIfPassed() {
-        if (quiz != null) {
-            this.isPassed = quiz.isPassingScore(score);
-        }
-    }
 
     public void addAttempt(QuizAttempt attempt) {
         if (attempt != null) {

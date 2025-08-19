@@ -18,4 +18,5 @@ public class QuizAnswerResDTO {
     private String customAnswer;
     private Long answerId; // nullable
     private String answerName; // nullable
+    boolean isActive;
 } 

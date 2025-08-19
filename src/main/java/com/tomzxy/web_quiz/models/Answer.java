@@ -17,7 +17,9 @@ import jakarta.persistence.Index;
 @Builder
 @Table(name = "answers", indexes = {
     @Index(name = "idx_answer_question", columnList = "question_id"),
-    @Index(name = "idx_answer_correct", columnList = "answer_correct")
+    @Index(name = "idx_answer_correct", columnList = "answer_correct"),
+    @Index(name = "idx_answer_option_order", columnList = "option_order"),
+    @Index(name = "idx_answer_option_label", columnList = "option_label")
 })
 public class Answer extends BaseEntity {
     
@@ -40,8 +42,13 @@ public class Answer extends BaseEntity {
     @JoinColumn(name = "question_id", nullable = false)
     private Question question;
 
-    @OneToMany(mappedBy = "answer", cascade = CascadeType.ALL, orphanRemoval = true)
-    private java.util.Set<AnswerAttempt> answerAttempts = new java.util.HashSet<>();
+    @Column(name = "option_order")
+    private Integer optionOrder;
+
+    @Column(name = "option_label", length = 10)
+    private String optionLabel;
+
+
 
     // Business Logic Methods
     public boolean isTextAnswer() {

@@ -43,17 +43,12 @@ public class Quiz extends BaseEntity {
     @Column(name = "time_limit_minutes")
     private Integer timeLimitMinutes;
 
-    @Column(name = "passing_score_percentage")
-    private Integer passingScorePercentage = 60;
-
     @Column(name = "max_attempts")
     private Integer maxAttempts = 1;
 
     @Column(name = "is_public", nullable = false)
     private boolean isPublic = false;
 
-    @Column(name = "is_available", nullable = false)
-    private boolean isQuizAvailable = true;
 
     @Column(name = "start_date")
     private LocalDateTime startDate;
@@ -108,7 +103,7 @@ public class Quiz extends BaseEntity {
 
     public boolean isAvailable() {
         LocalDateTime now = LocalDateTime.now();
-        return isQuizAvailable && 
+        return isActive() && 
                (startDate == null || now.isAfter(startDate)) &&
                (endDate == null || now.isBefore(endDate));
     }
@@ -170,23 +165,14 @@ public class Quiz extends BaseEntity {
     }
 
     public void activate() {
-        this.isQuizAvailable = true;
+        this.setActive(true);
         this.setUpdatedAt(LocalDateTime.now());
     }
 
     public void deactivate() {
-        this.isQuizAvailable = false;
+        this.setActive(false);
         this.setUpdatedAt(LocalDateTime.now());
     }
-
-    public boolean isPassingScore(int score) {
-        if (passingScorePercentage == null) {
-            return score >= 60; // Default 60%
-        }
-        double percentage = (double) score / totalQuestions * 100;
-        return percentage >= passingScorePercentage;
-    }
-
     @Override
     public String toString() {
         return "Quiz{" +
@@ -194,7 +180,7 @@ public class Quiz extends BaseEntity {
                 ", title='" + title + '\'' +
                 ", quizType=" + quizType +
                 ", totalQuestions=" + totalQuestions +
-                ", isAvailable=" + isQuizAvailable +
+                ", isAvailable=" + isActive() +
                 '}';
     }
 }

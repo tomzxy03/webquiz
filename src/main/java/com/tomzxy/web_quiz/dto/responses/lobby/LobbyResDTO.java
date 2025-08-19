@@ -12,5 +12,6 @@ import lombok.Setter;
 public class LobbyResDTO {
     private Long id;
     private String lobbyName;
+    private String hostName;
     
 }

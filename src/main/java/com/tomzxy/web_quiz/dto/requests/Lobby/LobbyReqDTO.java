@@ -10,8 +10,4 @@ import lombok.Data;
 public class LobbyReqDTO {
     @NotBlank(message = "Lobby name is required")
     private String lobbyName;
-
-    private Set<Long> members;
-
-    private List<Long> quizzes;
 }

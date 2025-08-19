@@ -1,6 +1,8 @@
 package com.tomzxy.web_quiz.dto.requests;
 
 import com.tomzxy.web_quiz.enums.QuizType;
+import com.tomzxy.web_quiz.validation.EnumValidate;
+
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,23 +17,19 @@ public class QuizReqDTO {
     @Size(min = 3, max = 200, message = "Title must be between 3 and 200 characters")
     private String title;
 
-    @Size(max = 1000, message = "Description cannot exceed 1000 characters")
     private String description;
 
     @Min(value = 1, message = "Total questions must be at least 1")
     @Max(value = 100, message = "Total questions cannot exceed 100")
     private Integer totalQuestions = 0;
 
-    @NotNull(message = "Quiz type is required")
+    @EnumValidate(name = "quizType", regex = "PUBLIC|GROUP")
     private QuizType quizType;
 
     @Min(value = 1, message = "Time limit must be at least 1 minute")
     @Max(value = 480, message = "Time limit cannot exceed 8 hours")
     private Integer timeLimitMinutes;
 
-    @Min(value = 0, message = "Passing score cannot be negative")
-    @Max(value = 100, message = "Passing score cannot exceed 100")
-    private Integer passingScorePercentage = 60;
 
     @Min(value = 1, message = "Max attempts must be at least 1")
     @Max(value = 10, message = "Max attempts cannot exceed 10")

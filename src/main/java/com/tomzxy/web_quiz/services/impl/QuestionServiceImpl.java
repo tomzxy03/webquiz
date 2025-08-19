@@ -63,7 +63,6 @@ public class QuestionServiceImpl implements QuestionService {
         answers.forEach(Answer::activate);
         question.addAnswers(answers); // save the answers to the question
         question.activate();
-        System.out.println(question.toString()+ " " + question.getAnswers().toString());
         questionRepo.save(question); // save the question to the database
     }
 

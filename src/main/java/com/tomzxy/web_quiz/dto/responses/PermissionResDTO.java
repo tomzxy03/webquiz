@@ -17,5 +17,5 @@ public class PermissionResDTO {
     String permissionName;
     String description;
 
-    boolean is_active;
+    boolean isActive;
 }

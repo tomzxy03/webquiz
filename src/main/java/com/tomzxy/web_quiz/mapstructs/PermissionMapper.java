@@ -16,9 +16,9 @@ public interface PermissionMapper {
     PermissionMapper MAPPER = Mappers.getMapper(PermissionMapper.class);
 
     Permission toPermission(PermissionReqDTO permissionReqDTO);
-    
+    @Mapping(source = "active", target = "isActive")
     PermissionResDTO toPermissionResDTO(Permission permission);
-
+    @Mapping(source = "active", target = "isActive")
     List<PermissionResDTO> toListPermissionResDTO(List<Permission> permissions);
 
     void updatePermission(@MappingTarget Permission permission, PermissionReqDTO permissionReqDTO);

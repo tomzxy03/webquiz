@@ -17,10 +17,11 @@ public interface QuizAnswerMapper {
     QuizAnswer toEntity(QuizAnswerReqDTO dto);
 
     @Mapping(target = "answerId", source = "answer.id")
+    @Mapping(source = "active", target = "isActive")
     QuizAnswerResDTO toDTO(QuizAnswer entity);
 
     List<QuizAnswer> toEntityList(List<QuizAnswerReqDTO> dtoList);
-
+    @Mapping(source = "active", target = "isActive")
     List<QuizAnswerResDTO> toDTOList(List<QuizAnswer> entityList);
 
     @Named("mapAnswerBank")
