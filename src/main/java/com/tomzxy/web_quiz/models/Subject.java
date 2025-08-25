@@ -10,6 +10,8 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import java.util.Set;
 
+import com.tomzxy.web_quiz.models.Quiz.Quiz;
+
 @Entity
 @Getter
 @Setter
@@ -28,7 +30,4 @@ public class Subject extends BaseEntity{
 
     @OneToMany(mappedBy = "subject", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     Set<Quiz> quizzes;
-
-    @OneToMany(mappedBy = "subject", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    Set<Question> questions;
 }

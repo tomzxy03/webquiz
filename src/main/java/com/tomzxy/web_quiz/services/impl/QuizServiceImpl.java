@@ -1,21 +1,21 @@
 package com.tomzxy.web_quiz.services.impl;
 
-import com.tomzxy.web_quiz.dto.requests.QuizReqDTO;
 import com.tomzxy.web_quiz.dto.requests.QuizQuestionReqDTO;
+import com.tomzxy.web_quiz.dto.requests.quiz.QuizReqDTO;
 import com.tomzxy.web_quiz.dto.requests.QuizAnswerReqDTO;
 import com.tomzxy.web_quiz.dto.responses.QuizResDTO;
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.mapstructs.QuizMapper;
-import com.tomzxy.web_quiz.models.Quiz;
 import com.tomzxy.web_quiz.models.User;
+import com.tomzxy.web_quiz.models.Quiz.Quiz;
+import com.tomzxy.web_quiz.models.Quiz.QuizAttempt;
 import com.tomzxy.web_quiz.models.Lobby;
 import com.tomzxy.web_quiz.models.Question;
 import com.tomzxy.web_quiz.models.Answer;
 import com.tomzxy.web_quiz.models.QuizQuestion;
 import com.tomzxy.web_quiz.models.QuizAnswer;
-import com.tomzxy.web_quiz.models.QuizAttempt;
 import com.tomzxy.web_quiz.models.QuizResult;
 import com.tomzxy.web_quiz.repositories.QuizRepo;
 import com.tomzxy.web_quiz.repositories.UserRepo;
@@ -93,11 +93,6 @@ public class QuizServiceImpl implements QuizService {
             if (dto.getLobbyId() != null) {
                 group = lobbyRepo.findById(dto.getLobbyId())
                         .orElseThrow(() -> new NotFoundException("Group not found with id: " + dto.getLobbyId()));
-                
-                // Validate host is member of the group
-                if (!group.getMembers().contains(host)) {
-                    throw new RuntimeException("Host must be a member of the specified group");
-                }
             }
 
             // Create quiz
@@ -198,9 +193,16 @@ public class QuizServiceImpl implements QuizService {
     /**
      * Process a single quiz question, creating QuizQuestion with proper relationships
      */
+    @Transactional
     private QuizQuestion processQuizQuestion(QuizQuestionReqDTO questionDto) {
         QuizQuestion quizQuestion = new QuizQuestion();
-        quizQuestion.setQuestionText(questionDto.getQuestionText());
+        if (questionDto.getIsCustom() == true) {
+            quizQuestion.setCustomQuestion(questionDto.getCustomQuestion());
+        } else {
+            Question existingQuestion = questionRepo.findById(questionDto.getQuestionId())
+                .orElseThrow(() -> new NotFoundException("Question not found with id: " + questionDto.getQuestionId()));
+            quizQuestion.setQuestion(existingQuestion);
+        }
         quizQuestion.setIsCustom(questionDto.getIsCustom());
 
         if (questionDto.getIsCustom()) {
@@ -248,8 +250,9 @@ public class QuizServiceImpl implements QuizService {
             attempt.snapshotAnswers(originalQuestion.getAnswers());
         }
         
-        // Set user response
-        attempt.setUserResponse(questionDto.getQuestionText(), questionDto.getIsCustom());
+        // Initialize attempt without user response
+        attempt.setSelectedAnswer(null);
+        attempt.setCorrect(false);
         attempt.setSkipped(false);
         
         // Set relationships

@@ -1,17 +1,16 @@
-package com.tomzxy.web_quiz.dto.requests;
+package com.tomzxy.web_quiz.dto.requests.quiz;
 
+import com.tomzxy.web_quiz.dto.requests.QuizQuestionReqDTO;
 import com.tomzxy.web_quiz.enums.QuizType;
 import com.tomzxy.web_quiz.validation.EnumValidate;
 
 import jakarta.validation.constraints.*;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.Set;
 
 @Getter
-@Setter
 public class QuizReqDTO {
     @NotBlank(message = "Quiz title is required")
     @Size(min = 3, max = 200, message = "Title must be between 3 and 200 characters")
@@ -39,7 +38,6 @@ public class QuizReqDTO {
 
     private LocalDateTime startDate;
 
-    private LocalDateTime endDate;
 
     @NotNull(message = "Host ID is required")
     private Long hostId;

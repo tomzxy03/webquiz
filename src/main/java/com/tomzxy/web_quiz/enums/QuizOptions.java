@@ -1,0 +1,12 @@
+package com.tomzxy.web_quiz.enums;
+
+public enum QuizOptions {
+    SHUFFLE_QUESTIONS,
+    SHUFFLE_ANSWERS,
+    SHOW_CORRECT_ANSWERS,
+    SHOW_SCORE_IMMEDIATELY,
+    ALLOW_REVIEW,
+    STRICT_TIME_LIMIT,
+    RANDOM_QUESTION_ORDER,
+    RANDOM_ANSWER_ORDER
+} 

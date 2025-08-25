@@ -1,4 +1,4 @@
-package com.tomzxy.web_quiz.models;
+package com.tomzxy.web_quiz.models.Quiz;
 
 import jakarta.persistence.*;
 
@@ -12,6 +12,13 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tomzxy.web_quiz.dto.responses.AnswerSnapshot;
+import com.tomzxy.web_quiz.models.Answer;
+import com.tomzxy.web_quiz.models.AnswersSnapshot;
+import com.tomzxy.web_quiz.models.BaseEntity;
+import com.tomzxy.web_quiz.models.Question;
+import com.tomzxy.web_quiz.models.QuestionSnapshot;
+import com.tomzxy.web_quiz.models.QuizQuestion;
+import com.tomzxy.web_quiz.models.QuizResult;
 
 @Entity
 @Getter
@@ -24,13 +31,15 @@ import com.tomzxy.web_quiz.dto.responses.AnswerSnapshot;
     @Index(name = "idx_quiz_attempt_correct", columnList = "is_correct"),
     @Index(name = "idx_quiz_attempt_created_at", columnList = "created_at"),
     @Index(name = "idx_quiz_attempt_question_type", columnList = "question_type"),
-    @Index(name = "idx_quiz_attempt_question_level", columnList = "question_level"),
     @Index(name = "idx_quiz_attempt_original_question", columnList = "original_question_id")
 })
 public class QuizAttempt extends BaseEntity {
 
-    @Column(name = "question_text", nullable = false, length = 1000)
-    private String questionText;
+    @Embedded
+    private QuestionSnapshot questionSnapshot = new QuestionSnapshot();
+
+    @Embedded
+    private AnswersSnapshot answersSnapshot = new AnswersSnapshot();
 
     @Column(name = "selected_answer", length = 1000)
     private String selectedAnswer;
@@ -44,37 +53,15 @@ public class QuizAttempt extends BaseEntity {
     @Column(name = "points_earned", nullable = false)
     private Integer pointsEarned = 0;
 
-    @Column(name = "time_taken_seconds")
-    private Integer timeTakenSeconds;
-
     @Column(name = "answered_at")
     private LocalDateTime answeredAt;
-
-    @Column(name = "feedback", length = 500)
-    private String feedback;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_result_id", nullable = false)
     private QuizResult quizResult;
 
-    // === QUESTION SNAPSHOT ===
-    @Column(name = "question_type", length = 20)
-    private String questionType;
 
-    @Column(name = "question_points", nullable = false)
-    private Integer questionPoints = 1;
 
-    @Column(name = "question_level", length = 20)
-    private String questionLevel;
-
-    // === ANSWER SNAPSHOT ===
-    @Column(name = "correct_answer_text", length = 1000)
-    private String correctAnswerText;
-
-    @Column(name = "all_answer_options", columnDefinition = "TEXT")
-    private String allAnswerOptions;
-
-    // === RELATIONSHIPS ===
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_question_id")
     private QuizQuestion quizQuestion;
@@ -121,14 +108,6 @@ public class QuizAttempt extends BaseEntity {
         return !isAnswered() && !isSkipped;
     }
 
-    public boolean hasFeedback() {
-        return feedback != null && !feedback.trim().isEmpty();
-    }
-
-    public void addFeedback(String feedback) {
-        this.feedback = feedback;
-        this.setUpdatedAt(LocalDateTime.now());
-    }
 
     public boolean isAnsweredCorrectly() {
         return isCorrect && !isSkipped;
@@ -136,12 +115,6 @@ public class QuizAttempt extends BaseEntity {
 
     public boolean isAnsweredIncorrectly() {
         return !isCorrect && !isSkipped && isAnswered();
-    }
-
-    public void calculateTimeTaken(LocalDateTime startTime) {
-        if (startTime != null && answeredAt != null) {
-            this.timeTakenSeconds = (int) java.time.Duration.between(startTime, answeredAt).getSeconds();
-        }
     }
 
     public String getStatus() {
@@ -159,10 +132,12 @@ public class QuizAttempt extends BaseEntity {
     // === SNAPSHOT METHODS ===
     public void snapshotQuestion(Question question) {
         if (question != null) {
-            this.questionText = question.getQuestionName();
-            this.questionType = question.getQuestionType().name();
-            this.questionPoints = question.getPoints();
-            this.questionLevel = question.getLevel().name();
+            if (this.questionSnapshot == null) {
+                this.questionSnapshot = new QuestionSnapshot();
+            }
+            this.questionSnapshot.setQuestionText(question.getQuestionName());
+            this.questionSnapshot.setQuestionType(question.getQuestionType().name());
+
         }
     }
 
@@ -179,21 +154,27 @@ public class QuizAttempt extends BaseEntity {
                         .build())
                     .collect(Collectors.toList());
                 
-                // Use Jackson ObjectMapper for JSON conversion
                 ObjectMapper objectMapper = new ObjectMapper();
-                this.allAnswerOptions = objectMapper.writeValueAsString(answerSnapshots);
+                String optionsJson = objectMapper.writeValueAsString(answerSnapshots);
+                if (this.answersSnapshot == null) {
+                    this.answersSnapshot = new AnswersSnapshot();
+                }
+                this.answersSnapshot.setAllAnswerOptions(optionsJson);
                 
-                // Store correct answer text
-                this.correctAnswerText = answers.stream()
+                String correctText = answers.stream()
                     .filter(Answer::isAnswerCorrect)
                     .map(Answer::getAnswerName)
                     .collect(Collectors.joining("; "));
+                this.answersSnapshot.setCorrectAnswerText(correctText);
             } catch (Exception e) {
-                // Fallback to simple text if JSON conversion fails
-                this.correctAnswerText = answers.stream()
+                String correctText = answers.stream()
                     .filter(Answer::isAnswerCorrect)
                     .map(Answer::getAnswerName)
                     .collect(Collectors.joining("; "));
+                if (this.answersSnapshot == null) {
+                    this.answersSnapshot = new AnswersSnapshot();
+                }
+                this.answersSnapshot.setCorrectAnswerText(correctText);
             }
         }
     }
@@ -201,15 +182,38 @@ public class QuizAttempt extends BaseEntity {
     public void setUserResponse(String response, boolean isCorrect) {
         this.selectedAnswer = response;
         this.isCorrect = isCorrect;
-        this.pointsEarned = isCorrect ? questionPoints : 0;
+        Integer qp = this.questionSnapshot != null ? this.questionSnapshot.getQuestionPoints() : 0;
+        this.pointsEarned = isCorrect ? (qp != null ? qp : 0) : 0;
         this.answeredAt = LocalDateTime.now();
+    }
+
+    // === Compatibility getters for mapping ===
+    public String getQuestionText() {
+        return this.questionSnapshot != null ? this.questionSnapshot.getQuestionText() : null;
+    }
+
+    public String getQuestionType() {
+        return this.questionSnapshot != null ? this.questionSnapshot.getQuestionType() : null;
+    }
+
+    public Integer getQuestionPoints() {
+        return this.questionSnapshot != null ? this.questionSnapshot.getQuestionPoints() : null;
+    }
+
+    public String getCorrectAnswerText() {
+        return this.answersSnapshot != null ? this.answersSnapshot.getCorrectAnswerText() : null;
+    }
+
+    public String getAllAnswerOptions() {
+        return this.answersSnapshot != null ? this.answersSnapshot.getAllAnswerOptions() : null;
     }
 
     @Override
     public String toString() {
+        String qt = getQuestionText();
         return "QuizAttempt{" +
                 "id=" + getId() +
-                ", questionText='" + (questionText != null ? questionText.substring(0, Math.min(30, questionText.length())) + "..." : "null") + '\'' +
+                ", questionText='" + (qt != null ? qt.substring(0, Math.min(30, qt.length())) + "..." : "null") + '\'' +
                 ", isCorrect=" + isCorrect +
                 ", isSkipped=" + isSkipped +
                 ", pointsEarned=" + pointsEarned +

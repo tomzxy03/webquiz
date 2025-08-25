@@ -8,8 +8,6 @@ import java.util.Set;
 
 @Getter
 public class QuizQuestionReqDTO {
-    @NotBlank(message = "Question text is required")
-    private String questionText;
     
     @NotNull(message = "Is custom flag is required")
     private Boolean isCustom;

@@ -1,6 +1,13 @@
-package com.tomzxy.web_quiz.models;
+package com.tomzxy.web_quiz.models.Quiz;
 
 import com.tomzxy.web_quiz.enums.QuizType;
+import com.tomzxy.web_quiz.models.BaseEntity;
+import com.tomzxy.web_quiz.models.Lobby;
+import com.tomzxy.web_quiz.models.QuizQuestion;
+import com.tomzxy.web_quiz.models.QuizResult;
+import com.tomzxy.web_quiz.models.Subject;
+import com.tomzxy.web_quiz.models.User;
+
 import jakarta.persistence.*;
 
 import lombok.*;
@@ -173,6 +180,83 @@ public class Quiz extends BaseEntity {
         this.setActive(false);
         this.setUpdatedAt(LocalDateTime.now());
     }
+
+    // Enhanced Analytics Methods
+    public double getPassRate() {
+        if (results.isEmpty()) {
+            return 0.0;
+        }
+        long passedCount = results.stream()
+                .filter(QuizResult::isPassed)
+                .count();
+        return (double) passedCount / results.size() * 100;
+    }
+
+    public double getAverageCompletionTime() {
+        if (results.isEmpty()) {
+            return 0.0;
+        }
+        return results.stream()
+                .filter(result -> result.getCompletionTimeMinutes() != null)
+                .mapToInt(QuizResult::getCompletionTimeMinutes)
+                .average()
+                .orElse(0.0);
+    }
+
+    public int getTotalAttempts() {
+        return results.size();
+    }
+
+    public int getUniqueParticipants() {
+        return (int) results.stream()
+                .map(QuizResult::getUser)
+                .distinct()
+                .count();
+    }
+
+    public QuizResult getBestResult() {
+        return results.stream()
+                .max((r1, r2) -> Double.compare(r1.getPercentageScore(), r2.getPercentageScore()))
+                .orElse(null);
+    }
+
+    public QuizResult getWorstResult() {
+        return results.stream()
+                .min((r1, r2) -> Double.compare(r1.getPercentageScore(), r2.getPercentageScore()))
+                .orElse(null);
+    }
+
+    public boolean isPopular() {
+        return getTotalParticipants() >= 10; // Define popularity threshold
+    }
+
+    public boolean isChallenging() {
+        return getAverageScore() < 70.0; // Define challenging threshold
+    }
+
+    public String getDifficultyLevel() {
+        double avgScore = getAverageScore();
+        if (avgScore >= 80) return "EASY";
+        else if (avgScore >= 60) return "MEDIUM";
+        else return "HARD";
+    }
+
+    public boolean hasTimeLimit() {
+        return timeLimitMinutes != null && timeLimitMinutes > 0;
+    }
+
+    public boolean isUnlimitedAttempts() {
+        return maxAttempts == null || maxAttempts <= 0;
+    }
+
+    public long getDaysSinceCreation() {
+        return java.time.Duration.between(getCreatedAt(), LocalDateTime.now()).toDays();
+    }
+
+    public boolean isRecentlyCreated() {
+        return getDaysSinceCreation() <= 7;
+    }
+
     @Override
     public String toString() {
         return "Quiz{" +

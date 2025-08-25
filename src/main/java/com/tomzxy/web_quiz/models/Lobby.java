@@ -3,6 +3,8 @@ package com.tomzxy.web_quiz.models;
 import java.util.List;
 import java.util.Set;
 
+import com.tomzxy.web_quiz.models.Quiz.Quiz;
+
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

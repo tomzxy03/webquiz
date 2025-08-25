@@ -24,7 +24,8 @@ public class GlobalExceptionHandler {
         return DataResDTO.error(AppCode.BAD_REQUEST, message);
     }
     @ExceptionHandler(Exception.class)
-    public DataResDTO<Object> handleUnknown(Exception e){
+    public DataResDTO<Object> handleUnknown(Exception e) {
         return DataResDTO.error(AppCode.INTERNAL_ERROR, "Unexcepted error");
     }
+    
 }

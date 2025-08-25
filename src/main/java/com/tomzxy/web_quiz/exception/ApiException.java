@@ -5,7 +5,7 @@ import com.tomzxy.web_quiz.enums.AppCode;
 import lombok.Getter;
 
 @Getter
-public abstract class ApiException extends RuntimeException {
+public class ApiException extends RuntimeException {
     private final AppCode appCode;
 
     public ApiException(AppCode appCode){

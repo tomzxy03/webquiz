@@ -22,7 +22,6 @@ import java.util.Set;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @SuperBuilder
 @Table(name = "questions", indexes = {
-    @Index(name = "idx_question_subject", columnList = "subject_id"),
     @Index(name = "idx_question_type", columnList = "question_type"),
     @Index(name = "idx_question_level", columnList = "level"),
     @Index(name = "idx_question_created_at", columnList = "created_at")
@@ -46,10 +45,6 @@ public class Question extends BaseEntity {
     @Column(name = "points", nullable = false)
     private Integer points = 1;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subject_id", nullable = true)
-    @JsonIgnore
-    private Subject subject;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -157,6 +152,87 @@ public class Question extends BaseEntity {
 
     public boolean hasExplanation() {
         return description != null && !description.trim().isEmpty();
+    }
+
+    // Enhanced Analytics Methods
+    public int getTotalUsage() {
+        return quizQuestions.size();
+    }
+
+    public boolean isFrequentlyUsed() {
+        return getTotalUsage() >= 5; // Define threshold for frequently used
+    }
+
+    public boolean isRarelyUsed() {
+        return getTotalUsage() <= 1;
+    }
+
+    public double getDifficultyRating() {
+        // Calculate difficulty based on level and points
+        double baseDifficulty = switch (level) {
+            case EASY -> 1.0;
+            case MEDIUM -> 2.0;
+            case HARD -> 3.0;
+        };
+        
+        // Adjust based on points (higher points = more difficult)
+        double pointMultiplier = Math.min(points / 10.0, 2.0);
+        
+        return baseDifficulty * pointMultiplier;
+    }
+
+    public String getComplexityLevel() {
+        double difficulty = getDifficultyRating();
+        if (difficulty <= 1.5) return "SIMPLE";
+        else if (difficulty <= 3.0) return "MODERATE";
+        else return "COMPLEX";
+    }
+
+    public boolean isBalanced() {
+        // Check if question has a good mix of correct and incorrect answers
+        long correctCount = answers.stream().filter(Answer::isAnswerCorrect).count();
+        long incorrectCount = answers.size() - correctCount;
+        
+        return correctCount >= 1 && incorrectCount >= 1;
+    }
+
+    public boolean hasTooManyCorrectAnswers() {
+        long correctCount = answers.stream().filter(Answer::isAnswerCorrect).count();
+        return correctCount > answers.size() / 2;
+    }
+
+    public boolean hasNoCorrectAnswers() {
+        return answers.stream().noneMatch(Answer::isAnswerCorrect);
+    }
+
+    public boolean isWellStructured() {
+        return hasAnswers() && 
+               isBalanced() && 
+               !hasNoCorrectAnswers() && 
+               hasExplanation();
+    }
+
+    public int getOptimalAnswerCount() {
+        // Suggest optimal number of answers based on question type
+        return switch (questionType) {
+            case TEXT -> 4; // Multiple choice typically has 4 options
+            case IMAGE -> 4;
+            default -> 4;
+        };
+    }
+
+    public boolean hasOptimalAnswerCount() {
+        return answers.size() == getOptimalAnswerCount();
+    }
+
+    public boolean isRecent() {
+        // Question is recent if created within last 30 days
+        return java.time.Duration.between(getCreatedAt(), java.time.LocalDateTime.now()).toDays() <= 30;
+    }
+
+    public boolean isLegacy() {
+        // Question is legacy if older than 1 year
+        return java.time.Duration.between(getCreatedAt(), java.time.LocalDateTime.now()).toDays() > 365;
     }
 
     @Override

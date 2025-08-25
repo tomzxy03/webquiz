@@ -33,13 +33,6 @@ public interface SubjectRepo extends JpaRepository<Subject, Long>, JpaSpecificat
            "WHERE s.subjectName = :subjectName AND s.isActive = true")
     boolean existsBySubjectName(@Param("subjectName") String subjectName);
     
-    // Find subjects by questions count
-    @Query("SELECT s FROM Subject s WHERE SIZE(s.questions) = :questionCount AND s.isActive = true")
-    Page<Subject> findByQuestionCount(@Param("questionCount") int questionCount, Pageable pageable);
-    
-    // Find subjects with minimum questions count
-    @Query("SELECT s FROM Subject s WHERE SIZE(s.questions) >= :minQuestionCount AND s.isActive = true")
-    Page<Subject> findByMinQuestionCount(@Param("minQuestionCount") int minQuestionCount, Pageable pageable);
     
     // Find subjects by quizzes count
     @Query("SELECT s FROM Subject s WHERE SIZE(s.quizzes) = :quizCount AND s.isActive = true")
@@ -49,9 +42,7 @@ public interface SubjectRepo extends JpaRepository<Subject, Long>, JpaSpecificat
     @Query("SELECT s FROM Subject s WHERE SIZE(s.quizzes) >= :minQuizCount AND s.isActive = true")
     Page<Subject> findByMinQuizCount(@Param("minQuizCount") int minQuizCount, Pageable pageable);
     
-    // Find subjects without questions
-    @Query("SELECT s FROM Subject s WHERE SIZE(s.questions) = 0 AND s.isActive = true")
-    Page<Subject> findSubjectsWithoutQuestions(Pageable pageable);
+   
     
     // Find subjects with most quizzes
     @Query("SELECT s FROM Subject s WHERE s.isActive = true ORDER BY SIZE(s.quizzes) DESC")
@@ -60,10 +51,6 @@ public interface SubjectRepo extends JpaRepository<Subject, Long>, JpaSpecificat
     // Find recent subjects
     @Query("SELECT s FROM Subject s WHERE s.isActive = true ORDER BY s.createdAt DESC")
     Page<Subject> findRecentSubjects(Pageable pageable);
-    
-    // Count subjects by question count
-    @Query("SELECT COUNT(s) FROM Subject s WHERE SIZE(s.questions) = :questionCount AND s.isActive = true")
-    long countByQuestionCount(@Param("questionCount") int questionCount);
     
     // Count subjects by quiz count
     @Query("SELECT COUNT(s) FROM Subject s WHERE SIZE(s.quizzes) = :quizCount AND s.isActive = true")

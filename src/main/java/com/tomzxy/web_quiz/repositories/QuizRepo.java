@@ -1,7 +1,8 @@
 package com.tomzxy.web_quiz.repositories;
 
-import com.tomzxy.web_quiz.models.Quiz;
 import com.tomzxy.web_quiz.enums.QuizType;
+import com.tomzxy.web_quiz.models.Quiz.Quiz;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

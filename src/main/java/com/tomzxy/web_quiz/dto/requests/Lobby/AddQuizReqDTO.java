@@ -1,8 +1,9 @@
 package com.tomzxy.web_quiz.dto.requests.Lobby;
 
-import com.tomzxy.web_quiz.models.Quiz;
-
 import lombok.Getter;
+
+import com.tomzxy.web_quiz.models.Quiz.Quiz;
+
 import jakarta.validation.constraints.NotBlank;  
 
 @Getter

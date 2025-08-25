@@ -35,7 +35,6 @@ public class QuestionServiceImpl implements QuestionService {
     private final ConvertToPageResDTO convertToPageResDTO;
     private final QuestionMapper questionMapper;
     private final AnswerMapper answerMapper;
-    private final SubjectRepo subjectRepo;
 
     @Override
     public PageResDTO<?> get_Questions_pageable(int page, int size) {
@@ -51,12 +50,11 @@ public class QuestionServiceImpl implements QuestionService {
     public void create_Question(QuestionReqDTO questionReqDTO) {
         boolean flag = questionRepo.existsByQuestionName(questionReqDTO.getQuestionName());// check if the question name is already existed
         log.info(questionReqDTO.getAnswers().toString());
-        Subject subject = subjectRepo.findById(questionReqDTO.getSubjectId()).orElseThrow(()->new NotFoundException("Subject not found!"));
+
         if(flag){
             throw new ExistedException("Question has been existed");
         }
         Question question = questionMapper.toQuestion(questionReqDTO); // convert the question request dto to question
-        question.setSubject(subject);
         
         System.out.println(question.toString());
         Set<Answer> answers = answerMapper.toListAnswer(questionReqDTO.getAnswers());// convert the answer request dto to answer

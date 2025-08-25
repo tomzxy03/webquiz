@@ -26,7 +26,6 @@ public class QuestionResDTO {
 
     Integer points;
 
-    String subjectName;
 
     Set<AnswerResDTO> answers;
 }

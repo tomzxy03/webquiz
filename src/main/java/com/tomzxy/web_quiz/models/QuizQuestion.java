@@ -7,6 +7,8 @@ import java.util.HashSet;
 
 import java.util.Set;
 
+import com.tomzxy.web_quiz.models.Quiz.Quiz;
+
 import jakarta.persistence.*;
 import lombok.experimental.FieldDefaults;
 
@@ -20,15 +22,15 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @Table(name = "quiz_question")
 public class QuizQuestion extends BaseEntity {
-
-    String questionText;
+    
+    @Column(name = "is_custom", nullable = false)
     Boolean isCustom;
 
     @ManyToOne
     @JoinColumn(name = "quiz_id")
     private Quiz quiz;
 
-    @Column(name = "custom_question")
+    @Column(name = "custom_question", nullable = true)
     String customQuestion;
 
     @ManyToOne

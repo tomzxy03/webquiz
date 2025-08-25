@@ -31,8 +31,6 @@ public class QuestionReqDTO {
     @Max(value = 100, message = "Points cannot exceed 100")
     private Integer points;
 
-    private Long subjectId;
-
     @NotEmpty(message = "Answers are required")
     private Set<AnswerReqDTO> answers;
 }

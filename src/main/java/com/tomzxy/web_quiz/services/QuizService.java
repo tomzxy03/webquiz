@@ -1,7 +1,7 @@
 package com.tomzxy.web_quiz.services;
 
-import com.tomzxy.web_quiz.dto.requests.QuizReqDTO;
 import com.tomzxy.web_quiz.dto.responses.QuizResDTO;
+import com.tomzxy.web_quiz.dto.requests.quiz.QuizReqDTO;
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import org.springframework.data.domain.Pageable;

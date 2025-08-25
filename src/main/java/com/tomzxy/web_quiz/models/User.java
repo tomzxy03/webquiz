@@ -9,6 +9,7 @@ import jakarta.persistence.Index;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -127,6 +128,110 @@ public class User extends BaseEntity {
 
     public boolean isFullyVerified() {
         return isEmailVerified && (phone == null || isPhoneVerified);
+    }
+
+    // Enhanced Learning Analytics Methods
+    public int getTotalQuizzesTaken() {
+        return quizResults.size();
+    }
+
+    public double getAverageScore() {
+        if (quizResults.isEmpty()) {
+            return 0.0;
+        }
+        return quizResults.stream()
+                .mapToDouble(result -> result.getPercentageScore())
+                .average()
+                .orElse(0.0);
+    }
+
+    public int getTotalCorrectAnswers() {
+        return quizResults.stream()
+                .mapToInt(QuizResult::getTotalCorrected)
+                .sum();
+    }
+
+    public int getTotalWrongAnswers() {
+        return quizResults.stream()
+                .mapToInt(QuizResult::getTotalFailed)
+                .sum();
+    }
+
+    public int getTotalSkippedQuestions() {
+        return quizResults.stream()
+                .mapToInt(QuizResult::getTotalSkipped)
+                .sum();
+    }
+
+    public long getTotalTimeSpent() {
+        return quizResults.stream()
+                .filter(result -> result.getCompletionTimeMinutes() != null)
+                .mapToLong(result -> result.getCompletionTimeMinutes())
+                .sum();
+    }
+
+    public QuizResult getBestQuizResult() {
+        return quizResults.stream()
+                .max((r1, r2) -> Double.compare(r1.getPercentageScore(), r2.getPercentageScore()))
+                .orElse(null);
+    }
+
+    public QuizResult getLatestQuizResult() {
+        return quizResults.stream()
+                .max((r1, r2) -> r1.getCreatedAt().compareTo(r2.getCreatedAt()))
+                .orElse(null);
+    }
+
+    public boolean isActiveLearner() {
+        // User is active if they've taken quizzes in the last 30 days
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+        return quizResults.stream()
+                .anyMatch(result -> result.getCreatedAt().isAfter(thirtyDaysAgo));
+    }
+
+    public String getLearningLevel() {
+        double avgScore = getAverageScore();
+        if (avgScore >= 90) return "EXPERT";
+        else if (avgScore >= 75) return "ADVANCED";
+        else if (avgScore >= 60) return "INTERMEDIATE";
+        else if (avgScore >= 40) return "BEGINNER";
+        else return "NOVICE";
+    }
+
+    public boolean isImproving() {
+        // Check if recent scores are better than older scores
+        List<QuizResult> sortedResults = quizResults.stream()
+                .sorted((r1, r2) -> r1.getCreatedAt().compareTo(r2.getCreatedAt()))
+                .toList();
+        
+        if (sortedResults.size() < 2) return false;
+        
+        // Compare first half vs second half
+        int midPoint = sortedResults.size() / 2;
+        double firstHalfAvg = sortedResults.subList(0, midPoint).stream()
+                .mapToDouble(QuizResult::getPercentageScore)
+                .average()
+                .orElse(0.0);
+        double secondHalfAvg = sortedResults.subList(midPoint, sortedResults.size()).stream()
+                .mapToDouble(QuizResult::getPercentageScore)
+                .average()
+                .orElse(0.0);
+        
+        return secondHalfAvg > firstHalfAvg;
+    }
+
+    public long getDaysSinceLastQuiz() {
+        QuizResult latest = getLatestQuizResult();
+        if (latest == null) return Long.MAX_VALUE;
+        return java.time.Duration.between(latest.getCreatedAt(), LocalDateTime.now()).toDays();
+    }
+
+    public boolean isNewUser() {
+        return getDaysSinceLastQuiz() <= 7 && getTotalQuizzesTaken() <= 3;
+    }
+
+    public boolean isExperiencedUser() {
+        return getTotalQuizzesTaken() >= 10;
     }
 
     @Override

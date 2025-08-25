@@ -10,6 +10,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.tomzxy.web_quiz.models.Quiz.Quiz;
+import com.tomzxy.web_quiz.models.Quiz.QuizAttempt;
+
 @Entity
 @Getter
 @Setter 

@@ -18,7 +18,6 @@ public interface QuizQuestionMapper {
     @Mapping(target = "question", source = "questionId", qualifiedByName = "mapQuestionBank")
     QuizQuestion toEntity(QuizQuestionReqDTO dto);
 
-    @Mapping(target = "questionId", source = "question.id")
     QuizQuestionResDTO toDTO(QuizQuestion entity);
 
     List<QuizQuestion> toEntityList(List<QuizQuestionReqDTO> dtoList);

@@ -16,7 +16,10 @@ public enum AppCode {
     UNAUTHORIZED(401 , "Unauthorized"),
     FORBIDDEN(403 , "Forbidden"),
     INTERNAL_ERROR(500 , "Internal server error"),
-    DATA_EXISTED(409, "Data already exists");
+    DATA_EXISTED(409, "Data already exists"), 
+    USER_NOT_ELIGIBLE(403, "User not eligible"),
+    NOT_AVAILABLE(404, "Not available"),
+    NOT_PERMISSION(401, "Not be permission");
 
     private final int code;
     private final String message;
