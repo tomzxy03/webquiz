@@ -50,7 +50,7 @@ public class Quiz extends BaseEntity {
     @Column(name = "time_limit_minutes")
     private Integer timeLimitMinutes;
 
-    @Column(name = "max_attempts")
+    @Column(name = "max_attempts") // max attempts for a user to attempt the quiz
     private Integer maxAttempts = 1;
 
     @Column(name = "is_public", nullable = false)

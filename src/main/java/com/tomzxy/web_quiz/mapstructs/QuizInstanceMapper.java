@@ -1,7 +1,5 @@
 package com.tomzxy.web_quiz.mapstructs;
 
-import com.tomzxy.web_quiz.models.QuizInstanceQuestion;
-import com.tomzxy.web_quiz.models.QuizInstanceAnswer;
 import com.tomzxy.web_quiz.dto.responses.QuizInstanceResDTO;
 import com.tomzxy.web_quiz.dto.responses.QuizInstanceQuestionResDTO;
 import com.tomzxy.web_quiz.dto.responses.QuizInstanceAnswerResDTO;
@@ -10,6 +8,8 @@ import com.tomzxy.web_quiz.dto.responses.QuestionResultResDTO;
 import com.tomzxy.web_quiz.dto.responses.AnswerResultResDTO;
 import com.tomzxy.web_quiz.models.QuizUserResponse;
 import com.tomzxy.web_quiz.models.Quiz.QuizInstance;
+import com.tomzxy.web_quiz.models.snapshot.QuizInstanceAnswer;
+import com.tomzxy.web_quiz.models.snapshot.QuizInstanceQuestion;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

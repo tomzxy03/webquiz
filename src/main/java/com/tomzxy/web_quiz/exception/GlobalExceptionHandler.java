@@ -3,6 +3,9 @@ package com.tomzxy.web_quiz.exception;
 
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
 import com.tomzxy.web_quiz.enums.AppCode;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -24,8 +27,11 @@ public class GlobalExceptionHandler {
         return DataResDTO.error(AppCode.BAD_REQUEST, message);
     }
     @ExceptionHandler(Exception.class)
-    public DataResDTO<Object> handleUnknown(Exception e) {
-        return DataResDTO.error(AppCode.INTERNAL_ERROR, "Unexcepted error");
+    public ResponseEntity<DataResDTO<?>> handleUnknown(Exception ex) {
+        DataResDTO<?> res = DataResDTO.error(AppCode.UNKNOWN_ERROR, ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(MediaType.APPLICATION_JSON) // bắt buộc JSON
+                .body(res);
     }
     
 }

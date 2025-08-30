@@ -13,12 +13,12 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tomzxy.web_quiz.dto.responses.AnswerSnapshot;
 import com.tomzxy.web_quiz.models.Answer;
-import com.tomzxy.web_quiz.models.AnswersSnapshot;
 import com.tomzxy.web_quiz.models.BaseEntity;
 import com.tomzxy.web_quiz.models.Question;
-import com.tomzxy.web_quiz.models.QuestionSnapshot;
 import com.tomzxy.web_quiz.models.QuizQuestion;
 import com.tomzxy.web_quiz.models.QuizResult;
+import com.tomzxy.web_quiz.models.snapshot.AnswersSnapshot;
+import com.tomzxy.web_quiz.models.snapshot.QuestionSnapshot;
 
 @Entity
 @Getter

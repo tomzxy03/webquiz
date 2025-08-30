@@ -5,6 +5,13 @@ import com.tomzxy.web_quiz.dto.responses.QuizResultResDTO;
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.services.QuizResultService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -20,12 +27,19 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/quiz-results")
 @RequiredArgsConstructor
+@Tag(name = "Quiz Results", description = "Quiz result management APIs")
 public class QuizResultController {
 
     private final QuizResultService quizResultService;
 
     // CRUD endpoints
     @PostMapping
+    @Operation(summary = "Create quiz result", description = "Create a new quiz result")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Quiz result created successfully",
+            content = @Content(schema = @Schema(implementation = DataResDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
     public ResponseEntity<DataResDTO<QuizResultResDTO>> createQuizResult(@Valid @RequestBody QuizResultReqDTO request) {
         QuizResultResDTO result = quizResultService.createQuizResult(request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -33,35 +47,62 @@ public class QuizResultController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update quiz result", description = "Update an existing quiz result")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Quiz result updated successfully"),
+        @ApiResponse(responseCode = "404", description = "Quiz result not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
     public ResponseEntity<DataResDTO<QuizResultResDTO>> updateQuizResult(
-            @PathVariable Long id, 
+            @Parameter(description = "Quiz result ID") @PathVariable Long id, 
             @Valid @RequestBody QuizResultReqDTO request) {
         QuizResultResDTO result = quizResultService.updateQuizResult(id, request);
         return ResponseEntity.ok(DataResDTO.update(result));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DataResDTO<QuizResultResDTO>> getQuizResultById(@PathVariable Long id) {
+    @Operation(summary = "Get quiz result by ID", description = "Retrieve a quiz result by its ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Quiz result found successfully"),
+        @ApiResponse(responseCode = "404", description = "Quiz result not found")
+    })
+    public ResponseEntity<DataResDTO<QuizResultResDTO>> getQuizResultById(
+            @Parameter(description = "Quiz result ID") @PathVariable Long id) {
         QuizResultResDTO result = quizResultService.getQuizResultById(id);
         return ResponseEntity.ok(DataResDTO.ok(result));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<DataResDTO<Void>> deleteQuizResult(@PathVariable Long id) {
+    @Operation(summary = "Delete quiz result", description = "Delete a quiz result by its ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Quiz result deleted successfully"),
+        @ApiResponse(responseCode = "404", description = "Quiz result not found")
+    })
+    public ResponseEntity<DataResDTO<Void>> deleteQuizResult(
+            @Parameter(description = "Quiz result ID") @PathVariable Long id) {
         quizResultService.deleteQuizResult(id);
         return ResponseEntity.ok(DataResDTO.delete());
     }
 
     @GetMapping
+    @Operation(summary = "Get all quiz results", description = "Retrieve all quiz results with pagination")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Quiz results retrieved successfully")
+    })
     public ResponseEntity<DataResDTO<PageResDTO<QuizResultResDTO>>> getAllQuizResults(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
         PageResDTO<QuizResultResDTO> results = quizResultService.getAllQuizResults(page, size);
         return ResponseEntity.ok(DataResDTO.ok(results));
     }
 
     // Business operation endpoints
     @PostMapping("/submit")
+    @Operation(summary = "Submit quiz result", description = "Submit a quiz result for evaluation")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Quiz result submitted successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
     public ResponseEntity<DataResDTO<QuizResultResDTO>> submitQuizResult(@Valid @RequestBody QuizResultReqDTO request) {
         QuizResultResDTO result = quizResultService.submitQuizResult(request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -69,31 +110,53 @@ public class QuizResultController {
     }
 
     @PostMapping("/calculate/{quizInstanceId}/{userId}")
+    @Operation(summary = "Calculate and save result", description = "Calculate and save quiz result for a specific instance and user")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Result calculated and saved successfully"),
+        @ApiResponse(responseCode = "404", description = "Quiz instance or user not found")
+    })
     public ResponseEntity<DataResDTO<QuizResultResDTO>> calculateAndSaveResult(
-            @PathVariable Long quizInstanceId, 
-            @PathVariable Long userId) {
+            @Parameter(description = "Quiz instance ID") @PathVariable Long quizInstanceId, 
+            @Parameter(description = "User ID") @PathVariable Long userId) {
         QuizResultResDTO result = quizResultService.calculateAndSaveResult(quizInstanceId, userId);
         return ResponseEntity.ok(DataResDTO.ok(result));
     }
 
     // User-specific endpoints
     @GetMapping("/user/{userId}")
-    public ResponseEntity<DataResDTO<List<QuizResultResDTO>>> getUserResults(@PathVariable Long userId) {
+    @Operation(summary = "Get user results", description = "Get all quiz results for a specific user")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "User results retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    public ResponseEntity<DataResDTO<List<QuizResultResDTO>>> getUserResults(
+            @Parameter(description = "User ID") @PathVariable Long userId) {
         List<QuizResultResDTO> results = quizResultService.getUserResults(userId);
         return ResponseEntity.ok(DataResDTO.ok(results));
     }
 
     @GetMapping("/user/{userId}/page")
+    @Operation(summary = "Get user results with pagination", description = "Get paginated quiz results for a specific user")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "User results retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "User not found")
+    })
     public ResponseEntity<DataResDTO<PageResDTO<QuizResultResDTO>>> getUserResults(
-            @PathVariable Long userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @Parameter(description = "User ID") @PathVariable Long userId,
+            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
         PageResDTO<QuizResultResDTO> results = quizResultService.getUserResults(userId, page, size);
         return ResponseEntity.ok(DataResDTO.ok(results));
     }
 
     @GetMapping("/user/{userId}/best")
-    public ResponseEntity<DataResDTO<QuizResultResDTO>> getBestResultForUser(@PathVariable Long userId) {
+    @Operation(summary = "Get best result for user", description = "Get the best quiz result for a specific user")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Best result found successfully"),
+        @ApiResponse(responseCode = "404", description = "User not found or no results available")
+    })
+    public ResponseEntity<DataResDTO<QuizResultResDTO>> getBestResultForUser(
+            @Parameter(description = "User ID") @PathVariable Long userId) {
         return quizResultService.getBestResultForUser(userId)
                 .map(result -> ResponseEntity.ok(DataResDTO.ok(result)))
                 .orElse(ResponseEntity.notFound().build());

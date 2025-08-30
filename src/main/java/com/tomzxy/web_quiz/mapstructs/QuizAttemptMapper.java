@@ -23,7 +23,7 @@ public interface QuizAttemptMapper {
     List<QuizAttemptResDTO> toQuizAttemptResDTOList(List<QuizAttempt> quizAttempts);
 
     // Custom mapping methods
-    default String mapAnswersSnapshotToString(com.tomzxy.web_quiz.models.AnswersSnapshot answersSnapshot) {
+    default String mapAnswersSnapshotToString(com.tomzxy.web_quiz.models.snapshot.AnswersSnapshot answersSnapshot) {
         if (answersSnapshot == null) return null;
         return answersSnapshot.getAllAnswerOptions();
     }

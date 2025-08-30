@@ -5,6 +5,13 @@ import com.tomzxy.web_quiz.dto.responses.QuizAttemptResDTO;
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.services.QuizAttemptService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,12 +28,19 @@ import java.util.List;
 @RequestMapping("/api/quiz-attempts")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Quiz Attempts", description = "Quiz attempt management APIs")
 public class QuizAttemptController {
 
     private final QuizAttemptService quizAttemptService;
 
     // CRUD endpoints
     @PostMapping
+    @Operation(summary = "Create quiz attempt", description = "Create a new quiz attempt")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Quiz attempt created successfully",
+            content = @Content(schema = @Schema(implementation = DataResDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
     public ResponseEntity<DataResDTO<QuizAttemptResDTO>> createQuizAttempt(@Valid @RequestBody QuizAttemptReqDTO request) {
         QuizAttemptResDTO result = quizAttemptService.createQuizAttempt(request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -34,66 +48,118 @@ public class QuizAttemptController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update quiz attempt", description = "Update an existing quiz attempt")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Quiz attempt updated successfully"),
+        @ApiResponse(responseCode = "404", description = "Quiz attempt not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
     public ResponseEntity<DataResDTO<QuizAttemptResDTO>> updateQuizAttempt(
-            @PathVariable Long id, 
+            @Parameter(description = "Quiz attempt ID") @PathVariable Long id, 
             @Valid @RequestBody QuizAttemptReqDTO request) {
         QuizAttemptResDTO result = quizAttemptService.updateQuizAttempt(id, request);
         return ResponseEntity.ok(DataResDTO.update(result));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DataResDTO<QuizAttemptResDTO>> getQuizAttemptById(@PathVariable Long id) {
+    @Operation(summary = "Get quiz attempt by ID", description = "Retrieve a quiz attempt by its ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Quiz attempt found successfully"),
+        @ApiResponse(responseCode = "404", description = "Quiz attempt not found")
+    })
+    public ResponseEntity<DataResDTO<QuizAttemptResDTO>> getQuizAttemptById(
+            @Parameter(description = "Quiz attempt ID") @PathVariable Long id) {
         QuizAttemptResDTO result = quizAttemptService.getQuizAttemptById(id);
         return ResponseEntity.ok(DataResDTO.ok(result));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<DataResDTO<Void>> deleteQuizAttempt(@PathVariable Long id) {
+    @Operation(summary = "Delete quiz attempt", description = "Delete a quiz attempt by its ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Quiz attempt deleted successfully"),
+        @ApiResponse(responseCode = "404", description = "Quiz attempt not found")
+    })
+    public ResponseEntity<DataResDTO<Void>> deleteQuizAttempt(
+            @Parameter(description = "Quiz attempt ID") @PathVariable Long id) {
         quizAttemptService.deleteQuizAttempt(id);
         return ResponseEntity.ok(DataResDTO.delete());
     }
 
     @GetMapping
+    @Operation(summary = "Get all quiz attempts", description = "Retrieve all quiz attempts with pagination")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Quiz attempts retrieved successfully")
+    })
     public ResponseEntity<DataResDTO<PageResDTO<QuizAttemptResDTO>>> getAllQuizAttempts(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
         PageResDTO<QuizAttemptResDTO> results = quizAttemptService.getAllQuizAttempts(page, size);
         return ResponseEntity.ok(DataResDTO.ok(results));
     }
 
     // Business operation endpoints
     @PostMapping("/start/{quizId}/{userId}")
+    @Operation(summary = "Start quiz attempt", description = "Start a new quiz attempt for a user")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Quiz attempt started successfully"),
+        @ApiResponse(responseCode = "404", description = "Quiz or user not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid request")
+    })
     public ResponseEntity<DataResDTO<QuizAttemptResDTO>> startQuizAttempt(
-            @PathVariable Long quizId, 
-            @PathVariable Long userId) {
+            @Parameter(description = "Quiz ID") @PathVariable Long quizId, 
+            @Parameter(description = "User ID") @PathVariable Long userId) {
         QuizAttemptResDTO result = quizAttemptService.startQuizAttempt(quizId, userId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(DataResDTO.create(result));
     }
 
     @PostMapping("/resume/{attemptId}")
-    public ResponseEntity<DataResDTO<QuizAttemptResDTO>> resumeQuizAttempt(@PathVariable Long attemptId) {
+    @Operation(summary = "Resume quiz attempt", description = "Resume an existing quiz attempt")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Quiz attempt resumed successfully"),
+        @ApiResponse(responseCode = "404", description = "Quiz attempt not found")
+    })
+    public ResponseEntity<DataResDTO<QuizAttemptResDTO>> resumeQuizAttempt(
+            @Parameter(description = "Quiz attempt ID") @PathVariable Long attemptId) {
         QuizAttemptResDTO result = quizAttemptService.resumeQuizAttempt(attemptId);
         return ResponseEntity.ok(DataResDTO.ok(result));
     }
 
     @PutMapping("/{attemptId}/progress")
+    @Operation(summary = "Update attempt progress", description = "Update the progress of a quiz attempt")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Progress updated successfully"),
+        @ApiResponse(responseCode = "404", description = "Quiz attempt not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
     public ResponseEntity<DataResDTO<QuizAttemptResDTO>> updateAttemptProgress(
-            @PathVariable Long attemptId,
-            @RequestParam Integer currentQuestionIndex,
-            @RequestParam String answersSnapshot) {
+            @Parameter(description = "Quiz attempt ID") @PathVariable Long attemptId,
+            @Parameter(description = "Current question index") @RequestParam Integer currentQuestionIndex,
+            @Parameter(description = "Answers snapshot") @RequestParam String answersSnapshot) {
         QuizAttemptResDTO result = quizAttemptService.updateAttemptProgress(attemptId, currentQuestionIndex, answersSnapshot);
         return ResponseEntity.ok(DataResDTO.update(result));
     }
 
     @PostMapping("/{attemptId}/complete")
-    public ResponseEntity<DataResDTO<QuizAttemptResDTO>> completeQuizAttempt(@PathVariable Long attemptId) {
+    @Operation(summary = "Complete quiz attempt", description = "Mark a quiz attempt as completed")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Quiz attempt completed successfully"),
+        @ApiResponse(responseCode = "404", description = "Quiz attempt not found")
+    })
+    public ResponseEntity<DataResDTO<QuizAttemptResDTO>> completeQuizAttempt(
+            @Parameter(description = "Quiz attempt ID") @PathVariable Long attemptId) {
         QuizAttemptResDTO result = quizAttemptService.completeQuizAttempt(attemptId);
         return ResponseEntity.ok(DataResDTO.ok(result));
     }
 
     @PostMapping("/{attemptId}/abandon")
-    public ResponseEntity<DataResDTO<QuizAttemptResDTO>> abandonQuizAttempt(@PathVariable Long attemptId) {
+    @Operation(summary = "Abandon quiz attempt", description = "Mark a quiz attempt as abandoned")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Quiz attempt abandoned successfully"),
+        @ApiResponse(responseCode = "404", description = "Quiz attempt not found")
+    })
+    public ResponseEntity<DataResDTO<QuizAttemptResDTO>> abandonQuizAttempt(
+            @Parameter(description = "Quiz attempt ID") @PathVariable Long attemptId) {
         QuizAttemptResDTO result = quizAttemptService.abandonQuizAttempt(attemptId);
         return ResponseEntity.ok(DataResDTO.ok(result));
     }

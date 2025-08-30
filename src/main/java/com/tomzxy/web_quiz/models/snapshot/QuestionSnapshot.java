@@ -1,6 +1,7 @@
-package com.tomzxy.web_quiz.models;
+package com.tomzxy.web_quiz.models.snapshot;
 
 import com.tomzxy.web_quiz.enums.Level;
+import com.tomzxy.web_quiz.models.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -18,7 +19,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class QuestionSnapshot {
+public class QuestionSnapshot extends BaseEntity {
 	@Column(name = "question_text", nullable = false, length = 1000)
 	private String questionText;
 

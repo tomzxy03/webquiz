@@ -24,10 +24,6 @@ public class QuizUserResponse extends BaseEntity {
     @JoinColumn(name = "quiz_instance_id", nullable = false)
     private QuizInstance quizInstance;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "quiz_instance_question_id", nullable = false)
-    private QuizInstanceQuestion quizInstanceQuestion;
-
     @Column(name = "selected_answer_id")
     private Long selectedAnswerId; // ID của đáp án user chọn
 
@@ -114,7 +110,7 @@ public class QuizUserResponse extends BaseEntity {
     public String toString() {
         return "QuizUserResponse{" +
                 "id=" + getId() +
-                ", questionId=" + (quizInstanceQuestion != null ? quizInstanceQuestion.getId() : "null") +
+                ", quizInstanceId=" + (quizInstance != null ? quizInstance.getId() : "null") +
                 ", isCorrect=" + isCorrect +
                 ", isSkipped=" + isSkipped +
                 ", pointsEarned=" + pointsEarned +

@@ -13,6 +13,8 @@ import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.models.*;
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
 import com.tomzxy.web_quiz.models.Quiz.QuizInstance;
+import com.tomzxy.web_quiz.models.snapshot.QuizInstanceAnswer;
+import com.tomzxy.web_quiz.models.snapshot.QuizInstanceQuestion;
 import com.tomzxy.web_quiz.repositories.*;
 import com.tomzxy.web_quiz.services.QuizInstanceService;
 import com.tomzxy.web_quiz.mapstructs.QuizInstanceMapper;

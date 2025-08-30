@@ -10,7 +10,6 @@ import java.util.Set;
 
 import com.tomzxy.web_quiz.enums.QuizInstanceStatus;
 import com.tomzxy.web_quiz.models.BaseEntity;
-import com.tomzxy.web_quiz.models.QuizInstanceQuestion;
 import com.tomzxy.web_quiz.models.QuizUserResponse;
 import com.tomzxy.web_quiz.models.User;
 
@@ -65,9 +64,6 @@ public class QuizInstance extends BaseEntity {
     private QuizInstanceStatus status = QuizInstanceStatus.IN_PROGRESS;
 
     @OneToMany(mappedBy = "quizInstance", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<QuizInstanceQuestion> questions = new HashSet<>();
-
-    @OneToMany(mappedBy = "quizInstance", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<QuizUserResponse> userResponses = new HashSet<>();
 
     // Business Logic Methods
@@ -109,12 +105,6 @@ public class QuizInstance extends BaseEntity {
         return (double) earnedPoints / totalPoints * 100;
     }
 
-    public void addQuestion(QuizInstanceQuestion question) {
-        if (question != null) {
-            questions.add(question);
-            question.setQuizInstance(this);
-        }
-    }
 
     public void addUserResponse(QuizUserResponse response) {
         if (response != null) {

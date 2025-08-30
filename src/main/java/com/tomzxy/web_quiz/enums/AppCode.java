@@ -19,7 +19,8 @@ public enum AppCode {
     DATA_EXISTED(409, "Data already exists"), 
     USER_NOT_ELIGIBLE(403, "User not eligible"),
     NOT_AVAILABLE(404, "Not available"),
-    NOT_PERMISSION(401, "Not be permission");
+    NOT_PERMISSION(401, "Not be permission"),
+    UNKNOWN_ERROR(500, "Un known error");
 
     private final int code;
     private final String message;
