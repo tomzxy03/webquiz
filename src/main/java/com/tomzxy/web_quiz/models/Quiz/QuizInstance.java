@@ -8,9 +8,13 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.hibernate.annotations.Type;
+
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import com.tomzxy.web_quiz.enums.QuizInstanceStatus;
+import com.tomzxy.web_quiz.enums.QuizOptions;
 import com.tomzxy.web_quiz.models.BaseEntity;
-import com.tomzxy.web_quiz.models.QuizUserResponse;
+import com.tomzxy.web_quiz.models.Lobby;
 import com.tomzxy.web_quiz.models.User;
 
 @Entity
@@ -19,6 +23,7 @@ import com.tomzxy.web_quiz.models.User;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@TypeDef(name = "json", typeClass = JsonBinaryType.class)
 @Table(name = "quiz_instances", indexes = {
     @Index(name = "idx_quiz_instance_quiz", columnList = "quiz_id"),
     @Index(name = "idx_quiz_instance_user", columnList = "user_id"),
@@ -32,26 +37,20 @@ public class QuizInstance extends BaseEntity {
     private Quiz quiz;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = true)
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lobby_id", nullable = true)
+    private Lobby lobby;
 
     @Column(name = "started_at", nullable = false)
     private LocalDateTime startedAt;
 
-    @Column(name = "submitted_at")
-    private LocalDateTime submittedAt;
+    @Type(JsonBinaryType.class)
+    @Column(name = "options", columnDefinition = "jsonb")
+    private Set<QuizOptions> options = new HashSet<>();
 
-    @Column(name = "question_order", columnDefinition = "TEXT")
-    private String questionOrder; // JSON string lưu thứ tự câu hỏi
-
-    @Column(name = "answer_order", columnDefinition = "TEXT")
-    private String answerOrder; // JSON string lưu thứ tự đáp án
-
-    @Column(name = "shuffle_enabled", nullable = false)
-    private boolean shuffleEnabled = false;
-
-    @Column(name = "time_limit_minutes")
-    private Integer timeLimitMinutes;
 
     @Column(name = "total_points", nullable = false)
     private Integer totalPoints = 0;
@@ -93,11 +92,6 @@ public class QuizInstance extends BaseEntity {
     public long getElapsedTimeMinutes() {
         LocalDateTime endTime = submittedAt != null ? submittedAt : LocalDateTime.now();
         return java.time.Duration.between(startedAt, endTime).toMinutes();
-    }
-
-    public boolean isTimeLimitExceeded() {
-        if (timeLimitMinutes == null) return false;
-        return getElapsedTimeMinutes() > timeLimitMinutes;
     }
 
     public double getScorePercentage() {

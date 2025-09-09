@@ -35,8 +35,8 @@ class QuizInstanceMapperTest {
                 .quiz(quiz)
                 .user(user)
                 .startedAt(LocalDateTime.now())
-                .timeLimitMinutes(30)
-                .shuffleEnabled(true)
+                .shuffleQuestions(true)
+                .shuffleAnswers(true)
                 .totalPoints(100)
                 .status(QuizInstanceStatus.IN_PROGRESS)
                 .build();
@@ -53,9 +53,13 @@ class QuizInstanceMapperTest {
         assertEquals(user.getId(), result.getUserId());
         assertEquals(user.getUserName(), result.getUserName());
         assertEquals(quizInstance.getStartedAt(), result.getStartedAt());
-        assertEquals(quizInstance.getTimeLimitMinutes(), result.getTimeLimitMinutes());
-        assertEquals(quizInstance.isShuffleEnabled(), result.isShuffleEnabled());
+        assertEquals(quizInstance.getElapsedTimeMinutes(), result.getRemainingTimeSeconds());
+        assertEquals(quizInstance.getShuffleQuestions(), result.isShuffleQuestions());
+        assertEquals(quizInstance.getShuffleAnswers(), result.isShuffleAnswers());
         assertEquals(quizInstance.getTotalPoints(), result.getTotalPoints());
+        assertEquals(quizInstance.getEarnedPoints(), result.getEarnedPoints());
+        assertEquals(quizInstance.getTotalPoints(), result.getTotalPoints());
+        assertEquals(quizInstance.getTotalPoints(), result.getTotalPoints()); 
         assertEquals(quizInstance.getStatus().name(), result.getStatus());
     }
 

@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Data
@@ -18,4 +19,5 @@ public class QuizSubmissionReqDTO {
     private Map<Long, String> answers; // questionInstanceId -> selectedAnswerText
     private Map<Long, Long> answerIds; // questionInstanceId -> selectedAnswerId
     private Integer totalTimeSpentSeconds;
+    private LocalDateTime submittedAt;
 } 

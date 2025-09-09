@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -14,30 +15,24 @@ import java.time.LocalDateTime;
 public class QuizUserResponseResDTO {
 
     private Long id;
-    private Long quizInstanceQuestionId;
-    private String questionText;
-    private Long userId;
-    private String userName;
+    private Long quizInstanceId;
     private Long selectedAnswerId;
     private String selectedAnswerText;
-    private String userAnswer;
-    private Integer timeSpentSeconds;
     private Boolean isCorrect;
+    private Integer pointsEarned;
+    private Integer responseTimeSeconds;
     private LocalDateTime answeredAt;
-    private String notes;
+    private Boolean isSkipped;
+    private String status;
+    private List<QuestionSnapshotResDTO> questionSnapshots;
     
     // Computed fields
     private Boolean isAnswered;
-    private Boolean isSkipped;
-    private Boolean isTimeEfficient;
-    private Boolean isTimeConsuming;
-    private String answerStatus;
-    private Double timeEfficiency;
-    private Boolean isFirstAttempt;
-    private Boolean isLastAttempt;
-    private Integer attemptCount;
+    private Boolean isNotAnswered;
+    private Boolean isAnsweredCorrectly;
+    private Boolean isAnsweredIncorrectly;
     
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Boolean isActive;
-} 
+}

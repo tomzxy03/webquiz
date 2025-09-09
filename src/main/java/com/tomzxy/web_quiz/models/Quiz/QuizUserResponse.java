@@ -1,11 +1,13 @@
-package com.tomzxy.web_quiz.models;
+package com.tomzxy.web_quiz.models.Quiz;
 
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-import com.tomzxy.web_quiz.models.Quiz.QuizInstance;
+import com.tomzxy.web_quiz.models.BaseEntity;
+import com.tomzxy.web_quiz.models.snapshot.QuestionSnapshot;
 
 @Entity
 @Getter
@@ -44,6 +46,13 @@ public class QuizUserResponse extends BaseEntity {
 
     @Column(name = "is_skipped", nullable = false)
     private boolean isSkipped = false;
+
+    @ManyToMany
+    @JoinTable(name = "quiz_user_responses_question_snapshots",
+        joinColumns = @JoinColumn(name = "quiz_user_response_id"),
+        inverseJoinColumns = @JoinColumn(name = "question_snapshot_id")
+    )
+    private List<QuestionSnapshot> questionSnapshot;
 
     // Business Logic Methods
     public void markAsCorrect() {

@@ -14,21 +14,22 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class QuizUserResponseReqDTO {
 
-    @NotNull(message = "Quiz instance question ID is required")
-    private Long quizInstanceQuestionId;
-
-    @NotNull(message = "User ID is required")
-    private Long userId;
+    @NotNull(message = "Quiz instance ID is required")
+    private Long quizInstanceId;
 
     private Long selectedAnswerId;
-
-    private String userAnswer; // For text-based questions
-
-    private Integer timeSpentSeconds;
-
+    
+    private String selectedAnswerText;
+    
     private Boolean isCorrect;
-
+    
+    private Integer pointsEarned;
+    
+    private Integer responseTimeSeconds;
+    
     private LocalDateTime answeredAt;
-
-    private String notes;
-} 
+    
+    private Boolean isSkipped;
+    
+    private Long questionSnapshotId;
+}

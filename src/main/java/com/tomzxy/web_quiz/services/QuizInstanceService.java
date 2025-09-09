@@ -2,6 +2,7 @@ package com.tomzxy.web_quiz.services;
 
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizInstanceReqDTO;
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizSubmissionReqDTO;
+import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.QuizInstanceResDTO;
 import com.tomzxy.web_quiz.dto.responses.QuizResultDetailResDTO;
 
@@ -13,6 +14,17 @@ public interface QuizInstanceService {
 
     QuizInstanceResDTO getQuizInstance(Long instanceId, Long userId);
     
+    PageResDTO<?> getAllQuizInstances(int page, int size);
+
+    PageResDTO<?> getAllQuizInstancesByLobbyId(Long lobbyId, int page, int size);
+
+    PageResDTO<?> getAllQuizInstancesByUserId(Long userId, int page, int size);
+
+    PageResDTO<?> getAllQuizInstancesByQuizId(Long quizId, int page, int size);
+
+    PageResDTO<?> getAllQuizInstancesByQuizIdAndUserId(Long quizId, Long userId, int page, int size);
+
+    PageResDTO<?> getAllQuizInstancesByQuizIdAndLobbyId(Long quizId, Long lobbyId, int page, int size);
   
     QuizResultDetailResDTO submitQuiz(QuizSubmissionReqDTO request);
     

@@ -19,7 +19,7 @@ public interface QuizUserResponseService {
     
     void deleteUserResponse(Long id);
     
-    PageResDTO<QuizUserResponseResDTO> getAllUserResponses(int page, int size);
+    PageResDTO<?> getAllUserResponses(int page, int size);
 
     // Business operations
     QuizUserResponseResDTO submitAnswer(Long quizInstanceQuestionId, Long userId, Long selectedAnswerId, String userAnswer);
@@ -30,7 +30,7 @@ public interface QuizUserResponseService {
     
     List<QuizUserResponseResDTO> getUserResponses(Long userId);
     
-    PageResDTO<QuizUserResponseResDTO> getUserResponses(Long userId, int page, int size);
+    PageResDTO<?> getUserResponses(Long userId, int page, int size);
     
     List<QuizUserResponseResDTO> getQuestionResponses(Long quizInstanceQuestionId);
     
@@ -40,7 +40,7 @@ public interface QuizUserResponseService {
     
     List<QuizUserResponseResDTO> getCorrectResponses(Boolean isCorrect);
     
-    PageResDTO<QuizUserResponseResDTO> getCorrectResponses(Boolean isCorrect, int page, int size);
+    PageResDTO<?> getCorrectResponses(Boolean isCorrect, int page, int size);
     
     List<QuizUserResponseResDTO> getResponsesByTimeRange(Integer minTime, Integer maxTime);
     

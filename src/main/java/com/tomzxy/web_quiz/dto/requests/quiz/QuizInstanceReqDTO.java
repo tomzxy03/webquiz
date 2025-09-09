@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Data
@@ -16,12 +17,11 @@ public class QuizInstanceReqDTO {
     
     private Long quizId;
     private Long userId;
+    private Long lobbyId;
     private Set<QuizOptions> options;
     private Integer timeLimitMinutes;
-    private boolean shuffleQuestions = false;
-    private boolean shuffleAnswers = false;
-    private boolean showCorrectAnswers = false;
-    private boolean showScoreImmediately = false;
-    private boolean allowReview = false;
-    private boolean strictTimeLimit = false;
+    private Integer totalPoints;
+    private LocalDateTime startedAt;
+
+    
 } 

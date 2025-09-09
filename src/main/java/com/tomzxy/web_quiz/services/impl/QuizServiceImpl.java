@@ -1,22 +1,19 @@
 package com.tomzxy.web_quiz.services.impl;
 
+import com.tomzxy.web_quiz.dto.requests.QuizAnswerReqDTO;
 import com.tomzxy.web_quiz.dto.requests.QuizQuestionReqDTO;
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizReqDTO;
-import com.tomzxy.web_quiz.dto.requests.QuizAnswerReqDTO;
 import com.tomzxy.web_quiz.dto.responses.QuizResDTO;
-import com.tomzxy.web_quiz.dto.responses.DataResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.mapstructs.QuizMapper;
 import com.tomzxy.web_quiz.models.User;
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
-import com.tomzxy.web_quiz.models.Quiz.QuizAttempt;
 import com.tomzxy.web_quiz.models.Lobby;
 import com.tomzxy.web_quiz.models.Question;
 import com.tomzxy.web_quiz.models.Answer;
 import com.tomzxy.web_quiz.models.QuizQuestion;
 import com.tomzxy.web_quiz.models.QuizAnswer;
-import com.tomzxy.web_quiz.models.QuizResult;
 import com.tomzxy.web_quiz.repositories.QuizRepo;
 import com.tomzxy.web_quiz.repositories.UserRepo;
 import com.tomzxy.web_quiz.repositories.LobbyRepo;
@@ -32,7 +29,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -231,35 +227,6 @@ public class QuizServiceImpl implements QuizService {
         return quizQuestion;
     }
 
-    /**
-     * Create a QuizAttempt with complete snapshot of question and answers
-     */
-    private QuizAttempt createQuizAttempt(QuizQuestionReqDTO questionDto, 
-                                        QuizResult quizResult, 
-                                        Question originalQuestion) {
-        QuizAttempt attempt = new QuizAttempt();
-        
-        // Snapshot the question if it exists
-        if (originalQuestion != null) {
-            attempt.snapshotQuestion(originalQuestion);
-            attempt.setOriginalQuestion(originalQuestion);
-        }
-        
-        // Snapshot the answers if they exist
-        if (originalQuestion != null && originalQuestion.getAnswers() != null) {
-            attempt.snapshotAnswers(originalQuestion.getAnswers());
-        }
-        
-        // Initialize attempt without user response
-        attempt.setSelectedAnswer(null);
-        attempt.setCorrect(false);
-        attempt.setSkipped(false);
-        
-        // Set relationships
-        attempt.setQuizResult(quizResult);
-        
-        return attempt;
-    }
 
     /**
      * Process quiz answers, handling existing vs custom content

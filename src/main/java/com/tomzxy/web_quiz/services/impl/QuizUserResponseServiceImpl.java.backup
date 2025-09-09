@@ -19,7 +19,6 @@ import com.tomzxy.web_quiz.models.Quiz.QuizInstance;
 import com.tomzxy.web_quiz.models.Quiz.QuizUserResponse;
 import com.tomzxy.web_quiz.repositories.QuizInstanceRepo;
 import com.tomzxy.web_quiz.repositories.QuizUserResponseRepo;
-import com.tomzxy.web_quiz.services.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.services.QuizUserResponseService;
 
 import lombok.RequiredArgsConstructor;
@@ -34,7 +33,6 @@ public class QuizUserResponseServiceImpl implements QuizUserResponseService {
     private final QuizUserResponseRepo quizUserResponseRepo;
     private final QuizInstanceRepo quizInstanceRepo;
     private final QuizUserResponseMapper quizUserResponseMapper;
-    private final ConvertToPageResDTO convertToPageResDTO;
 
     @Override
     public QuizUserResponseResDTO createUserResponse(QuizUserResponseReqDTO request) {
@@ -89,15 +87,21 @@ public class QuizUserResponseServiceImpl implements QuizUserResponseService {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public PageResDTO<QuizUserResponseResDTO> getAllUserResponses(int page, int size) {
         log.info("Getting all user responses with pagination: page={}, size={}", page, size);
         
         Pageable pageable = PageRequest.of(page, size);
         Page<QuizUserResponse> responses = quizUserResponseRepo.findAll(pageable);
         
-        PageResDTO<List<QuizUserResponseResDTO>> result = convertToPageResDTO.convertPageResponse(responses, pageable, quizUserResponseMapper::toQuizUserResponseResDTO);
-        return (PageResDTO<QuizUserResponseResDTO>) (PageResDTO<?>) result;
+        List<QuizUserResponseResDTO> responseDTOs = quizUserResponseMapper.toQuizUserResponseResDTOList(responses.getContent());
+        
+        return PageResDTO.<QuizUserResponseResDTO>builder()
+                .items(responseDTOs)
+                .page(page)
+                .size(size)
+                .totalElements(responses.getTotalElements())
+                .totalPages(responses.getTotalPages())
+                .build();
     }
 
     @Override
@@ -172,15 +176,23 @@ public class QuizUserResponseServiceImpl implements QuizUserResponseService {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public PageResDTO<QuizUserResponseResDTO> getUserResponses(Long userId, int page, int size) {
         log.info("Getting user responses for user: {} with pagination: page={}, size={}", userId, page, size);
         
         Pageable pageable = PageRequest.of(page, size);
         Page<QuizUserResponse> responses = quizUserResponseRepo.findByUserIdAndIsActiveTrue(userId, pageable);
         
-        PageResDTO<List<QuizUserResponseResDTO>> result = convertToPageResDTO.convertPageResponse(responses, pageable, quizUserResponseMapper::toQuizUserResponseResDTO);
-        return (PageResDTO<QuizUserResponseResDTO>) (PageResDTO<?>) result;
+        List<QuizUserResponseResDTO> responseDTOs = quizUserResponseMapper.toQuizUserResponseResDTOList(responses.getContent());
+        
+        return PageResDTO.<QuizUserResponseResDTO>builder()
+                .data(responseDTOs)
+                .page(page)
+                .size(size)
+                .totalElements(responses.getTotalElements())
+                .totalPages(responses.getTotalPages())
+                .first(responses.isFirst())
+                .last(responses.isLast())
+                .build();
     }
 
     @Override
@@ -219,15 +231,23 @@ public class QuizUserResponseServiceImpl implements QuizUserResponseService {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public PageResDTO<QuizUserResponseResDTO> getCorrectResponses(Boolean isCorrect, int page, int size) {
         log.info("Getting {} responses with pagination: page={}, size={}", isCorrect ? "correct" : "incorrect", page, size);
         
         Pageable pageable = PageRequest.of(page, size);
         Page<QuizUserResponse> responses = quizUserResponseRepo.findByIsCorrectAndIsActiveTrue(isCorrect, pageable);
         
-        PageResDTO<List<QuizUserResponseResDTO>> result = convertToPageResDTO.convertPageResponse(responses, pageable, quizUserResponseMapper::toQuizUserResponseResDTO);
-        return (PageResDTO<QuizUserResponseResDTO>) (PageResDTO<?>) result;
+        List<QuizUserResponseResDTO> responseDTOs = quizUserResponseMapper.toQuizUserResponseResDTOList(responses.getContent());
+        
+        return PageResDTO.<QuizUserResponseResDTO>builder()
+                .data(responseDTOs)
+                .page(page)
+                .size(size)
+                .totalElements(responses.getTotalElements())
+                .totalPages(responses.getTotalPages())
+                .first(responses.isFirst())
+                .last(responses.isLast())
+                .build();
     }
 
     @Override

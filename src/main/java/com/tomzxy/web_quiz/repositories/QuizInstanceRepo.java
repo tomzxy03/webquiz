@@ -5,6 +5,8 @@ import com.tomzxy.web_quiz.models.Quiz.QuizInstance;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -46,4 +48,10 @@ List<QuizInstance> findTimedOutInstances(@Param("now") LocalDateTime now,
     
     // Tìm quiz instance đang chạy
     List<QuizInstance> findByStatusAndStartedAtBefore(QuizInstanceStatus status, LocalDateTime before);
+
+    @Query(value = "SELECT * FROM quiz_instance qi " +
+               "WHERE qi.quiz_id = :quizId " +
+               "AND qi.lobby_id = :lobbyId",
+       nativeQuery = true)
+    Page<QuizInstance> findByQuizIdAndLobbyId(@Param("quizId") Long quizId, @Param("lobbyId") Long lobbyId, Pageable pageable);
 } 

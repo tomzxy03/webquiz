@@ -4,7 +4,6 @@ import com.tomzxy.web_quiz.enums.QuizType;
 import com.tomzxy.web_quiz.models.BaseEntity;
 import com.tomzxy.web_quiz.models.Lobby;
 import com.tomzxy.web_quiz.models.QuizQuestion;
-import com.tomzxy.web_quiz.models.QuizResult;
 import com.tomzxy.web_quiz.models.Subject;
 import com.tomzxy.web_quiz.models.User;
 
@@ -79,7 +78,7 @@ public class Quiz extends BaseEntity {
     private Set<QuizQuestion> questions = new HashSet<>();
 
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<QuizResult> results = new HashSet<>();
+    private Set<QuizInstance> instances = new HashSet<>();
 
     // Business Logic Methods
     public void addQuestion(QuizQuestion question) {
@@ -140,33 +139,33 @@ public class Quiz extends BaseEntity {
         }
         
         // Check if user has already reached max attempts
-        long userAttempts = results.stream()
-                .filter(result -> result.getUser().equals(user))
+        long userAttempts = instances.stream()
+                .filter(instance -> instance.getUser().equals(user))
                 .count();
         
         return userAttempts < maxAttempts;
     }
 
-    public QuizResult getUserLatestResult(User user) {
-        return results.stream()
-                .filter(result -> result.getUser().equals(user))
+    public QuizInstance getUserLatestInstance(User user) {
+        return instances.stream()
+                .filter(instance -> instance.getUser().equals(user))
                 .max((r1, r2) -> r1.getCreatedAt().compareTo(r2.getCreatedAt()))
                 .orElse(null);
     }
 
     public double getAverageScore() {
-        if (results.isEmpty()) {
+        if (instances.isEmpty()) {
             return 0.0;
         }
-        return results.stream()
-                .mapToInt(QuizResult::getScore)
+        return instances.stream()
+                .mapToInt(QuizInstance::getTotalPoints)
                 .average()
                 .orElse(0.0);
     }
 
     public int getTotalParticipants() {
-        return (int) results.stream()
-                .map(QuizResult::getUser)
+        return (int) instances.stream()
+                .map(QuizInstance::getUser)
                 .distinct()
                 .count();
     }
@@ -181,48 +180,26 @@ public class Quiz extends BaseEntity {
         this.setUpdatedAt(LocalDateTime.now());
     }
 
-    // Enhanced Analytics Methods
-    public double getPassRate() {
-        if (results.isEmpty()) {
-            return 0.0;
-        }
-        long passedCount = results.stream()
-                .filter(QuizResult::isPassed)
-                .count();
-        return (double) passedCount / results.size() * 100;
-    }
-
-    public double getAverageCompletionTime() {
-        if (results.isEmpty()) {
-            return 0.0;
-        }
-        return results.stream()
-                .filter(result -> result.getCompletionTimeMinutes() != null)
-                .mapToInt(QuizResult::getCompletionTimeMinutes)
-                .average()
-                .orElse(0.0);
-    }
-
     public int getTotalAttempts() {
-        return results.size();
+        return instances.size();
     }
 
     public int getUniqueParticipants() {
-        return (int) results.stream()
-                .map(QuizResult::getUser)
+            return (int) instances.stream()
+                .map(QuizInstance::getUser)
                 .distinct()
                 .count();
     }
 
-    public QuizResult getBestResult() {
-        return results.stream()
-                .max((r1, r2) -> Double.compare(r1.getPercentageScore(), r2.getPercentageScore()))
+    public QuizInstance getBestResult() {
+        return instances.stream()
+                .max((r1, r2) -> Double.compare(r1.getScorePercentage(), r2.getScorePercentage()))
                 .orElse(null);
     }
 
-    public QuizResult getWorstResult() {
-        return results.stream()
-                .min((r1, r2) -> Double.compare(r1.getPercentageScore(), r2.getPercentageScore()))
+    public QuizInstance getWorstResult() {
+        return instances.stream()
+                .min((r1, r2) -> Double.compare(r1.getScorePercentage(), r2.getScorePercentage()))
                 .orElse(null);
     }
 

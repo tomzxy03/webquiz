@@ -1,6 +1,8 @@
 package com.tomzxy.web_quiz.models;
 
 import com.tomzxy.web_quiz.enums.Gender;
+import com.tomzxy.web_quiz.models.Quiz.QuizInstance;
+
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -76,7 +78,7 @@ public class User extends BaseEntity {
     private Set<Notification> notifications = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<QuizResult> quizResults = new HashSet<>();
+    private Set<QuizInstance> quizInstances = new HashSet<>();
 
     // Business Logic Methods
     public void addRole(Role role) {
@@ -132,52 +134,52 @@ public class User extends BaseEntity {
 
     // Enhanced Learning Analytics Methods
     public int getTotalQuizzesTaken() {
-        return quizResults.size();
+        return quizInstances.size();
     }
 
     public double getAverageScore() {
-        if (quizResults.isEmpty()) {
+        if (quizInstances.isEmpty()) {
             return 0.0;
         }
-        return quizResults.stream()
-                .mapToDouble(result -> result.getPercentageScore())
+        return quizInstances.stream()
+                .mapToDouble(QuizInstance::getScorePercentage)
                 .average()
                 .orElse(0.0);
     }
 
     public int getTotalCorrectAnswers() {
-        return quizResults.stream()
-                .mapToInt(QuizResult::getTotalCorrected)
+        return quizInstances.stream()
+                .mapToInt(QuizInstance::getEarnedPoints)
                 .sum();
     }
 
     public int getTotalWrongAnswers() {
-        return quizResults.stream()
-                .mapToInt(QuizResult::getTotalFailed)
+        return quizInstances.stream()
+                .mapToInt(QuizInstance::getTotalPoints)
                 .sum();
     }
 
     public int getTotalSkippedQuestions() {
-        return quizResults.stream()
-                .mapToInt(QuizResult::getTotalSkipped)
+        return quizInstances.stream()
+                .mapToInt(QuizInstance::getTotalPoints)
                 .sum();
     }
 
     public long getTotalTimeSpent() {
-        return quizResults.stream()
-                .filter(result -> result.getCompletionTimeMinutes() != null)
-                .mapToLong(result -> result.getCompletionTimeMinutes())
+        return quizInstances.stream()
+                .filter(instance -> instance.getSubmittedAt() != null)
+                .mapToLong(QuizInstance::getElapsedTimeMinutes)
                 .sum();
     }
 
-    public QuizResult getBestQuizResult() {
-        return quizResults.stream()
-                .max((r1, r2) -> Double.compare(r1.getPercentageScore(), r2.getPercentageScore()))
+    public QuizInstance getBestQuizResult() {
+        return quizInstances.stream()
+                .max((r1, r2) -> Double.compare(r1.getScorePercentage(), r2.getScorePercentage()))
                 .orElse(null);
     }
 
-    public QuizResult getLatestQuizResult() {
-        return quizResults.stream()
+    public QuizInstance getLatestQuizResult() {
+        return quizInstances.stream()
                 .max((r1, r2) -> r1.getCreatedAt().compareTo(r2.getCreatedAt()))
                 .orElse(null);
     }
@@ -185,8 +187,8 @@ public class User extends BaseEntity {
     public boolean isActiveLearner() {
         // User is active if they've taken quizzes in the last 30 days
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
-        return quizResults.stream()
-                .anyMatch(result -> result.getCreatedAt().isAfter(thirtyDaysAgo));
+        return quizInstances.stream()
+                .anyMatch(instance -> instance.getCreatedAt().isAfter(thirtyDaysAgo));
     }
 
     public String getLearningLevel() {
@@ -200,7 +202,7 @@ public class User extends BaseEntity {
 
     public boolean isImproving() {
         // Check if recent scores are better than older scores
-        List<QuizResult> sortedResults = quizResults.stream()
+            List<QuizInstance> sortedResults = quizInstances.stream()
                 .sorted((r1, r2) -> r1.getCreatedAt().compareTo(r2.getCreatedAt()))
                 .toList();
         
@@ -209,11 +211,11 @@ public class User extends BaseEntity {
         // Compare first half vs second half
         int midPoint = sortedResults.size() / 2;
         double firstHalfAvg = sortedResults.subList(0, midPoint).stream()
-                .mapToDouble(QuizResult::getPercentageScore)
+                .mapToDouble(QuizInstance::getScorePercentage)
                 .average()
                 .orElse(0.0);
         double secondHalfAvg = sortedResults.subList(midPoint, sortedResults.size()).stream()
-                .mapToDouble(QuizResult::getPercentageScore)
+                .mapToDouble(QuizInstance::getScorePercentage)
                 .average()
                 .orElse(0.0);
         
@@ -221,7 +223,7 @@ public class User extends BaseEntity {
     }
 
     public long getDaysSinceLastQuiz() {
-        QuizResult latest = getLatestQuizResult();
+        QuizInstance latest = getLatestQuizResult();
         if (latest == null) return Long.MAX_VALUE;
         return java.time.Duration.between(latest.getCreatedAt(), LocalDateTime.now()).toDays();
     }
