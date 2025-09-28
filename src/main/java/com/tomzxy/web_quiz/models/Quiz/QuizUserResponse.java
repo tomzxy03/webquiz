@@ -6,6 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.tomzxy.web_quiz.enums.ResponseStatus;
 import com.tomzxy.web_quiz.models.BaseEntity;
 import com.tomzxy.web_quiz.models.snapshot.QuestionSnapshot;
 
@@ -32,9 +33,11 @@ public class QuizUserResponse extends BaseEntity {
     @Column(name = "selected_answer_text", columnDefinition = "TEXT")
     private String selectedAnswerText; // Snapshot text của đáp án user chọn
 
+    @Builder.Default
     @Column(name = "is_correct", nullable = false)
     private boolean isCorrect = false;
 
+    @Builder.Default
     @Column(name = "points_earned", nullable = false)
     private Integer pointsEarned = 0;
 
@@ -44,6 +47,7 @@ public class QuizUserResponse extends BaseEntity {
     @Column(name = "answered_at")
     private LocalDateTime answeredAt;
 
+    @Builder.Default
     @Column(name = "is_skipped", nullable = false)
     private boolean isSkipped = false;
 
@@ -79,6 +83,11 @@ public class QuizUserResponse extends BaseEntity {
     }
 
     public void setAnswer(Long answerId, String answerText, boolean isCorrect) {
+        // Validation
+        if (answerId == null && (answerText == null || answerText.trim().isEmpty())) {
+            throw new IllegalArgumentException("Either answerId or answerText must be provided");
+        }
+        
         this.selectedAnswerId = answerId;
         this.selectedAnswerText = answerText;
         this.isCorrect = isCorrect;
@@ -103,15 +112,15 @@ public class QuizUserResponse extends BaseEntity {
         return !isCorrect && !isSkipped && isAnswered();
     }
 
-    public String getStatus() {
+    public ResponseStatus getStatus() {
         if (isSkipped) {
-            return "SKIPPED";
+            return ResponseStatus.SKIPPED;
         } else if (isCorrect) {
-            return "CORRECT";
+            return ResponseStatus.CORRECT;
         } else if (isAnswered()) {
-            return "INCORRECT";
+            return ResponseStatus.INCORRECT;
         } else {
-            return "NOT_ANSWERED";
+            return ResponseStatus.NOT_ANSWERED;
         }
     }
 

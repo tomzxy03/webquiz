@@ -9,6 +9,7 @@ import com.tomzxy.web_quiz.dto.responses.*;
 import com.tomzxy.web_quiz.enums.AppCode;
 import com.tomzxy.web_quiz.enums.QuizInstanceStatus;
 import com.tomzxy.web_quiz.enums.QuizOptions;
+import com.tomzxy.web_quiz.enums.ResponseStatus;
 import com.tomzxy.web_quiz.exception.ApiException;
 import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.models.*;
@@ -77,8 +78,7 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
                 .quiz(quiz)
                 .user(user)
                 .startedAt(LocalDateTime.now())
-                .shuffleQuestions(shuffleQuestions)
-                .shuffleAnswers(shuffleAnswers)
+                .options(request.getOptions())
                 .status(QuizInstanceStatus.IN_PROGRESS)
                 .build();
 
@@ -130,7 +130,7 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         instance.setTotalPoints(totalPoints);
         instance = quizInstanceRepo.save(instance);
 
-        return mapQuizInstanceResDTO(instance);
+        return quizInstanceMapper.toQuizInstanceResDTO(instance);
     }
 
     @Override
@@ -146,7 +146,7 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
             throw new ApiException(AppCode.FORBIDDEN);
         }
 
-        return mapQuizInstanceResDTO(instance);
+        return quizInstanceMapper.toQuizInstanceResDTO(instance);
     }
 
     @Override
@@ -198,7 +198,8 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
 
         // Cập nhật instance
         instance.setEarnedPoints(earnedPoints);
-        instance.submit();
+        instance.setStatus(QuizInstanceStatus.SUBMITTED);
+        instance.setUpdatedAt(LocalDateTime.now());
         instance = quizInstanceRepo.save(instance);
 
         return mapQuizResultDetailResDTO(instance);
@@ -250,7 +251,7 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
     }
 
     @Override
-    public PageResDTO<?> getAllQuizInstancesByQuizIdAndLobbyId(Long quizId, Long lobbyId, int page, int size) {
+    public PageResDTO<QuizInstanceResDTO> getAllQuizInstancesByQuizIdAndLobbyId(Long quizId, Long lobbyId, int page, int size) {
         // Implementation for getting quiz instances by quiz and lobby
         Pageable pageable = PageRequest.of(page, size);
         Page<QuizInstance> instances = quizInstanceRepo.findByQuizIdAndLobbyId(quizId, lobbyId, pageable);
@@ -269,37 +270,7 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         return question.getPoints() != null ? question.getPoints() : 1;
     }
 
-    private QuizInstanceResDTO mapQuizInstanceResDTO(QuizInstance instance) {
-        List<Question> questions = getQuestionsFromQuiz(instance.getQuiz());
 
-        List<QuizInstanceQuestionResDTO> questionDTOs = questions.stream()
-                .map(this::mapQuestionResDTO)
-                .collect(Collectors.toList());
-
-        QuizInstanceResDTO dto = quizInstanceMapper.toQuizInstanceResDTO(instance);
-        dto.setQuestions(questionDTOs);
-        dto.setRemainingTimeSeconds(calculateRemainingTime(instance));
-        
-        return dto;
-    }
-
-    private QuizInstanceQuestionResDTO mapQuestionResDTO(Question question) {
-        List<Answer> answers = new ArrayList<>(question.getAnswers());
-
-        List<QuizInstanceAnswerResDTO> answerDTOs = answers.stream()
-                .map(this::mapAnswerResDTO)
-                .collect(Collectors.toList());
-
-        QuizInstanceQuestionResDTO dto = QuizInstanceQuestionResDTO.builder()
-                .id(question.getId())
-                .questionText(question.getQuestionName())
-                .questionType(question.getQuestionType().name())
-                .points(question.getPoints())
-                .answers(answerDTOs)
-                .build();
-        
-        return dto;
-    }
 
     private QuizResultDetailResDTO mapQuizResultDetailResDTO(QuizInstance instance) {
         List<Question> questions = getQuestionsFromQuiz(instance.getQuiz());
@@ -332,16 +303,16 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
                 .orElse(null);
 
         QuestionResultResDTO dto = QuestionResultResDTO.builder()
-                .questionId(question.getId())
+                .questionInstanceId(question.getId())
                 .questionText(question.getQuestionName())
                 .questionType(question.getQuestionType().name())
                 .points(question.getPoints())
                 .earnedPoints(userResponse != null ? userResponse.getPointsEarned() : 0)
                 .userAnswer(userResponse != null ? userResponse.getSelectedAnswerText() : null)
                 .correctAnswer(correctAnswer != null ? correctAnswer.getAnswerName() : null)
-                .correct(userResponse != null && userResponse.isCorrect())
-                .skipped(userResponse != null && userResponse.isSkipped())
-                .status(userResponse != null ? userResponse.getStatus() : "NOT_ANSWERED")
+                .isCorrect(userResponse != null && userResponse.isCorrect())
+                .isSkipped(userResponse != null && userResponse.isSkipped())
+                .status(userResponse != null ? userResponse.getStatus() : ResponseStatus.NOT_ANSWERED)
                 .allAnswers(answerResults)
                 .build();
         
@@ -353,10 +324,10 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
                 answer.getId().equals(userResponse.getSelectedAnswerId());
 
         return AnswerResultResDTO.builder()
-                .answerId(answer.getId())
+                .answerInstanceId(answer.getId())
                 .answerText(answer.getAnswerName())
-                .correct(answer.isAnswerCorrect())
-                .userSelected(isUserSelected)
+                .isCorrect(answer.isAnswerCorrect())
+                .isUserSelected(isUserSelected)
                 .build();
     }
 
@@ -368,5 +339,35 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         long elapsedSeconds = instance.getElapsedTimeMinutes() * 60;
         long totalSeconds = instance.getQuiz().getTimeLimitMinutes() * 60L;
         return Math.max(0, totalSeconds - elapsedSeconds);
+    }
+
+    @Override
+    public PageResDTO<?> getAllQuizInstances(int page, int size) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getAllQuizInstances'");
+    }
+
+    @Override
+    public PageResDTO<?> getAllQuizInstancesByLobbyId(Long lobbyId, int page, int size) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getAllQuizInstancesByLobbyId'");
+    }
+
+    @Override
+    public PageResDTO<?> getAllQuizInstancesByUserId(Long userId, int page, int size) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getAllQuizInstancesByUserId'");
+    }
+
+    @Override
+    public PageResDTO<?> getAllQuizInstancesByQuizId(Long quizId, int page, int size) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getAllQuizInstancesByQuizId'");
+    }
+
+    @Override
+    public PageResDTO<?> getAllQuizInstancesByQuizIdAndUserId(Long quizId, Long userId, int page, int size) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getAllQuizInstancesByQuizIdAndUserId'");
     }
 }

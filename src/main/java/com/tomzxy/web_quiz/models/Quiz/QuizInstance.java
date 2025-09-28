@@ -8,9 +8,9 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
-import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import com.tomzxy.web_quiz.enums.QuizInstanceStatus;
 import com.tomzxy.web_quiz.enums.QuizOptions;
 import com.tomzxy.web_quiz.models.BaseEntity;
@@ -22,8 +22,7 @@ import com.tomzxy.web_quiz.models.User;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-@TypeDef(name = "json", typeClass = JsonBinaryType.class)
+@Builder    
 @Table(name = "quiz_instances", indexes = {
     @Index(name = "idx_quiz_instance_quiz", columnList = "quiz_id"),
     @Index(name = "idx_quiz_instance_user", columnList = "user_id"),
@@ -47,17 +46,20 @@ public class QuizInstance extends BaseEntity {
     @Column(name = "started_at", nullable = false)
     private LocalDateTime startedAt;
 
-    @Type(JsonBinaryType.class)
+    @Builder.Default
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "options", columnDefinition = "jsonb")
     private Set<QuizOptions> options = new HashSet<>();
 
-
+    @Builder.Default
     @Column(name = "total_points", nullable = false)
     private Integer totalPoints = 0;
 
+    @Builder.Default
     @Column(name = "earned_points", nullable = false)
     private Integer earnedPoints = 0;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private QuizInstanceStatus status = QuizInstanceStatus.IN_PROGRESS;
@@ -66,11 +68,6 @@ public class QuizInstance extends BaseEntity {
     private Set<QuizUserResponse> userResponses = new HashSet<>();
 
     // Business Logic Methods
-    public void submit() {
-        this.status = QuizInstanceStatus.SUBMITTED;
-        this.submittedAt = LocalDateTime.now();
-        this.setUpdatedAt(LocalDateTime.now());
-    }
 
     public void markAsTimedOut() {
         this.status = QuizInstanceStatus.TIMED_OUT;
@@ -89,8 +86,8 @@ public class QuizInstance extends BaseEntity {
         return this.status == QuizInstanceStatus.TIMED_OUT;
     }
 
-    public long getElapsedTimeMinutes() {
-        LocalDateTime endTime = submittedAt != null ? submittedAt : LocalDateTime.now();
+    public Long getElapsedTimeMinutes() {
+        LocalDateTime endTime = LocalDateTime.now();
         return java.time.Duration.between(startedAt, endTime).toMinutes();
     }
 

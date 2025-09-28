@@ -96,7 +96,7 @@ public class QuizUserResponseServiceImpl implements QuizUserResponseService {
         Pageable pageable = PageRequest.of(page, size);
         Page<QuizUserResponse> responses = quizUserResponseRepo.findAll(pageable);
         
-        PageResDTO<List<QuizUserResponseResDTO>> result = convertToPageResDTO.convertPageResponse(responses, pageable, quizUserResponseMapper::toQuizUserResponseResDTO);
+        PageResDTO<QuizUserResponseResDTO> result = convertToPageResDTO.convertPageResponse(responses, pageable, quizUserResponseMapper::toQuizUserResponseResDTO);
         return (PageResDTO<QuizUserResponseResDTO>) (PageResDTO<?>) result;
     }
 
@@ -179,7 +179,7 @@ public class QuizUserResponseServiceImpl implements QuizUserResponseService {
         Pageable pageable = PageRequest.of(page, size);
         Page<QuizUserResponse> responses = quizUserResponseRepo.findByUserIdAndIsActiveTrue(userId, pageable);
         
-        PageResDTO<List<QuizUserResponseResDTO>> result = convertToPageResDTO.convertPageResponse(responses, pageable, quizUserResponseMapper::toQuizUserResponseResDTO);
+        PageResDTO<QuizUserResponseResDTO> result = convertToPageResDTO.convertPageResponse(responses, pageable, quizUserResponseMapper::toQuizUserResponseResDTO);
         return (PageResDTO<QuizUserResponseResDTO>) (PageResDTO<?>) result;
     }
 
@@ -226,8 +226,7 @@ public class QuizUserResponseServiceImpl implements QuizUserResponseService {
         Pageable pageable = PageRequest.of(page, size);
         Page<QuizUserResponse> responses = quizUserResponseRepo.findByIsCorrectAndIsActiveTrue(isCorrect, pageable);
         
-        PageResDTO<List<QuizUserResponseResDTO>> result = convertToPageResDTO.convertPageResponse(responses, pageable, quizUserResponseMapper::toQuizUserResponseResDTO);
-        return (PageResDTO<QuizUserResponseResDTO>) (PageResDTO<?>) result;
+        return convertToPageResDTO.convertPageResponse(responses, pageable, quizUserResponseMapper::toQuizUserResponseResDTO);
     }
 
     @Override

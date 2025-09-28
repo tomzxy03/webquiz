@@ -22,5 +22,5 @@ public interface UserService {
     
     
     
-    UserResDTO update_profile(UserProfileReqDTO userProfileReqDTO);
+    UserResDTO update_profile(Long user_id, UserProfileReqDTO userProfileReqDTO);
 }

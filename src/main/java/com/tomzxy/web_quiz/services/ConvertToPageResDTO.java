@@ -18,11 +18,11 @@ public class ConvertToPageResDTO {
 
 
     //use modelMapper
-    public <T, R> PageResDTO<List<R>> convertToPageResponse (Page<T> page, int pageRequest, int size, Class<R> classes){
+    public <T, R> PageResDTO<R> convertToPageResponse (Page<T> page, int pageRequest, int size, Class<R> classes){
         List<R> list = page.stream()
                 .map(entity -> modelMapper.map(entity, classes))
                 .toList();
-        return PageResDTO.<List<R>> builder()
+        return PageResDTO.<R> builder()
                 .page(pageRequest)
                 .size(size)
                 .total_page(page.getTotalPages())
@@ -31,12 +31,12 @@ public class ConvertToPageResDTO {
     }
 
     // user mapstruct
-    public <T, R> PageResDTO<List<R>> convertPageResponse(Page<T> entities, Pageable pageable, Function<T, R> mapper) {
+    public <T, R> PageResDTO<R> convertPageResponse(Page<T> entities, Pageable pageable, Function<T, R> mapper) {
         List<R> dtoList = entities.stream()
                 .map(mapper)
                 .toList();
             
-        return PageResDTO.<List<R>>builder()
+        return PageResDTO.<R>builder()
                 .page(pageable.getPageNumber())
                 .size(pageable.getPageSize())
                 .total_page(entities.getTotalPages())

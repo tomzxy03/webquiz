@@ -78,6 +78,7 @@ public class QuizServiceImpl implements QuizService {
     }
 
     @Override
+    @Transactional
     public QuizResDTO create(QuizReqDTO dto) {
         try {
             // Validate host exists
@@ -182,39 +183,30 @@ public class QuizServiceImpl implements QuizService {
      */
     private Set<QuizQuestion> processQuizQuestions(Set<QuizQuestionReqDTO> questionDtos) {
         return questionDtos.stream()
-                .map(this::processQuizQuestion)
+                .map(this::mapToQuizQuestionEntity)
                 .collect(Collectors.toSet());
     }
 
     /**
      * Process a single quiz question, creating QuizQuestion with proper relationships
      */
-    @Transactional
-    private QuizQuestion processQuizQuestion(QuizQuestionReqDTO questionDto) {
+    private QuizQuestion mapToQuizQuestionEntity(QuizQuestionReqDTO questionDto) {
         QuizQuestion quizQuestion = new QuizQuestion();
-        if (questionDto.getIsCustom() == true) {
-            quizQuestion.setCustomQuestion(questionDto.getCustomQuestion());
-        } else {
-            Question existingQuestion = questionRepo.findById(questionDto.getQuestionId())
-                .orElseThrow(() -> new NotFoundException("Question not found with id: " + questionDto.getQuestionId()));
-            quizQuestion.setQuestion(existingQuestion);
-        }
-        quizQuestion.setIsCustom(questionDto.getIsCustom());
-
-        if (questionDto.getIsCustom()) {
-            // Custom question - set custom question text
-            quizQuestion.setCustomQuestion(questionDto.getCustomQuestion());
-            quizQuestion.setQuestion(null); // No existing question reference
-        } else {
-            // Existing question - validate and set reference
-            if (questionDto.getQuestionId() == null) {
-                throw new RuntimeException("Question ID is required when isCustom is false");
+        if (Boolean.TRUE.equals(questionDto.getIsCustom())) {
+            // custom question
+            if (questionDto.getCustomQuestion() == null || questionDto.getCustomQuestion().isBlank()) {
+                throw new IllegalArgumentException("Custom question text must not be empty");
             }
-            
-            Question existingQuestion = questionRepo.findById(questionDto.getQuestionId())
+            quizQuestion.setCustomQuestion(questionDto.getCustomQuestion());
+            quizQuestion.setQuestion(null);
+        } else {
+            // existing question
+            if (questionDto.getQuestionId() == null) {
+                throw new IllegalArgumentException("Question ID is required for existing question");
+            }
+            Question existing = questionRepo.findById(questionDto.getQuestionId())
                     .orElseThrow(() -> new NotFoundException("Question not found with id: " + questionDto.getQuestionId()));
-            
-            quizQuestion.setQuestion(existingQuestion);
+            quizQuestion.setQuestion(existing);
             quizQuestion.setCustomQuestion(null);
         }
 
@@ -233,31 +225,33 @@ public class QuizServiceImpl implements QuizService {
      */
     private Set<QuizAnswer> processQuizAnswers(Set<QuizAnswerReqDTO> answerDtos) {
         return answerDtos.stream()
-                .map(this::processQuizAnswer)
+                .map(this::mapToQuizAnswerEntity)
                 .collect(Collectors.toSet());
     }
 
     /**
      * Process a single quiz answer, creating QuizAnswer with proper relationships
      */
-    private QuizAnswer processQuizAnswer(QuizAnswerReqDTO answerDto) {
+    private QuizAnswer mapToQuizAnswerEntity(QuizAnswerReqDTO answerDto) {
         QuizAnswer quizAnswer = new QuizAnswer();
         quizAnswer.setCustom(answerDto.isCustom());
         quizAnswer.setCorrect(answerDto.isCorrect());
 
         if (answerDto.isCustom()) {
-            // Custom answer - set custom answer text
-            quizAnswer.setCustomAnswer(answerDto.getCustomAnswer());
-            quizAnswer.setAnswer(null); // No existing answer reference
-        } else {
-            // Existing answer - validate and set reference
-            if (answerDto.getAnswerId() == null) {
-                throw new RuntimeException("Answer ID is required when isCustom is false");
+            if (answerDto.getCustomAnswer() == null || answerDto.getCustomAnswer().isBlank()) {
+                throw new IllegalArgumentException("Custom answer text must not be empty");
             }
-            
+            quizAnswer.setCustomAnswer(answerDto.getCustomAnswer());
+            quizAnswer.setAnswer(null);
+        } else {
+            if (answerDto.getAnswerId() == null) {
+                throw new IllegalArgumentException("Answer ID is required when isCustom = false");
+            }
+
             Answer existingAnswer = answerRepo.findById(answerDto.getAnswerId())
-                    .orElseThrow(() -> new NotFoundException("Answer not found with id: " + answerDto.getAnswerId()));
-            
+                    .orElseThrow(() -> new NotFoundException(
+                            "Answer not found with id: " + answerDto.getAnswerId()
+                    ));
             quizAnswer.setAnswer(existingAnswer);
             quizAnswer.setCustomAnswer(null);
         }

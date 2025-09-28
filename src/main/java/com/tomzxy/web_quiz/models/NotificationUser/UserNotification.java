@@ -37,5 +37,6 @@ public class UserNotification {
     private Notification notification;
 
     private boolean isRead;
+
     private LocalDateTime readAt;
 }

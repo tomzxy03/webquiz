@@ -85,9 +85,9 @@ public class UserController {
         @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public DataResDTO<UserResDTO> updateProfile(@RequestBody @Valid UserProfileReqDTO userProfileReqDTO){
+    public DataResDTO<UserResDTO> updateProfile(@PathVariable Long userId, @RequestBody @Valid UserProfileReqDTO userProfileReqDTO){
         log.info("Update user profile");
-        return DataResDTO.update(userService.update_profile(userProfileReqDTO));
+        return DataResDTO.update(userService.update_profile(userId,userProfileReqDTO));
     }
 
     @DeleteMapping(ApiDefined.User.ID)

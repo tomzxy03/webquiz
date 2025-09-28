@@ -17,50 +17,57 @@ public interface RoleRepo extends JpaRepository<Role, Long>, JpaSpecificationExe
     
     // Basic queries
     Optional<Role> findByName(String name);
+
+    @Query("SELECT r FROM Role r WHERE r.isActive = :isActive")
+    Page<Role> findAllActive(@Param("isActive") boolean isActive, Pageable pageable);
+
+    //find by id
+    @Query("SELECT r FROM Role r WHERE r.id = :id AND r.isActive = :isActive")
+    Optional<Role> findByIdAndActive(@Param("id") Long id);
     
     // Search functionality
-    @Query("SELECT r FROM Role r WHERE LOWER(r.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) AND r.isActive = true")
+    @Query("SELECT r FROM Role r WHERE LOWER(r.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) AND r.isActive = :isActive")
     Page<Role> searchByRoleName(@Param("searchTerm") String searchTerm, Pageable pageable);
     
     // Find by role name
-    @Query("SELECT r FROM Role r WHERE r.name = :name AND r.isActive = true")
+    @Query("SELECT r FROM Role r WHERE r.name = :name AND r.isActive = :isActive")
     Optional<Role> findByNameAndActive(@Param("name") String name);
     
     // Check if role exists by name
     @Query("SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END FROM Role r " +
-           "WHERE r.name = :name AND r.isActive = true")
+           "WHERE r.name = :name AND r.isActive = :isActive")
     boolean existsByName(@Param("name") String name);
     
     // Find roles by user count
-    @Query("SELECT r FROM Role r WHERE SIZE(r.user) = :userCount AND r.isActive = true")
+    @Query("SELECT r FROM Role r WHERE SIZE(r.user) = :userCount AND r.isActive = :isActive")
     Page<Role> findByUserCount(@Param("userCount") int userCount, Pageable pageable);
     
     // Find roles with minimum user count
-    @Query("SELECT r FROM Role r WHERE SIZE(r.user) >= :minUserCount AND r.isActive = true")
+    @Query("SELECT r FROM Role r WHERE SIZE(r.user) >= :minUserCount AND r.isActive = :isActive")
     Page<Role> findByMinUserCount(@Param("minUserCount") int minUserCount, Pageable pageable);
     
     // Find roles without users
-    @Query("SELECT r FROM Role r WHERE SIZE(r.user) = 0 AND r.isActive = true")
+    @Query("SELECT r FROM Role r WHERE SIZE(r.user) = 0 AND r.isActive = :isActive")
     Page<Role> findRolesWithoutUsers(Pageable pageable);
     
     // Find roles with most users
-    @Query("SELECT r FROM Role r WHERE r.isActive = true ORDER BY SIZE(r.user) DESC")
+    @Query("SELECT r FROM Role r WHERE r.isActive = :isActive ORDER BY SIZE(r.user) DESC")
     Page<Role> findRolesWithMostUsers(Pageable pageable);
     
     // Find recent roles
-    @Query("SELECT r FROM Role r WHERE r.isActive = true ORDER BY r.createdAt DESC")
+    @Query("SELECT r FROM Role r WHERE r.isActive = :isActive ORDER BY r.createdAt DESC")
     Page<Role> findRecentRoles(Pageable pageable);
     
     // Count roles by user count
-    @Query("SELECT COUNT(r) FROM Role r WHERE SIZE(r.user) = :userCount AND r.isActive = true")
+    @Query("SELECT COUNT(r) FROM Role r WHERE SIZE(r.user) = :userCount AND r.isActive = :isActive")
     long countByUserCount(@Param("userCount") int userCount);
     
     // Find all role names
-    @Query("SELECT r.name FROM Role r WHERE r.isActive = true")
+    @Query("SELECT r.name FROM Role r WHERE r.isActive = :isActive")
     List<String> findAllRoleNames();
     
     // Find roles by ID list
-    @Query("SELECT r FROM Role r WHERE r.id IN :ids AND r.isActive = true")
+    @Query("SELECT r FROM Role r WHERE r.id IN :ids AND r.isActive = :isActive")
     List<Role> findByIds(@Param("ids") List<Long> ids);
     
     // Find roles by permission count

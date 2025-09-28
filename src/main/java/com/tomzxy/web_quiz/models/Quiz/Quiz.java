@@ -153,22 +153,6 @@ public class Quiz extends BaseEntity {
                 .orElse(null);
     }
 
-    public double getAverageScore() {
-        if (instances.isEmpty()) {
-            return 0.0;
-        }
-        return instances.stream()
-                .mapToInt(QuizInstance::getTotalPoints)
-                .average()
-                .orElse(0.0);
-    }
-
-    public int getTotalParticipants() {
-        return (int) instances.stream()
-                .map(QuizInstance::getUser)
-                .distinct()
-                .count();
-    }
 
     public void activate() {
         this.setActive(true);
@@ -180,43 +164,6 @@ public class Quiz extends BaseEntity {
         this.setUpdatedAt(LocalDateTime.now());
     }
 
-    public int getTotalAttempts() {
-        return instances.size();
-    }
-
-    public int getUniqueParticipants() {
-            return (int) instances.stream()
-                .map(QuizInstance::getUser)
-                .distinct()
-                .count();
-    }
-
-    public QuizInstance getBestResult() {
-        return instances.stream()
-                .max((r1, r2) -> Double.compare(r1.getScorePercentage(), r2.getScorePercentage()))
-                .orElse(null);
-    }
-
-    public QuizInstance getWorstResult() {
-        return instances.stream()
-                .min((r1, r2) -> Double.compare(r1.getScorePercentage(), r2.getScorePercentage()))
-                .orElse(null);
-    }
-
-    public boolean isPopular() {
-        return getTotalParticipants() >= 10; // Define popularity threshold
-    }
-
-    public boolean isChallenging() {
-        return getAverageScore() < 70.0; // Define challenging threshold
-    }
-
-    public String getDifficultyLevel() {
-        double avgScore = getAverageScore();
-        if (avgScore >= 80) return "EASY";
-        else if (avgScore >= 60) return "MEDIUM";
-        else return "HARD";
-    }
 
     public boolean hasTimeLimit() {
         return timeLimitMinutes != null && timeLimitMinutes > 0;
@@ -226,13 +173,6 @@ public class Quiz extends BaseEntity {
         return maxAttempts == null || maxAttempts <= 0;
     }
 
-    public long getDaysSinceCreation() {
-        return java.time.Duration.between(getCreatedAt(), LocalDateTime.now()).toDays();
-    }
-
-    public boolean isRecentlyCreated() {
-        return getDaysSinceCreation() <= 7;
-    }
 
     @Override
     public String toString() {

@@ -12,7 +12,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuizInstanceQuestionResDTO {
-    
     private Long id;
     private Integer displayOrder;
     private Integer points;

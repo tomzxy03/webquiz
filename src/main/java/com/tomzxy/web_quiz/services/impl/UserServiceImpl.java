@@ -74,13 +74,9 @@ public class UserServiceImpl implements UserService {
     
 
     @Override
-    public UserResDTO update_profile(UserProfileReqDTO userProfileReqDTO) {
-        // TODO: Get current user from security context
-        // For now, this is a placeholder implementation
-        // In a real application, you would get the current user from the security context
-        
-        // Placeholder: create a new user with profile data
-        User user = new User();
+    public UserResDTO update_profile(Long user_id, UserProfileReqDTO userProfileReqDTO) {
+       
+        User user = findUserById(user_id);
         userMapper.updateUserProfile(user, userProfileReqDTO);
         
         return userMapper.toUserResDTO(user);

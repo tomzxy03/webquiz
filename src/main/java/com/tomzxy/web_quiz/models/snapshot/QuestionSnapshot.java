@@ -1,5 +1,6 @@
 package com.tomzxy.web_quiz.models.snapshot;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.List;
 
@@ -16,6 +17,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.CreationTimestamp;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

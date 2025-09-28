@@ -87,7 +87,7 @@ public class QuizUserResponseController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "User responses retrieved successfully")
     })
-    public DataResDTO<PageResDTO<QuizUserResponseResDTO>> getAllUserResponses(
+    public DataResDTO<PageResDTO<?>> getAllUserResponses(
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
         log.info("Get all user responses");
@@ -152,7 +152,7 @@ public class QuizUserResponseController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "User responses retrieved successfully")
     })
-    public DataResDTO<PageResDTO<QuizUserResponseResDTO>> getUserResponses(
+    public DataResDTO<PageResDTO<?>> getUserResponses(
             @Parameter(description = "User ID") @PathVariable Long userId,
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
@@ -199,7 +199,7 @@ public class QuizUserResponseController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Correct responses retrieved successfully")
     })
-    public DataResDTO<PageResDTO<QuizUserResponseResDTO>> getCorrectResponses(
+    public DataResDTO<PageResDTO<?>> getCorrectResponses(
             @Parameter(description = "Whether to get correct responses") @RequestParam Boolean isCorrect,
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {

@@ -54,4 +54,9 @@ List<QuizInstance> findTimedOutInstances(@Param("now") LocalDateTime now,
                "AND qi.lobby_id = :lobbyId",
        nativeQuery = true)
     Page<QuizInstance> findByQuizIdAndLobbyId(@Param("quizId") Long quizId, @Param("lobbyId") Long lobbyId, Pageable pageable);
+
+
+    // Tìm số lượng quiz đã làm.
+    int countByQuizzesAndUserId(Long userId);
+
 } 
