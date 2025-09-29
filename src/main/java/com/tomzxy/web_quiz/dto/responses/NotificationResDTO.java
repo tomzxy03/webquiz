@@ -17,7 +17,7 @@ public class NotificationResDTO {
     private String title;
     private String content;
     private String type;           // từ enum NotificationType
-    private Long groupId;          // lobby id nếu type = GROUP
-    private Long hostId;           // id của host/admin tạo
+    private String lobbyName;          // class id nếu type = GROUP
+    private String hostName;           // id của host/admin tạo
     private LocalDateTime createdAt;
 }

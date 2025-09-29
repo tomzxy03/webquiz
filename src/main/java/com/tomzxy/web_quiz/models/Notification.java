@@ -8,9 +8,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.FetchType;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
 import com.tomzxy.web_quiz.enums.NotificationType;
 
@@ -19,7 +17,8 @@ import com.tomzxy.web_quiz.enums.NotificationType;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-
+@Getter
+@Setter
 public class Notification extends BaseEntity {
 
     @Column(name = "title")
@@ -29,8 +28,8 @@ public class Notification extends BaseEntity {
     private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_id", nullable = true)
-    private Lobby group;
+    @JoinColumn(name = "lobby_id", nullable = true)
+    private Lobby lobby;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type")

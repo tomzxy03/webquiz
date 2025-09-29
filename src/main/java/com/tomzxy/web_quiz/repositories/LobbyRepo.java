@@ -19,7 +19,10 @@ public interface LobbyRepo extends JpaRepository<Lobby, Long>, JpaSpecificationE
     // Basic CRUD with pagination
     @Query("SELECT l FROM Lobby l WHERE l.isActive = true")
     Page<Lobby> findAllActive(Pageable pageable);
-    
+
+    @Query("SELECT l FROM Lobby l WHERE l.id = :lobbyId AND l.isActive = true")
+    Optional<Lobby> findByLobbyId(@Param("lobbyId") Long lobbyId);
+
     // Search functionality
     @Query("SELECT l FROM Lobby l WHERE LOWER(l.lobbyName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) AND l.isActive = true")
     Page<Lobby> searchByLobbyName(@Param("searchTerm") String searchTerm, Pageable pageable);

@@ -26,7 +26,10 @@ public interface UserRepo extends JpaRepository<User, Long>, JpaSpecificationExe
 
     @Query("SELECT u FROM User u WHERE u.isActive = :isActive")
     Page<User> findAllByActive(@Param("isActive") boolean isActive, Pageable pageable);
-    
+
+    @Query("SELECT u FROM User u WHERE u.isActive = true and u.id = :userId")
+    Optional<User> findByIdAndActive(Long userId);
+
     // Authentication and basic queries
     Optional<User> findByUserName(String userName, @Param("isActive") boolean isActive);
     Optional<User> findByEmail(String email, @Param("isActive") boolean isActive);

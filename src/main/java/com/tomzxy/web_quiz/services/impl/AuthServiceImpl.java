@@ -24,8 +24,6 @@ public class AuthServiceImpl implements AuthService {
  
     @Override
     public String login(LoginReqDTO loginReqDTO) {
-        User user = userRepo.findByUserName(loginReqDTO.getUserName())
-                .orElseThrow(() -> new NotFoundException("User not found"));
-        return user.getUserName();
+        return null;
     }
 }

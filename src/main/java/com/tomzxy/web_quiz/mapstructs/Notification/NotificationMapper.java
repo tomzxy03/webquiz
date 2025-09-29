@@ -1,6 +1,7 @@
 package com.tomzxy.web_quiz.mapstructs.Notification;
 
 
+import com.tomzxy.web_quiz.dto.requests.Notification.NotificationReqDTO;
 import com.tomzxy.web_quiz.dto.responses.NotificationResDTO;
 import com.tomzxy.web_quiz.models.Notification;
 import org.mapstruct.InheritInverseConfiguration;
@@ -13,13 +14,14 @@ public interface NotificationMapper {
 
     NotificationMapper MAPPER = Mappers.getMapper(NotificationMapper.class);
 
-    @Mapping(source = "group.id", target = "groupId")
-    @Mapping(source = "host.id", target = "hostId")
+    @Mapping(target = "lobbyName", ignore = true)
+    @Mapping(target = "hostName", ignore = true)
+    @Mapping(target = "type", ignore = true)
     NotificationResDTO toDto(Notification entity);
 
     @InheritInverseConfiguration
-    @Mapping(target = "group", ignore = true) // xử lý qua service
+    @Mapping(target = "lobby", ignore = true) // xử lý qua service
     @Mapping(target = "host", ignore = true)  // xử lý qua service
-    Notification toEntity(NotificationResDTO dto);
+    Notification toEntity(NotificationReqDTO dto);
 
 }

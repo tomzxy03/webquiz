@@ -1,4 +1,4 @@
-package com.tomzxy.web_quiz.dto.requests;
+package com.tomzxy.web_quiz.dto.requests.Notification;
 
 
 import com.tomzxy.web_quiz.enums.NotificationType;
@@ -14,10 +14,10 @@ public class NotificationReqDTO {
     @NotBlank(message = "Content must be not blank")
     private String content;
 
-    private Long groupId;
+    private Long lobbyId;
 
     @EnumValidate(name = "notificationType", regex = "SYSTEM|GROUP|PERSONAL")
-    private NotificationType notificationType;
+    private NotificationType type;
 
     @NotNull(message = "host must be not null")
     private Long hostId;
