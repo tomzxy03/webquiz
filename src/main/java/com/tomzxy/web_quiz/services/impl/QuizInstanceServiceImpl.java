@@ -312,7 +312,7 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
                 .correctAnswer(correctAnswer != null ? correctAnswer.getAnswerName() : null)
                 .isCorrect(userResponse != null && userResponse.isCorrect())
                 .isSkipped(userResponse != null && userResponse.isSkipped())
-                .status(userResponse != null ? userResponse.getStatus() : ResponseStatus.NOT_ANSWERED)
+                .status(userResponse != null ? userResponse.getStatus().name() : ResponseStatus.NOT_ANSWERED.name())
                 .allAnswers(answerResults)
                 .build();
         

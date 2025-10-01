@@ -65,7 +65,8 @@ public interface UserRepo extends JpaRepository<User, Long>, JpaSpecificationExe
     // Find users who are members of a specific lobby
     @Query("SELECT u FROM User u JOIN u.lobbies l WHERE l.id = :lobbyId AND u.isActive = :isActive")
     Page<User> findByLobbyId(@Param("lobbyId") Long lobbyId, @Param("isActive") boolean isActive, Pageable pageable);
-    
+    @Query("SELECT u FROM User u JOIN u.lobbies l WHERE l.id = :lobbyId AND u.isActive = true")
+    List<User> findByLobbyId(@Param("lobbyId") Long lobbyId);
     // Find users with specific phone number pattern
     @Query("SELECT u FROM User u WHERE u.phone LIKE :phonePattern AND u.isActive = :isActive")
     Page<User> findByPhonePattern(@Param("phonePattern") String phonePattern, @Param("isActive") boolean isActive, Pageable pageable);
