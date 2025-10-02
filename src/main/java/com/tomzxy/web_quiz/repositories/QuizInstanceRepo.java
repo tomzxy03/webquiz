@@ -49,14 +49,14 @@ List<QuizInstance> findTimedOutInstances(@Param("now") LocalDateTime now,
     // Tìm quiz instance đang chạy
     List<QuizInstance> findByStatusAndStartedAtBefore(QuizInstanceStatus status, LocalDateTime before);
 
-    @Query(value = "SELECT * FROM quiz_instance qi " +
-               "WHERE qi.quiz_id = :quizId " +
-               "AND qi.lobby_id = :lobbyId",
-       nativeQuery = true)
-    Page<QuizInstance> findByQuizIdAndLobbyId(@Param("quizId") Long quizId, @Param("lobbyId") Long lobbyId, Pageable pageable);
+//    @Query(value = "SELECT * FROM quiz_instance qi " +
+//               "WHERE qi.quiz_id = :quizId " +
+//               "AND qi.lobby_id = :lobbyId",
+//       nativeQuery = true)
+//    Page<QuizInstance> findByQuizIdAndLobbyId(@Param("quizId") Long quizId, @Param("lobbyId") Long lobbyId, Pageable pageable);
 
 
-    // Tìm số lượng quiz đã làm.
-    int countByQuizzesAndUserId(Long userId);
+//    // Tìm số lượng quiz đã làm.
+//    int countByQuizzesAndUserId(Long userId);
 
 } 

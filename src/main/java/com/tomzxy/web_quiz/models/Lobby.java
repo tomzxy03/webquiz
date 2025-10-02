@@ -39,4 +39,6 @@ public class Lobby extends BaseEntity{
 
     @OneToMany(mappedBy = "lobby")
     private List<Quiz> quizzes;
+
+
 }

@@ -250,13 +250,13 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         quizInstanceRepo.delete(instance);
     }
 
-    @Override
-    public PageResDTO<QuizInstanceResDTO> getAllQuizInstancesByQuizIdAndLobbyId(Long quizId, Long lobbyId, int page, int size) {
-        // Implementation for getting quiz instances by quiz and lobby
-        Pageable pageable = PageRequest.of(page, size);
-        Page<QuizInstance> instances = quizInstanceRepo.findByQuizIdAndLobbyId(quizId, lobbyId, pageable);
-        return convertToPageResDTO.convertPageResponse(instances, pageable, quizInstanceMapper::toQuizInstanceResDTO);
-    }
+//    @Override
+//    public PageResDTO<QuizInstanceResDTO> getAllQuizInstancesByQuizIdAndLobbyId(Long quizId, Long lobbyId, int page, int size) {
+//        // Implementation for getting quiz instances by quiz and lobby
+//        Pageable pageable = PageRequest.of(page, size);
+//        Page<QuizInstance> instances = quizInstanceRepo.findByQuizIdAndLobbyId(quizId, lobbyId, pageable);
+//        return convertToPageResDTO.convertPageResponse(instances, pageable, quizInstanceMapper::toQuizInstanceResDTO);
+//    }
 
     // Helper methods
     private List<Question> getQuestionsFromQuiz(Quiz quiz) {

@@ -39,16 +39,12 @@ public class QuizInstance extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lobby_id", nullable = true)
-    private Lobby lobby;
-
     @Column(name = "started_at", nullable = false)
     private LocalDateTime startedAt;
 
     @Builder.Default
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "options", columnDefinition = "jsonb")
+    @Column(name = "options", columnDefinition = "json")
     private Set<QuizOptions> options = new HashSet<>();
 
     @Builder.Default

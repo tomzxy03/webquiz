@@ -41,13 +41,13 @@ public interface QuizRepo extends JpaRepository<Quiz, Long>, JpaSpecificationExe
     @Query("SELECT q FROM Quiz q WHERE q.host.id = :hostId AND q.lobby.id = :lobbyId AND q.isActive = true")
     Page<Quiz> findByHostIdAndLobbyId(@Param("hostId") Long hostId, @Param("lobbyId") Long lobbyId, Pageable pageable);
     
-    // Find quizzes with results count
-    @Query("SELECT q FROM Quiz q WHERE SIZE(q.results) > 0 AND q.isActive = true")
-    Page<Quiz> findQuizzesWithResults(Pageable pageable);
+//    // Find quizzes with results count
+//    @Query("SELECT q FROM Quiz q WHERE SIZE(q.instances) > 0 AND q.isActive = true")
+//    Page<Quiz> findQuizzesWithResults(Pageable pageable);
     
-    // Find quizzes without results
-    @Query("SELECT q FROM Quiz q WHERE SIZE(q.results) = 0 AND q.isActive = true")
-    Page<Quiz> findQuizzesWithoutResults(Pageable pageable);
+//    // Find quizzes without results
+//    @Query("SELECT q FROM Quiz q WHERE SIZE(q.instances) = 0 AND q.isActive = true")
+//    Page<Quiz> findQuizzesWithoutResults(Pageable pageable);
     
     // Find by subject
     @Query("SELECT q FROM Quiz q WHERE q.subject.id = :subjectId AND q.isActive = true")
@@ -66,7 +66,7 @@ public interface QuizRepo extends JpaRepository<Quiz, Long>, JpaSpecificationExe
     Page<Quiz> findRecentQuizzes(Pageable pageable);
     
     // Find popular quizzes (with most results)
-    @Query("SELECT q FROM Quiz q WHERE q.isActive = true ORDER BY SIZE(q.results) DESC")
+    @Query("SELECT q FROM Quiz q WHERE q.isActive = true ORDER BY SIZE(q.instances) DESC")
     Page<Quiz> findPopularQuizzes(Pageable pageable);
     
     // Check if quiz exists by title and host

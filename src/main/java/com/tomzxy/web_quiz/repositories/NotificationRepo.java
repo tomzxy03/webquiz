@@ -9,10 +9,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface NotificationRepo extends JpaRepository<Notification, Long> {
-    Page<Notification> findAllByActive (PageRequest pageRequest);
+    Page<Notification> findAllByIsActiveTrue (PageRequest pageRequest);
 
-    Optional<Notification> findByGroupIdAndActive(Long groupId);   // lấy theo lobby
+    Optional<Notification> findByLobbyIdAndIsActiveTrue(Long lobbyId);   // lấy theo lobby
 
-    Optional<Notification> findByHostIdAndActive(Long hostId);     // lấy theo người tạo
+    Optional<Notification> findByHostIdAndIsActiveTrue(Long hostId);     // lấy theo người tạo
 
 }

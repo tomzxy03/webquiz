@@ -24,7 +24,7 @@ public interface QuizInstanceService {
 
     PageResDTO<?> getAllQuizInstancesByQuizIdAndUserId(Long quizId, Long userId, int page, int size);
 
-    PageResDTO<?> getAllQuizInstancesByQuizIdAndLobbyId(Long quizId, Long lobbyId, int page, int size);
+  //  PageResDTO<?> getAllQuizInstancesByQuizIdAndLobbyId(Long quizId, Long lobbyId, int page, int size);
   
     QuizResultDetailResDTO submitQuiz(QuizSubmissionReqDTO request);
     

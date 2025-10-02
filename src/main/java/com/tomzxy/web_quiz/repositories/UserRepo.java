@@ -22,7 +22,7 @@ public interface UserRepo extends JpaRepository<User, Long>, JpaSpecificationExe
     
     // Basic CRUD with pagination
     @NonNull
-    Page<User> findAll(@NonNull Pageable pageable, @Param("isActive") boolean isActive);
+    Page<User> findAllByIsActiveTrue(@NonNull Pageable pageable);
 
     @Query("SELECT u FROM User u WHERE u.isActive = :isActive")
     Page<User> findAllByActive(@Param("isActive") boolean isActive, Pageable pageable);
@@ -31,10 +31,10 @@ public interface UserRepo extends JpaRepository<User, Long>, JpaSpecificationExe
     Optional<User> findByIdAndActive(Long userId);
 
     // Authentication and basic queries
-    Optional<User> findByUserName(String userName, @Param("isActive") boolean isActive);
-    Optional<User> findByEmail(String email, @Param("isActive") boolean isActive);
-    boolean existsByEmail(String email, @Param("isActive") boolean isActive);
-    boolean existsByPhone(String phone, @Param("isActive") boolean isActive);
+    Optional<User> findByUserNameAndIsActiveTrue(String userName);
+    Optional<User> findByEmailAndIsActiveTrue(String email);
+    boolean existsByEmailAndIsActiveTrue(String email);
+    boolean existsByPhoneAndIsActiveTrue(String phone);
     
     // Search functionality
     @Query("SELECT u FROM User u WHERE (LOWER(u.userName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +

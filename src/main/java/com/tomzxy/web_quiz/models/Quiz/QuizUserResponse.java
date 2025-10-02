@@ -16,11 +16,14 @@ import com.tomzxy.web_quiz.models.snapshot.QuestionSnapshot;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "quiz_user_responses", indexes = {
-    @Index(name = "idx_quiz_user_response_instance", columnList = "quiz_instance_id"),
-    @Index(name = "idx_quiz_user_response_question", columnList = "quiz_instance_question_id"),
-    @Index(name = "idx_quiz_user_response_correct", columnList = "is_correct")
-})
+@Table(
+        name = "quiz_user_responses",
+        indexes = {
+                @Index(name = "idx_quiz_user_response_instance", columnList = "quiz_instance_id"),
+                @Index(name = "idx_quiz_user_response_instance_correct", columnList = "quiz_instance_id, is_correct"),
+                @Index(name = "idx_quiz_user_response_instance_answered", columnList = "quiz_instance_id, answered_at")
+        }
+)
 public class QuizUserResponse extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -56,7 +59,7 @@ public class QuizUserResponse extends BaseEntity {
         joinColumns = @JoinColumn(name = "quiz_user_response_id"),
         inverseJoinColumns = @JoinColumn(name = "question_snapshot_id")
     )
-    private List<QuestionSnapshot> questionSnapshot;
+    private List<QuestionSnapshot> questionSnapshots;
 
     // Business Logic Methods
     public void markAsCorrect() {
