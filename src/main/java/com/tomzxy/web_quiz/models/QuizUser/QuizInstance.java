@@ -1,5 +1,6 @@
-package com.tomzxy.web_quiz.models.Quiz;
+package com.tomzxy.web_quiz.models.QuizUser;
 
+import com.tomzxy.web_quiz.models.Quiz.Quiz;
 import jakarta.persistence.*;
 import lombok.*;
 import jakarta.persistence.Index;
@@ -8,14 +9,9 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-
 import com.tomzxy.web_quiz.enums.QuizInstanceStatus;
-import com.tomzxy.web_quiz.enums.QuizOptions;
 import com.tomzxy.web_quiz.models.BaseEntity;
-import com.tomzxy.web_quiz.models.Lobby;
-import com.tomzxy.web_quiz.models.User;
+import com.tomzxy.web_quiz.models.User.User;
 
 @Entity
 @Getter
@@ -29,6 +25,8 @@ import com.tomzxy.web_quiz.models.User;
     @Index(name = "idx_quiz_instance_status", columnList = "status"),
     @Index(name = "idx_quiz_instance_started", columnList = "started_at")
 })
+// the quizInstance be created whenever user join quiz. It's include general result of user.
+
 public class QuizInstance extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -41,11 +39,6 @@ public class QuizInstance extends BaseEntity {
 
     @Column(name = "started_at", nullable = false)
     private LocalDateTime startedAt;
-
-    @Builder.Default
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "options", columnDefinition = "json")
-    private Set<QuizOptions> options = new HashSet<>();
 
     @Builder.Default
     @Column(name = "total_points", nullable = false)

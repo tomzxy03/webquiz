@@ -8,5 +8,9 @@ public enum QuizOptions {
     @JsonProperty("shuffle_answers")
     SHUFFLE_ANSWERS,
     @JsonProperty("allow_review")
-    ALLOW_REVIEW
+    ALLOW_REVIEW,
+    @JsonProperty("show_score_after_submit")
+    SHOW_SCORE_AFTER_SUBMIT,
+    @JsonProperty("allow_retry")
+    ALLOW_RETRY
 } 

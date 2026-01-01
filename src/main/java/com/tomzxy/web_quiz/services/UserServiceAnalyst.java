@@ -1,8 +1,7 @@
 package com.tomzxy.web_quiz.services;
 
 
-import com.tomzxy.web_quiz.models.Quiz.QuizInstance;
-import com.tomzxy.web_quiz.repositories.QuizInstanceRepo;
+import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;
 
 
 public interface UserServiceAnalyst {

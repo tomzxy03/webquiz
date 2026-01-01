@@ -1,4 +1,4 @@
-package com.tomzxy.web_quiz.models.Quiz;
+package com.tomzxy.web_quiz.models.QuizUser;
 
 import jakarta.persistence.*;
 import lombok.*;

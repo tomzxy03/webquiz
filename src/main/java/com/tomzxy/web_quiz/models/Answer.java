@@ -34,21 +34,12 @@ public class Answer extends BaseEntity {
     private QuestionAndAnswerType answerType;
 
     @Column(name = "answer_correct", nullable = false)
-
     private boolean answerCorrect;
 
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "question_id", nullable = false)
     private Question question;
-
-    @Column(name = "option_order")
-    private Integer optionOrder;
-
-    @Column(name = "option_label", length = 10)
-    private String optionLabel;
-
-
 
     // Business Logic Methods
     public boolean isTextAnswer() {
@@ -59,23 +50,14 @@ public class Answer extends BaseEntity {
         return answerType == QuestionAndAnswerType.IMAGE;
     }
 
+    // to update correct answer
     public void markAsCorrect() {
         this.answerCorrect = true;
         this.setUpdatedAt(java.time.LocalDateTime.now());
     }
-
+    // to update no correct answer
     public void markAsIncorrect() {
         this.answerCorrect = false;
-        this.setUpdatedAt(java.time.LocalDateTime.now());
-    }
-
-    public void activate() {
-        this.setActive(true);
-        this.setUpdatedAt(java.time.LocalDateTime.now());
-    }
-
-    public void deactivate() {
-        this.setActive(false);
         this.setUpdatedAt(java.time.LocalDateTime.now());
     }
 

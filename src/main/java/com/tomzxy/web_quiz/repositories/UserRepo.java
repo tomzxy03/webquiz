@@ -1,11 +1,10 @@
 package com.tomzxy.web_quiz.repositories;
 
-import com.tomzxy.web_quiz.models.User;
+import com.tomzxy.web_quiz.models.User.User;
 import com.tomzxy.web_quiz.enums.Gender;
 import lombok.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -89,7 +88,7 @@ public interface UserRepo extends JpaRepository<User, Long>, JpaSpecificationExe
     
     
     // Find users without any roles
-@Query("SELECT u FROM User u WHERE SIZE(u.roles) = 0 AND u.isActive = :isActive")
+    @Query("SELECT u FROM User u WHERE SIZE(u.roles) = 0 AND u.isActive = :isActive")
     Page<User> findUsersWithoutRoles(@Param("isActive") boolean isActive, Pageable pageable);
     
     // Find users with multiple roles

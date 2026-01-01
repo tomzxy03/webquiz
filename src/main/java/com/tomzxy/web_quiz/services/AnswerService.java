@@ -9,7 +9,7 @@ import java.util.List;
 public interface AnswerService {
     PageResDTO<?> get_Answers_pageable(int size , int page);
 
-    void create_Answer(AnswerReqDTO answerReqDTO);
+    AnswerResDTO create_Answer(AnswerReqDTO answerReqDTO);
 
     void create_Answers(List<AnswerReqDTO> answerReqDTO);
 

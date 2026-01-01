@@ -2,7 +2,6 @@ package com.tomzxy.web_quiz.services.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -15,8 +14,8 @@ import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.QuizUserResponseResDTO;
 import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.mapstructs.QuizUserResponseMapper;
-import com.tomzxy.web_quiz.models.Quiz.QuizInstance;
-import com.tomzxy.web_quiz.models.Quiz.QuizUserResponse;
+import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;
+import com.tomzxy.web_quiz.models.QuizUser.QuizUserResponse;
 import com.tomzxy.web_quiz.repositories.QuizInstanceRepo;
 import com.tomzxy.web_quiz.repositories.QuizUserResponseRepo;
 import com.tomzxy.web_quiz.services.ConvertToPageResDTO;

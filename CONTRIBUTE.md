@@ -1,25 +1,40 @@
 # WebQuiz Project Requirements
-
+- Triển khai hệ thống bằng Spring boot. 
 1. Business Requirement
+Role được chia thành USER,ADMIN,HOST
 1.1. User & Authentication
 
 User có thể đăng ký / đăng nhập (email, social login).
 User có thể có role:
-ADMIN (toàn hệ thống).
-HOST/TEACHER (chủ class, tạo quiz, quản lý member).
-STUDENT (tham gia quiz).
+HOST (chủ class, tạo quiz, quản lý member).
+USER (tham gia quiz).
 Hỗ trợ refresh token, quản lý session.
 
+1.2. Mô tả tổng quan về yêu cầu đặc biệt:
+
+```
+Actor chính trong hệ thống có 2 loại: ADMIN và USER.
++ User khi khởi tạo nhóm riêng sẽ được cấp quyền Host.
++ Bản thân mỗi User sẽ có nhiều class.
++ Mỗi Host có một nơi lưu trữ question bank ( trong question bank có thể chia các folder)
++ Question bank có thể được sử dụng bất kì trong nhóm nào ( không bị phụ thuộc)
++ Question có thể thêm thông qua import hoặc tự custom.
++ Bản thân quiz instance được tạo mỗi khi user join quiz.
++ Kết quả được đưa về hệ thống theo từng path mỗi khoảng thời gian. 
+Và được lưu tại UserQuizResponse.
+```
 
 1.2. Quiz Management
-Host/Admin có thể tạo quiz từ question bank (hoặc tự custom).
-Quiz có các option:
+- Host/Admin có thể tạo quiz từ question bank (hoặc tự custom).
+- Quiz có các option:
+```
 Shuffle questions/answers.
 Allow review after submit.
-Time limit (per quiz hoặc per question).
+Time limit 
 Show score immediately or delayed.
-Quiz có question types: MCQ (single/multiple), True/False, Essay (open text), Image-based.
-Quiz được snapshot khi publish để đảm bảo toàn vẹn (kể cả khi bank thay đổi).
+```
+- Quiz có question types: MCQ (single/multiple), True/False, Essay (open text), Image-based.
+- *Quiz được snapshot khi publish để đảm bảo toàn vẹn (kể cả khi bank thay đổi).*
 
 1.3. Quiz Instance / Attempt
 Khi user join quiz → tạo QuizInstance.

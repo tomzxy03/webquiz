@@ -2,20 +2,18 @@ package com.tomzxy.web_quiz.services.impl;
 
 
 import com.tomzxy.web_quiz.dto.requests.Notification.NotificationReqDTO;
-import com.tomzxy.web_quiz.dto.responses.NotificationResDTO;
+import com.tomzxy.web_quiz.dto.responses.Notification.NotificationResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.enums.AppCode;
-import com.tomzxy.web_quiz.enums.NotificationType;
 import com.tomzxy.web_quiz.exception.ApiException;
-import com.tomzxy.web_quiz.exception.GlobalExceptionHandler;
 import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.mapstructs.Notification.NotificationMapper;
 import com.tomzxy.web_quiz.mapstructs.Notification.NotificationUserMapper;
 import com.tomzxy.web_quiz.models.Lobby;
-import com.tomzxy.web_quiz.models.Notification;
+import com.tomzxy.web_quiz.models.NotificationUser.Notification;
 import com.tomzxy.web_quiz.models.NotificationUser.NotificationUserId;
 import com.tomzxy.web_quiz.models.NotificationUser.UserNotification;
-import com.tomzxy.web_quiz.models.User;
+import com.tomzxy.web_quiz.models.User.User;
 import com.tomzxy.web_quiz.repositories.LobbyRepo;
 import com.tomzxy.web_quiz.repositories.NotificationRepo;
 import com.tomzxy.web_quiz.repositories.NotificationUserRepo;
@@ -119,8 +117,10 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public Void deleteNotification(Long notificationId) {
-        return null;
+    public void deleteNotification(Long notificationId) {
+        Notification notification = getById(notificationId);
+        notification.deactivate();
+        notificationRepo.save(notification);
     }
 
     private Notification getById(Long notificationId){

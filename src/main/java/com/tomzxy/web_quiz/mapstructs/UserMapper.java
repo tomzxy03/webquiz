@@ -1,14 +1,15 @@
 package com.tomzxy.web_quiz.mapstructs;
 
 import com.tomzxy.web_quiz.dto.requests.UserReqDto;
+import com.tomzxy.web_quiz.dto.responses.user.UserLobbyResDTO;
+import com.tomzxy.web_quiz.dto.responses.user.UserResDTO;
 import com.tomzxy.web_quiz.dto.requests.UserProfileReqDTO;
-import com.tomzxy.web_quiz.dto.responses.UserResDTO;
-import com.tomzxy.web_quiz.models.User;
+import com.tomzxy.web_quiz.models.User.User;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
-import java.lang.annotation.Target;
 import java.util.List;
+import java.util.Set;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING,
         unmappedTargetPolicy = ReportingPolicy.IGNORE)
@@ -24,6 +25,9 @@ public interface UserMapper {
     UserResDTO toUserResDTO(User user);
 
     List<UserResDTO> toListUserResDTO(List<User> users);
+
+
+    Set<UserLobbyResDTO> toListUserLobbyResDTO(Set<User> users);
 
     @Mapping(target = "roles", ignore = true)
     @Mapping(target = "passwordHash", source = "password")

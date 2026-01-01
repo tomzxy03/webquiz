@@ -1,19 +1,15 @@
 package com.tomzxy.web_quiz.services.impl;
 
-import com.tomzxy.web_quiz.dto.requests.QuizAnswerReqDTO;
-import com.tomzxy.web_quiz.dto.requests.QuizQuestionReqDTO;
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizReqDTO;
-import com.tomzxy.web_quiz.dto.responses.QuizResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
+import com.tomzxy.web_quiz.dto.responses.Quiz.QuizResDTO;
 import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.mapstructs.QuizMapper;
-import com.tomzxy.web_quiz.models.User;
+import com.tomzxy.web_quiz.models.User.User;
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
 import com.tomzxy.web_quiz.models.Lobby;
 import com.tomzxy.web_quiz.models.Question;
 import com.tomzxy.web_quiz.models.Answer;
-import com.tomzxy.web_quiz.models.QuizQuestion;
-import com.tomzxy.web_quiz.models.QuizAnswer;
 import com.tomzxy.web_quiz.repositories.QuizRepo;
 import com.tomzxy.web_quiz.repositories.UserRepo;
 import com.tomzxy.web_quiz.repositories.LobbyRepo;
@@ -21,7 +17,6 @@ import com.tomzxy.web_quiz.repositories.QuestionRepo;
 import com.tomzxy.web_quiz.repositories.AnswerRepo;
 import com.tomzxy.web_quiz.services.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.services.QuizService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -170,7 +165,8 @@ public class QuizServiceImpl implements QuizService {
         try {
             Quiz quiz = quizRepo.findById(id)
                     .orElseThrow(() -> new NotFoundException("Quiz not found with id: " + id));
-            quizRepo.delete(quiz);
+            quiz.softDelete();
+            quizRepo.save(quiz);
         } catch (NotFoundException e) {
             throw e;
         } catch (Exception e) {

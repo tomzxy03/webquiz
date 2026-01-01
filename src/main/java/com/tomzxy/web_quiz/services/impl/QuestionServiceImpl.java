@@ -3,16 +3,14 @@ package com.tomzxy.web_quiz.services.impl;
 
 import com.tomzxy.web_quiz.dto.requests.QuestionReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
-import com.tomzxy.web_quiz.dto.responses.QuestionResDTO;
+import com.tomzxy.web_quiz.dto.responses.question.QuestionResDTO;
 import com.tomzxy.web_quiz.exception.ExistedException;
 import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.mapstructs.AnswerMapper;
 import com.tomzxy.web_quiz.mapstructs.QuestionMapper;
 import com.tomzxy.web_quiz.models.Answer;
 import com.tomzxy.web_quiz.models.Question;
-import com.tomzxy.web_quiz.models.Subject;
 import com.tomzxy.web_quiz.repositories.QuestionRepo;
-import com.tomzxy.web_quiz.repositories.SubjectRepo;
 import com.tomzxy.web_quiz.services.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.services.QuestionService;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

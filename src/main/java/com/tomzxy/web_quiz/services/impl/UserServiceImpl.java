@@ -3,25 +3,22 @@ package com.tomzxy.web_quiz.services.impl;
 
 import com.tomzxy.web_quiz.dto.requests.UserReqDto;
 import com.tomzxy.web_quiz.dto.requests.UserProfileReqDTO;
-import com.tomzxy.web_quiz.dto.requests.auth.LoginReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
-import com.tomzxy.web_quiz.dto.responses.UserResDTO;
+import com.tomzxy.web_quiz.dto.responses.user.UserResDTO;
 import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.mapstructs.UserMapper;
-import com.tomzxy.web_quiz.models.User;
+import com.tomzxy.web_quiz.models.User.User;
 import com.tomzxy.web_quiz.repositories.UserRepo;
 import com.tomzxy.web_quiz.services.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -71,6 +68,17 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    @Override
+    public void delete_user_list(List<Long> userId){
+        List<User> users = userId.stream().map(
+                userRepo::getReferenceById
+        ).toList();
+        for(User user: users){
+            user.setActive(false);
+        }
+        userRepo.saveAll(users);
+    }
+
     
 
     @Override
@@ -85,6 +93,7 @@ public class UserServiceImpl implements UserService {
     private User findUserById(Long id){
         return userRepo.findById(id).orElseThrow(()-> new NotFoundException("User not found"));
     }
+
 
 
 }

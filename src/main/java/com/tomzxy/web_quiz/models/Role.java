@@ -1,13 +1,13 @@
 package com.tomzxy.web_quiz.models;
 
 
+import com.tomzxy.web_quiz.models.User.User;
 import com.tomzxy.web_quiz.models.rolepermission.RolePermissionObject;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Entity

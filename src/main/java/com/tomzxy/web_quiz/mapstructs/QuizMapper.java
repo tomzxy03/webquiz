@@ -1,7 +1,7 @@
 package com.tomzxy.web_quiz.mapstructs;
 
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizReqDTO;
-import com.tomzxy.web_quiz.dto.responses.QuizResDTO;
+import com.tomzxy.web_quiz.dto.responses.Quiz.QuizResDTO;
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
 
 import java.util.List;

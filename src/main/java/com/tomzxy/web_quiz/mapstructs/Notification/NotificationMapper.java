@@ -2,8 +2,8 @@ package com.tomzxy.web_quiz.mapstructs.Notification;
 
 
 import com.tomzxy.web_quiz.dto.requests.Notification.NotificationReqDTO;
-import com.tomzxy.web_quiz.dto.responses.NotificationResDTO;
-import com.tomzxy.web_quiz.models.Notification;
+import com.tomzxy.web_quiz.dto.responses.Notification.NotificationResDTO;
+import com.tomzxy.web_quiz.models.NotificationUser.Notification;
 import org.mapstruct.InheritInverseConfiguration;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

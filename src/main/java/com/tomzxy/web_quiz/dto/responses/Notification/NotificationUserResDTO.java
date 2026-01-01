@@ -1,4 +1,4 @@
-package com.tomzxy.web_quiz.dto.responses;
+package com.tomzxy.web_quiz.dto.responses.Notification;
 
 
 import lombok.*;

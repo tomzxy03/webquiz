@@ -1,6 +1,6 @@
 package com.tomzxy.web_quiz.repositories;
 
-import com.tomzxy.web_quiz.models.Notification;
+import com.tomzxy.web_quiz.models.NotificationUser.Notification;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

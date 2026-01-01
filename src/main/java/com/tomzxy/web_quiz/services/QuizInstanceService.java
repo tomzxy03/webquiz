@@ -4,7 +4,7 @@ import com.tomzxy.web_quiz.dto.requests.quiz.QuizInstanceReqDTO;
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizSubmissionReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.QuizInstanceResDTO;
-import com.tomzxy.web_quiz.dto.responses.QuizResultDetailResDTO;
+import com.tomzxy.web_quiz.models.Quiz.Quiz;
 
 public interface QuizInstanceService {
     
@@ -25,15 +25,12 @@ public interface QuizInstanceService {
     PageResDTO<?> getAllQuizInstancesByQuizIdAndUserId(Long quizId, Long userId, int page, int size);
 
   //  PageResDTO<?> getAllQuizInstancesByQuizIdAndLobbyId(Long quizId, Long lobbyId, int page, int size);
-  
-    QuizResultDetailResDTO submitQuiz(QuizSubmissionReqDTO request);
-    
-
-    QuizResultDetailResDTO getQuizResult(Long instanceId, Long userId);
     
    
     boolean canUserStartQuiz(Long quizId, Long userId);
-    
+
+    QuizInstanceResDTO submitQuiz(QuizSubmissionReqDTO request);
+
 
     void handleTimedOutInstances();
     

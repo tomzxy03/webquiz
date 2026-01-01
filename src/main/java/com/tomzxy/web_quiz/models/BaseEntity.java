@@ -10,7 +10,7 @@ import lombok.experimental.SuperBuilder;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.Where;
+
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -49,11 +49,6 @@ public abstract class BaseEntity implements Serializable {
 
     @Column(name = "updated_by")
     private String updatedBy;
-
-    @Version
-    @Column(name = "version")
-    private Long version = 0L;
-
     @PrePersist
     protected void onCreate() {
         if (uuid == null) {
@@ -93,5 +88,15 @@ public abstract class BaseEntity implements Serializable {
     @Override
     public int hashCode() {
         return uuid != null ? uuid.hashCode() : super.hashCode();
+    }
+
+    public void activate() {
+        this.setActive(true);
+        this.setUpdatedAt(java.time.LocalDateTime.now());
+    }
+
+    public void deactivate() {
+        this.setActive(false);
+        this.setUpdatedAt(java.time.LocalDateTime.now());
     }
 }

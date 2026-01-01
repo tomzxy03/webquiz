@@ -1,16 +1,12 @@
 package com.tomzxy.web_quiz.mapstructs;
 
 import com.tomzxy.web_quiz.dto.responses.QuizInstanceResDTO;
-import com.tomzxy.web_quiz.dto.responses.QuizResultDetailResDTO;
-import com.tomzxy.web_quiz.models.Quiz.QuizInstance;
+import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
-
-import java.util.List;
-import java.util.Optional;
 
 @Mapper(componentModel = "spring", uses = {QuizMapper.class, QuestionMapper.class, AnswerMapper.class})
 public interface QuizInstanceMapper {

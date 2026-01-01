@@ -43,15 +43,6 @@ public abstract class ApiDefined {
         public static final String BASE = API_PREFIX + "/subjects";
         public static final String ID = "{subjectId}";
         public static final String DELETE_MANY = "/delete_many";
-        public static final String ADD_CHAPTER = ID + "/chapters";
-    }
-
-    public static final class Chapter {
-        public static final String BASE = API_PREFIX + "/chapters";
-        public static final String ID = "{chapterId}";
-        public static final String DELETE_MANY = "/delete_many";
-        public static final String ADD_QUESTION = ID + "/add-question";
-
     }
 
     public static final class Question {

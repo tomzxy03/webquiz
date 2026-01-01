@@ -16,5 +16,26 @@ public class ApiException extends RuntimeException {
         super(message);
         this.appCode=appCode;
     }
+    public ApiException(AppCode appCode, String message, Throwable cause) {
+        super(message, cause);
+        this.appCode = appCode;
+    }
+
+    public ApiException(AppCode appCode, Throwable cause) {
+        super(appCode.getMessage(), cause);
+        this.appCode = appCode;
+    }
+
+    public int getCode() {
+        return appCode.getCode();
+    }
+
+    public String getDefaultMessage() {
+        return appCode.getMessage();
+    }
+
+    public org.springframework.http.HttpStatus getHttpStatus() {
+        return appCode.getHttpStatus();
+    }
 
 }

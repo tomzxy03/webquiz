@@ -1,6 +1,5 @@
 package com.tomzxy.web_quiz.dto.requests.quiz;
 
-import com.tomzxy.web_quiz.dto.requests.QuizQuestionReqDTO;
 import com.tomzxy.web_quiz.enums.QuizType;
 import com.tomzxy.web_quiz.validation.EnumValidate;
 
@@ -26,18 +25,16 @@ public class QuizReqDTO {
     private QuizType quizType;
 
     @Min(value = 1, message = "Time limit must be at least 1 minute")
-    @Max(value = 480, message = "Time limit cannot exceed 8 hours")
+    @Max(value = 180, message = "Time limit cannot exceed 3 hours")
     private Integer timeLimitMinutes;
 
 
     @Min(value = 1, message = "Max attempts must be at least 1")
-    @Max(value = 10, message = "Max attempts cannot exceed 10")
     private Integer maxAttempts = 1;
 
     private boolean isPublic = false;
 
     private LocalDateTime startDate;
-
 
     @NotNull(message = "Host ID is required")
     private Long hostId;
@@ -48,5 +45,5 @@ public class QuizReqDTO {
     private Long subjectId;
 
     @NotEmpty(message = "Questions are required")
-    private Set<QuizQuestionReqDTO> questions;
+    private Set<Long> questionIds;
 } 

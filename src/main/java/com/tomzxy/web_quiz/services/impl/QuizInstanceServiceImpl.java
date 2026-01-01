@@ -1,11 +1,10 @@
 package com.tomzxy.web_quiz.services.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizInstanceReqDTO;
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizSubmissionReqDTO;
 import com.tomzxy.web_quiz.dto.responses.*;
+import com.tomzxy.web_quiz.dto.responses.question.QuestionResultResDTO;
 import com.tomzxy.web_quiz.enums.AppCode;
 import com.tomzxy.web_quiz.enums.QuizInstanceStatus;
 import com.tomzxy.web_quiz.enums.QuizOptions;
@@ -14,8 +13,10 @@ import com.tomzxy.web_quiz.exception.ApiException;
 import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.models.*;
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
-import com.tomzxy.web_quiz.models.Quiz.QuizInstance;
-import com.tomzxy.web_quiz.models.Quiz.QuizUserResponse;
+import com.tomzxy.web_quiz.models.Quiz.QuizQuestionLink;
+import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;
+import com.tomzxy.web_quiz.models.QuizUser.QuizUserResponse;
+import com.tomzxy.web_quiz.models.User.User;
 import com.tomzxy.web_quiz.repositories.*;
 import com.tomzxy.web_quiz.services.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.services.QuizInstanceService;
@@ -25,9 +26,6 @@ import com.tomzxy.web_quiz.mapstructs.AnswerMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,8 +48,6 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
     private final QuizInstanceMapper quizInstanceMapper;
     private final QuestionMapper questionMapper;
     private final AnswerMapper answerMapper;
-    private final QuizQuestionRepo quizQuestionRepo;
-    private final QuizAnswerRepo quizAnswerRepo;
     private final ConvertToPageResDTO convertToPageResDTO;
 
     @Override
@@ -64,8 +60,8 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         User user = userRepo.findById(request.getUserId())
                 .orElseThrow(() -> new NotFoundException("User không tồn tại"));
 
-        // kiểm tra user da qua so lan tham gia quiz
-        if (!canUserStartQuiz(request.getQuizId(), request.getUserId())) {
+        // kiểm tra được phép thi
+        if (!quiz.isAvailable()){
             throw new RuntimeException("User không có quyền tham gia quiz này");
         }
 
@@ -78,7 +74,6 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
                 .quiz(quiz)
                 .user(user)
                 .startedAt(LocalDateTime.now())
-                .options(request.getOptions())
                 .status(QuizInstanceStatus.IN_PROGRESS)
                 .build();
 
@@ -98,10 +93,10 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
             int points = calculateQuestionPoints(question, request);
             totalPoints += points;
 
-            QuizQuestion instanceQuestion = QuizQuestion.builder()
+            QuizQuestionLink instanceQuestion = QuizQuestionLink.builder()
                     .quiz(quiz)
                     .question(question)
-                    .isCustom(false)
+                    .points(points)
                     .build();
 
             instanceQuestion = quizQuestionRepo.save(instanceQuestion);
@@ -149,83 +144,73 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         return quizInstanceMapper.toQuizInstanceResDTO(instance);
     }
 
-    @Override
-    public QuizResultDetailResDTO submitQuiz(QuizSubmissionReqDTO request) {
-        QuizInstance instance = quizInstanceRepo.findById(request.getQuizInstanceId())
-                .orElseThrow(() -> new NotFoundException("Quiz instance không tồn tại"));
+//    @Override
+//    public QuizResultDetailResDTO submitQuiz(QuizSubmissionReqDTO request) {
+//        QuizInstance instance = quizInstanceRepo.findById(request.getQuizInstanceId())
+//                .orElseThrow(() -> new NotFoundException("Quiz instance không tồn tại"));
+//
+//        if (!instance.isInProgress()) {
+//            throw new ApiException(AppCode.NOT_AVAILABLE,"Quiz instance này không còn trong trạng thái chạy");
+//        }
+//
+//        // Xử lý từng câu trả lời
+//        int earnedPoints = 0;
+//        for (Map.Entry<Long, String> entry : request.getAnswers().entrySet()) {
+//            Long questionId = entry.getKey();
+//            String selectedAnswer = entry.getValue();
+//
+//            Question question = questionRepo.findById(questionId)
+//                    .orElseThrow(() -> new NotFoundException("Câu hỏi không tồn tại"));
+//
+//            // Tìm đáp án đúng
+//            Answer correctAnswer = question.getAnswers().stream()
+//                    .filter(Answer::isAnswerCorrect)
+//                    .findFirst()
+//                    .orElse(null);
+//
+//            boolean isCorrect = correctAnswer != null &&
+//                    correctAnswer.getAnswerName().equals(selectedAnswer);
+//
+//            // Tìm đáp án user đã chọn
+//            Long selectedAnswerId = request.getAnswerIds().get(questionId);
+//
+//            // Tạo user response
+//            QuizUserResponse response = QuizUserResponse.builder()
+//                    .quizInstance(instance)
+//                    .selectedAnswerId(selectedAnswerId)
+//                    .selectedAnswerText(selectedAnswer)
+//                    .isCorrect(isCorrect)
+//                    .pointsEarned(isCorrect ? question.getPoints() : 0)
+//                    .answeredAt(LocalDateTime.now())
+//                    .build();
+//
+//            quizUserResponseRepo.save(response);
+//
+//            if (isCorrect) {
+//                earnedPoints += question.getPoints();
+//            }
+//        }
+//
+//        // Cập nhật instance
+//        instance.setEarnedPoints(earnedPoints);
+//        instance.setStatus(QuizInstanceStatus.SUBMITTED);
+//        instance.setUpdatedAt(LocalDateTime.now());
+//        instance = quizInstanceRepo.save(instance);
+//
+//        return mapQuizResultDetailResDTO(instance);
+//    }
 
-        if (!instance.isInProgress()) {
-            throw new ApiException(AppCode.NOT_AVAILABLE,"Quiz instance này không còn trong trạng thái chạy");
-        }
 
-        // Xử lý từng câu trả lời
-        int earnedPoints = 0;
-        for (Map.Entry<Long, String> entry : request.getAnswers().entrySet()) {
-            Long questionId = entry.getKey();
-            String selectedAnswer = entry.getValue();
-
-            Question question = questionRepo.findById(questionId)
-                    .orElseThrow(() -> new NotFoundException("Câu hỏi không tồn tại"));
-
-            // Tìm đáp án đúng
-            Answer correctAnswer = question.getAnswers().stream()
-                    .filter(Answer::isAnswerCorrect)
-                    .findFirst()
-                    .orElse(null);
-
-            boolean isCorrect = correctAnswer != null && 
-                    correctAnswer.getAnswerName().equals(selectedAnswer);
-
-            // Tìm đáp án user đã chọn
-            Long selectedAnswerId = request.getAnswerIds().get(questionId);
-
-            // Tạo user response
-            QuizUserResponse response = QuizUserResponse.builder()
-                    .quizInstance(instance)
-                    .selectedAnswerId(selectedAnswerId)
-                    .selectedAnswerText(selectedAnswer)
-                    .isCorrect(isCorrect)
-                    .pointsEarned(isCorrect ? question.getPoints() : 0)
-                    .answeredAt(LocalDateTime.now())
-                    .build();
-
-            quizUserResponseRepo.save(response);
-
-            if (isCorrect) {
-                earnedPoints += question.getPoints();
-            }
-        }
-
-        // Cập nhật instance
-        instance.setEarnedPoints(earnedPoints);
-        instance.setStatus(QuizInstanceStatus.SUBMITTED);
-        instance.setUpdatedAt(LocalDateTime.now());
-        instance = quizInstanceRepo.save(instance);
-
-        return mapQuizResultDetailResDTO(instance);
-    }
-
-    @Override
-    public QuizResultDetailResDTO getQuizResult(Long instanceId, Long userId) {
-        QuizInstance instance = quizInstanceRepo.findById(instanceId)
-                .orElseThrow(() -> new NotFoundException("Quiz instance không tồn tại"));
-
-        return mapQuizResultDetailResDTO(instance);
-    }
-
-    @Override
-    public boolean canUserStartQuiz(Long quizId, Long userId) {
-        Quiz quiz = quizRepo.findById(quizId)
-                .orElseThrow(() -> new NotFoundException("Quiz không tồn tại"));
-
-        if (!quiz.isAvailable()) {
-            return false;
-        }
-
-        // Kiểm tra số lần tham gia
-        long userAttempts = quizInstanceRepo.countByQuizIdAndUserId(quizId, userId);
-        return userAttempts < quiz.getMaxAttempts();
-    }
+//    @Override
+//    public boolean canUserStartQuiz(Quiz quiz) {
+//        if (!quiz.isAvailable()) {
+//            return false;
+//        }
+//
+//        // Kiểm tra số lần tham gia
+//        long userAttempts = quizInstanceRepo.countByQuizIdAndUserId(quizId, userId);
+//        return userAttempts < quiz.getMaxAttempts();
+//    }
 
     @Override
     public void handleTimedOutInstances() {
@@ -260,8 +245,8 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
 
     // Helper methods
     private List<Question> getQuestionsFromQuiz(Quiz quiz) {
-        return quiz.getQuestions().stream()
-                .map(QuizQuestion::getQuestion)
+        return quiz.getQuizQuestionLinks().stream()
+                .map(QuizQuestionLink::getQuestion)
                 .collect(Collectors.toList());
     }
 
@@ -271,19 +256,6 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
     }
 
 
-
-    private QuizResultDetailResDTO mapQuizResultDetailResDTO(QuizInstance instance) {
-        List<Question> questions = getQuestionsFromQuiz(instance.getQuiz());
-
-        List<QuestionResultResDTO> questionResults = questions.stream()
-                .map(question -> mapQuestionResultResDTO(question, instance))
-                .collect(Collectors.toList());
-
-        QuizResultDetailResDTO dto = quizInstanceMapper.toQuizResultDetailResDTO(instance);
-        dto.setQuestionResults(questionResults);
-        
-        return dto;
-    }
 
     private QuestionResultResDTO mapQuestionResultResDTO(Question question, QuizInstance instance) {
         QuizUserResponse userResponse = quizUserResponseRepo.findByQuizInstanceId(instance.getId()).stream()
@@ -369,5 +341,15 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
     public PageResDTO<?> getAllQuizInstancesByQuizIdAndUserId(Long quizId, Long userId, int page, int size) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getAllQuizInstancesByQuizIdAndUserId'");
+    }
+
+    @Override
+    public boolean canUserStartQuiz(Long quizId, Long userId) {
+        return false;
+    }
+
+    @Override
+    public QuizInstanceResDTO submitQuiz(QuizSubmissionReqDTO request) {
+        return null;
     }
 }

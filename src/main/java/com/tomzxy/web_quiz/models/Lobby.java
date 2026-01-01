@@ -3,8 +3,11 @@ package com.tomzxy.web_quiz.models;
 import java.util.List;
 import java.util.Set;
 
+import com.tomzxy.web_quiz.containts.ApiDefined;
+import com.tomzxy.web_quiz.models.NotificationUser.Notification;
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
 
+import com.tomzxy.web_quiz.models.User.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -31,6 +34,9 @@ public class Lobby extends BaseEntity{
     @Column(name = "host_name")
     private String hostName;
 
+    @Column(name = "code_invite")
+    private String codeInvite;
+
     @ManyToMany
     @JoinTable(name = "lobby_user",
         joinColumns = @JoinColumn(name = "lobby_id"),
@@ -39,6 +45,9 @@ public class Lobby extends BaseEntity{
 
     @OneToMany(mappedBy = "lobby")
     private List<Quiz> quizzes;
+
+    @OneToMany(mappedBy = "lobby")
+    private List<Notification> notifications;
 
 
 }

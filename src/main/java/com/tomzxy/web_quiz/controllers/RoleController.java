@@ -17,6 +17,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -33,11 +35,13 @@ public class RoleController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Roles retrieved successfully")
     })
-    public DataResDTO<PageResDTO<RoleResDTO>> getAllRoles(
+    public ResponseEntity<DataResDTO<PageResDTO<RoleResDTO>>> getAllRoles(
             @Parameter(description = "Page number (0-based)") @RequestParam @Min(0) int page,
             @Parameter(description = "Page size (minimum 10)") @RequestParam @Min(10) int size) {
         log.info("Get all roles");
-        return DataResDTO.ok(roleService.getAll(page, size));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(roleService.getAll(page, size)));
     }
 
     @GetMapping(ApiDefined.Role.ID)
@@ -46,10 +50,12 @@ public class RoleController {
         @ApiResponse(responseCode = "200", description = "Role found successfully"),
         @ApiResponse(responseCode = "404", description = "Role not found")
     })
-    public DataResDTO<RoleResDTO> getRole(
+    public ResponseEntity<DataResDTO<RoleResDTO>> getRole(
             @Parameter(description = "Role ID") @PathVariable Long roleId) {
         log.info("Get role by {}", roleId);
-        return DataResDTO.ok(roleService.get_Role(roleId));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(roleService.get_Role(roleId)));
     }
 
     @PostMapping()
@@ -59,9 +65,11 @@ public class RoleController {
             content = @Content(schema = @Schema(implementation = DataResDTO.class))),
         @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public DataResDTO<RoleResDTO> createRole(@Valid @RequestBody RoleReqDTO roleReqDTO) {
+    public ResponseEntity<DataResDTO<RoleResDTO>> createRole(@Valid @RequestBody RoleReqDTO roleReqDTO) {
         log.info("Create role");
-        return DataResDTO.create(roleService.create_Role(roleReqDTO));
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(DataResDTO.create(roleService.create_Role(roleReqDTO)));
     }
 
     @PutMapping(ApiDefined.Role.ID)
@@ -71,11 +79,13 @@ public class RoleController {
         @ApiResponse(responseCode = "404", description = "Role not found"),
         @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public DataResDTO<RoleResDTO> updateRole(
+    public ResponseEntity<DataResDTO<RoleResDTO>> updateRole(
             @Parameter(description = "Role ID") @PathVariable Long roleId,
             @Valid @RequestBody RoleReqDTO roleReqDTO) {
         log.info("Update role with id {}", roleId);
-        return DataResDTO.update(roleService.update_Role(roleId, roleReqDTO));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.update(roleService.update_Role(roleId, roleReqDTO)));
     }
 
     @DeleteMapping(ApiDefined.Role.ID)
@@ -84,10 +94,12 @@ public class RoleController {
         @ApiResponse(responseCode = "200", description = "Role deleted successfully"),
         @ApiResponse(responseCode = "404", description = "Role not found")
     })
-    public DataResDTO<Void> deleteRole(
+    public ResponseEntity<DataResDTO<Void>> deleteRole(
             @Parameter(description = "Role ID") @PathVariable Long roleId) {
         log.info("Delete role with id {}", roleId);
         roleService.delete_Role(roleId);
-        return DataResDTO.delete();
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.delete());
     }
 } 

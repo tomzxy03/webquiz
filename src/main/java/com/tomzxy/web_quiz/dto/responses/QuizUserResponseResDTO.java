@@ -1,5 +1,6 @@
 package com.tomzxy.web_quiz.dto.responses;
 
+import com.tomzxy.web_quiz.dto.responses.question.QuestionSnapshotResDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

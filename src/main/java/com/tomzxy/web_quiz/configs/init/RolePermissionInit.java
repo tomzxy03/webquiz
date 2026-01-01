@@ -5,7 +5,7 @@
 //import com.tomzxy.web_quiz.exception.NotFoundException;
 //import com.tomzxy.web_quiz.models.Permission;
 //import com.tomzxy.web_quiz.models.Role;
-//import com.tomzxy.web_quiz.models.User;
+//import com.tomzxy.web_quiz.models.User.User;
 //import com.tomzxy.web_quiz.models.rolepermission.RolePermissionObject;
 //import com.tomzxy.web_quiz.repositories.PermissionRepo;
 //import com.tomzxy.web_quiz.repositories.RolePermissionObjectRepo;

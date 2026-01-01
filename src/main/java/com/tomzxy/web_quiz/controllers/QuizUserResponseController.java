@@ -16,6 +16,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -38,9 +40,11 @@ public class QuizUserResponseController {
             content = @Content(schema = @Schema(implementation = DataResDTO.class))),
         @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public DataResDTO<QuizUserResponseResDTO> createUserResponse(@Valid @RequestBody QuizUserResponseReqDTO request) {
+    public ResponseEntity<DataResDTO<QuizUserResponseResDTO>> createUserResponse(@Valid @RequestBody QuizUserResponseReqDTO request) {
         log.info("Create user response");
-        return DataResDTO.create(quizUserResponseService.createUserResponse(request));
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(DataResDTO.create(quizUserResponseService.createUserResponse(request)));
     }
 
     @PutMapping("/{id}")
@@ -50,11 +54,13 @@ public class QuizUserResponseController {
         @ApiResponse(responseCode = "404", description = "User response not found"),
         @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public DataResDTO<QuizUserResponseResDTO> updateUserResponse(
+    public ResponseEntity<DataResDTO<QuizUserResponseResDTO>> updateUserResponse(
             @Parameter(description = "User response ID") @PathVariable Long id,
             @Valid @RequestBody QuizUserResponseReqDTO request) {
         log.info("Update user response with id {}", id);
-        return DataResDTO.update(quizUserResponseService.updateUserResponse(id, request));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.update(quizUserResponseService.updateUserResponse(id, request)));
     }
 
     @GetMapping("/{id}")
@@ -63,10 +69,12 @@ public class QuizUserResponseController {
         @ApiResponse(responseCode = "200", description = "User response found successfully"),
         @ApiResponse(responseCode = "404", description = "User response not found")
     })
-    public DataResDTO<QuizUserResponseResDTO> getUserResponseById(
+    public ResponseEntity<DataResDTO<QuizUserResponseResDTO>> getUserResponseById(
             @Parameter(description = "User response ID") @PathVariable Long id) {
         log.info("Get user response by {}", id);
-        return DataResDTO.ok(quizUserResponseService.getUserResponseById(id));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(quizUserResponseService.getUserResponseById(id)));
     }
 
     @DeleteMapping("/{id}")
@@ -75,11 +83,13 @@ public class QuizUserResponseController {
         @ApiResponse(responseCode = "200", description = "User response deleted successfully"),
         @ApiResponse(responseCode = "404", description = "User response not found")
     })
-    public DataResDTO<Void> deleteUserResponse(
+    public ResponseEntity<DataResDTO<Void>> deleteUserResponse(
             @Parameter(description = "User response ID") @PathVariable Long id) {
         log.info("Delete user response with id {}", id);
         quizUserResponseService.deleteUserResponse(id);
-        return DataResDTO.delete();
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.delete());
     }
 
     @GetMapping
@@ -87,11 +97,13 @@ public class QuizUserResponseController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "User responses retrieved successfully")
     })
-    public DataResDTO<PageResDTO<?>> getAllUserResponses(
+    public ResponseEntity<DataResDTO<PageResDTO<?>>> getAllUserResponses(
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
         log.info("Get all user responses");
-        return DataResDTO.ok(quizUserResponseService.getAllUserResponses(page, size));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(quizUserResponseService.getAllUserResponses(page, size)));
     }
 
     // Business operations
@@ -101,13 +113,15 @@ public class QuizUserResponseController {
         @ApiResponse(responseCode = "200", description = "Answer submitted successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public DataResDTO<QuizUserResponseResDTO> submitAnswer(
+    public ResponseEntity<DataResDTO<QuizUserResponseResDTO>> submitAnswer(
             @Parameter(description = "Quiz instance question ID") @RequestParam Long quizInstanceQuestionId,
             @Parameter(description = "User ID") @RequestParam Long userId,
             @Parameter(description = "Selected answer ID") @RequestParam(required = false) Long selectedAnswerId,
             @Parameter(description = "User answer text") @RequestParam(required = false) String userAnswer) {
         log.info("Submit answer for question {}", quizInstanceQuestionId);
-        return DataResDTO.ok(quizUserResponseService.submitAnswer(quizInstanceQuestionId, userId, selectedAnswerId, userAnswer));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(quizUserResponseService.submitAnswer(quizInstanceQuestionId, userId, selectedAnswerId, userAnswer)));
     }
 
     @PutMapping("/{responseId}/answer")
@@ -116,12 +130,14 @@ public class QuizUserResponseController {
         @ApiResponse(responseCode = "200", description = "Answer updated successfully"),
         @ApiResponse(responseCode = "404", description = "Response not found")
     })
-    public DataResDTO<QuizUserResponseResDTO> updateAnswer(
+    public ResponseEntity<DataResDTO<QuizUserResponseResDTO>> updateAnswer(
             @Parameter(description = "Response ID") @PathVariable Long responseId,
             @Parameter(description = "Selected answer ID") @RequestParam(required = false) Long selectedAnswerId,
             @Parameter(description = "User answer text") @RequestParam(required = false) String userAnswer) {
         log.info("Update answer for response {}", responseId);
-        return DataResDTO.ok(quizUserResponseService.updateAnswer(responseId, selectedAnswerId, userAnswer));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(quizUserResponseService.updateAnswer(responseId, selectedAnswerId, userAnswer)));
     }
 
     @PostMapping("/skip")
@@ -129,11 +145,13 @@ public class QuizUserResponseController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Question skipped successfully")
     })
-    public DataResDTO<QuizUserResponseResDTO> skipQuestion(
+    public ResponseEntity<DataResDTO<QuizUserResponseResDTO>> skipQuestion(
             @Parameter(description = "Quiz instance question ID") @RequestParam Long quizInstanceQuestionId,
             @Parameter(description = "User ID") @RequestParam Long userId) {
         log.info("Skip question {}", quizInstanceQuestionId);
-        return DataResDTO.ok(quizUserResponseService.skipQuestion(quizInstanceQuestionId, userId));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(quizUserResponseService.skipQuestion(quizInstanceQuestionId, userId)));
     }
 
     @GetMapping("/user/{userId}")
@@ -141,10 +159,12 @@ public class QuizUserResponseController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "User responses retrieved successfully")
     })
-    public DataResDTO<List<QuizUserResponseResDTO>> getUserResponses(
+    public ResponseEntity<DataResDTO<List<QuizUserResponseResDTO>>> getUserResponses(
             @Parameter(description = "User ID") @PathVariable Long userId) {
         log.info("Get responses for user {}", userId);
-        return DataResDTO.ok(quizUserResponseService.getUserResponses(userId));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(quizUserResponseService.getUserResponses(userId)));
     }
 
     @GetMapping("/user/{userId}/page")
@@ -152,12 +172,14 @@ public class QuizUserResponseController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "User responses retrieved successfully")
     })
-    public DataResDTO<PageResDTO<?>> getUserResponses(
+    public ResponseEntity<DataResDTO<PageResDTO<?>>> getUserResponses(
             @Parameter(description = "User ID") @PathVariable Long userId,
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
         log.info("Get paginated responses for user {}", userId);
-        return DataResDTO.ok(quizUserResponseService.getUserResponses(userId, page, size));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(quizUserResponseService.getUserResponses(userId, page, size)));
     }
 
     @GetMapping("/quiz-instance/{quizInstanceId}")
@@ -165,10 +187,12 @@ public class QuizUserResponseController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Quiz instance responses retrieved successfully")
     })
-    public DataResDTO<List<QuizUserResponseResDTO>> getQuizInstanceResponses(
+    public ResponseEntity<DataResDTO<List<QuizUserResponseResDTO>>> getQuizInstanceResponses(
             @Parameter(description = "Quiz instance ID") @PathVariable Long quizInstanceId) {
         log.info("Get responses for quiz instance {}", quizInstanceId);
-        return DataResDTO.ok(quizUserResponseService.getQuizInstanceResponses(quizInstanceId));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(quizUserResponseService.getQuizInstanceResponses(quizInstanceId)));
     }
 
     @GetMapping("/quiz-instance/{quizInstanceId}/user/{userId}")
@@ -176,11 +200,13 @@ public class QuizUserResponseController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "User quiz instance responses retrieved successfully")
     })
-    public DataResDTO<List<QuizUserResponseResDTO>> getUserQuizInstanceResponses(
+    public ResponseEntity<DataResDTO<List<QuizUserResponseResDTO>>> getUserQuizInstanceResponses(
             @Parameter(description = "Quiz instance ID") @PathVariable Long quizInstanceId,
             @Parameter(description = "User ID") @PathVariable Long userId) {
         log.info("Get responses for user {} in quiz instance {}", userId, quizInstanceId);
-        return DataResDTO.ok(quizUserResponseService.getUserQuizInstanceResponses(quizInstanceId, userId));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(quizUserResponseService.getUserQuizInstanceResponses(quizInstanceId, userId)));
     }
 
     @GetMapping("/correct")
@@ -188,10 +214,12 @@ public class QuizUserResponseController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Correct responses retrieved successfully")
     })
-    public DataResDTO<List<QuizUserResponseResDTO>> getCorrectResponses(
+    public ResponseEntity<DataResDTO<List<QuizUserResponseResDTO>>> getCorrectResponses(
             @Parameter(description = "Whether to get correct responses") @RequestParam Boolean isCorrect) {
         log.info("Get {} responses", isCorrect ? "correct" : "incorrect");
-        return DataResDTO.ok(quizUserResponseService.getCorrectResponses(isCorrect));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(quizUserResponseService.getCorrectResponses(isCorrect)));
     }
 
     @GetMapping("/correct/page")
@@ -199,12 +227,14 @@ public class QuizUserResponseController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Correct responses retrieved successfully")
     })
-    public DataResDTO<PageResDTO<?>> getCorrectResponses(
+    public ResponseEntity<DataResDTO<PageResDTO<?>>> getCorrectResponses(
             @Parameter(description = "Whether to get correct responses") @RequestParam Boolean isCorrect,
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
         log.info("Get paginated {} responses", isCorrect ? "correct" : "incorrect");
-        return DataResDTO.ok(quizUserResponseService.getCorrectResponses(isCorrect, page, size));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(quizUserResponseService.getCorrectResponses(isCorrect, page, size)));
     }
 
     @GetMapping("/time-range")
@@ -212,11 +242,13 @@ public class QuizUserResponseController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Responses retrieved successfully")
     })
-    public DataResDTO<List<QuizUserResponseResDTO>> getResponsesByTimeRange(
+    public ResponseEntity<DataResDTO<List<QuizUserResponseResDTO>>> getResponsesByTimeRange(
             @Parameter(description = "Minimum time in seconds") @RequestParam(required = false) Integer minTime,
             @Parameter(description = "Maximum time in seconds") @RequestParam(required = false) Integer maxTime) {
         log.info("Get responses by time range: {} - {}", minTime, maxTime);
-        return DataResDTO.ok(quizUserResponseService.getResponsesByTimeRange(minTime, maxTime));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(quizUserResponseService.getResponsesByTimeRange(minTime, maxTime)));
     }
 
     @GetMapping("/date-range")
@@ -224,11 +256,13 @@ public class QuizUserResponseController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Responses retrieved successfully")
     })
-    public DataResDTO<List<QuizUserResponseResDTO>> getResponsesByDateRange(
+    public ResponseEntity<DataResDTO<List<QuizUserResponseResDTO>>> getResponsesByDateRange(
             @Parameter(description = "Start date") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @Parameter(description = "End date") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
         log.info("Get responses by date range: {} - {}", startDate, endDate);
-        return DataResDTO.ok(quizUserResponseService.getResponsesByDateRange(startDate, endDate));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(quizUserResponseService.getResponsesByDateRange(startDate, endDate)));
     }
 
     @GetMapping("/recent")
@@ -236,10 +270,12 @@ public class QuizUserResponseController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Recent responses retrieved successfully")
     })
-    public DataResDTO<List<QuizUserResponseResDTO>> getRecentResponses(
+    public ResponseEntity<DataResDTO<List<QuizUserResponseResDTO>>> getRecentResponses(
             @Parameter(description = "Since date") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime sinceDate) {
         log.info("Get recent responses since {}", sinceDate);
-        return DataResDTO.ok(quizUserResponseService.getRecentResponses(sinceDate));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(quizUserResponseService.getRecentResponses(sinceDate)));
     }
 
     @GetMapping("/skipped")
@@ -247,9 +283,11 @@ public class QuizUserResponseController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Skipped questions retrieved successfully")
     })
-    public DataResDTO<List<QuizUserResponseResDTO>> getSkippedQuestions() {
+    public ResponseEntity<DataResDTO<List<QuizUserResponseResDTO>>> getSkippedQuestions() {
         log.info("Get skipped questions");
-        return DataResDTO.ok(quizUserResponseService.getSkippedQuestions());
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(quizUserResponseService.getSkippedQuestions()));
     }
 
     @GetMapping("/answered")
@@ -257,8 +295,10 @@ public class QuizUserResponseController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Answered questions retrieved successfully")
     })
-    public DataResDTO<List<QuizUserResponseResDTO>> getAnsweredQuestions() {
+    public ResponseEntity<DataResDTO<List<QuizUserResponseResDTO>>> getAnsweredQuestions() {
         log.info("Get answered questions");
-        return DataResDTO.ok(quizUserResponseService.getAnsweredQuestions());
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(quizUserResponseService.getAnsweredQuestions()));
     }
 } 

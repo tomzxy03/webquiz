@@ -1,17 +1,18 @@
-package com.tomzxy.web_quiz.models;
+package com.tomzxy.web_quiz.models.User;
 
 import com.tomzxy.web_quiz.enums.Gender;
-import com.tomzxy.web_quiz.models.Quiz.QuizInstance;
+import com.tomzxy.web_quiz.models.*;
+import com.tomzxy.web_quiz.models.Host.QuestionBank;
+import com.tomzxy.web_quiz.models.NotificationUser.Notification;
+import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;
 
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import jakarta.persistence.Index;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -41,14 +42,15 @@ public class User extends BaseEntity {
     @Column(name = "gender", length = 10)
     private Gender gender;
 
-    @Column(name = "date_of_birth")
-    private LocalDate dateOfBirth;
-
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
+
+    @OneToOne(mappedBy = "owner", cascade = CascadeType.ALL)
+    private QuestionBank hostQuestion;
+
 
     @Column(name = "is_email_verified", nullable = false)
     private boolean isEmailVerified = false;
@@ -79,9 +81,6 @@ public class User extends BaseEntity {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<QuizInstance> quizInstances = new HashSet<>();
-
-
-
 
 
     @Override

@@ -13,6 +13,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -32,8 +34,10 @@ public class AuthController {
         @ApiResponse(responseCode = "401", description = "Invalid credentials"),
         @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public DataResDTO<String> login(@Valid @RequestBody LoginReqDTO loginReqDTO) {
+    public ResponseEntity<DataResDTO<String>> login(@Valid @RequestBody LoginReqDTO loginReqDTO) {
         log.info("User login attempt: {}", loginReqDTO.getUserName());
-        return DataResDTO.ok(authService.login(loginReqDTO));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(authService.login(loginReqDTO)));
     }
 } 

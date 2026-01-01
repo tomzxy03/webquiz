@@ -4,7 +4,7 @@ import com.tomzxy.web_quiz.dto.requests.UserReqDto;
 import com.tomzxy.web_quiz.dto.requests.UserProfileReqDTO;
 import com.tomzxy.web_quiz.dto.requests.auth.LoginReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
-import com.tomzxy.web_quiz.dto.responses.UserResDTO;
+import com.tomzxy.web_quiz.dto.responses.user.UserResDTO;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,7 +20,7 @@ public interface UserService {
 
     void delete_user(Long user_id);
     
-    
+    void delete_user_list(List<Long> userId);
     
     UserResDTO update_profile(Long user_id, UserProfileReqDTO userProfileReqDTO);
 }

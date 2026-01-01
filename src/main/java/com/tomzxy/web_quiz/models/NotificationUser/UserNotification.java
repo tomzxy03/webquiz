@@ -2,8 +2,7 @@ package com.tomzxy.web_quiz.models.NotificationUser;
 
 import java.time.LocalDateTime;
 
-import com.tomzxy.web_quiz.models.User;
-import com.tomzxy.web_quiz.models.Notification;
+import com.tomzxy.web_quiz.models.User.User;
 
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;

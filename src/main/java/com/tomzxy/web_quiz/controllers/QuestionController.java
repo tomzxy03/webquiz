@@ -6,12 +6,10 @@ import com.tomzxy.web_quiz.dto.requests.QuestionReqDTO;
 
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
-import com.tomzxy.web_quiz.dto.responses.QuestionResDTO;
+import com.tomzxy.web_quiz.dto.responses.question.QuestionResDTO;
 import com.tomzxy.web_quiz.services.QuestionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -37,11 +37,13 @@ public class QuestionController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Questions retrieved successfully")
     })
-    public DataResDTO<PageResDTO<?>> getAllQuestion(
+    public ResponseEntity<DataResDTO<PageResDTO<?>>> getAllQuestion(
             @Parameter(description = "Page number (0-based)") @RequestParam @Min(0) int page,
             @Parameter(description = "Page size (minimum 10)") @RequestParam @Min(10) int size){
         log.info("Get all Questions");
-        return DataResDTO.ok(questionService.get_Questions_pageable(page,size));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(questionService.get_Questions_pageable(page,size)));
     }
 
     @GetMapping(ApiDefined.Question.ID)
@@ -50,10 +52,12 @@ public class QuestionController {
         @ApiResponse(responseCode = "200", description = "Question found successfully"),
         @ApiResponse(responseCode = "404", description = "Question not found")
     })
-    public DataResDTO<QuestionResDTO> getQuestion(
+    public ResponseEntity<DataResDTO<QuestionResDTO>> getQuestion(
             @Parameter(description = "Question ID") @PathVariable Long questionId){
         log.info("get Question by {}", questionId);
-        return DataResDTO.ok(questionService.get_Question(questionId));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(questionService.get_Question(questionId)));
     }
     
     @PostMapping("")
@@ -62,10 +66,12 @@ public class QuestionController {
         @ApiResponse(responseCode = "201", description = "Question created successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public DataResDTO<Void> addQuestion(@Valid @RequestBody QuestionReqDTO questionReqDTO){
+    public ResponseEntity<DataResDTO<Void>> addQuestion(@Valid @RequestBody QuestionReqDTO questionReqDTO){
         log.info("add Question");
         questionService.create_Question(questionReqDTO);
-        return DataResDTO.create();
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(DataResDTO.create());
     }
     
     @PostMapping(ApiDefined.Question.ADD_LIST)
@@ -74,10 +80,12 @@ public class QuestionController {
         @ApiResponse(responseCode = "201", description = "Questions created successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public DataResDTO<Void> addQuestionList(@Valid @RequestBody List<QuestionReqDTO> questionReqDTOList){
+    public ResponseEntity<DataResDTO<Void>> addQuestionList(@Valid @RequestBody List<QuestionReqDTO> questionReqDTOList){
         log.info("add Question List");
         questionService.create_Questions(questionReqDTOList);
-        return DataResDTO.create();
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(DataResDTO.create());
     }
 
     @PutMapping(ApiDefined.Question.ID)
@@ -87,11 +95,13 @@ public class QuestionController {
         @ApiResponse(responseCode = "404", description = "Question not found"),
         @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public DataResDTO<QuestionResDTO> updateQuestion(
+    public ResponseEntity<DataResDTO<QuestionResDTO>> updateQuestion(
             @Parameter(description = "Question ID") @PathVariable Long questionId, 
             @RequestBody @Valid QuestionReqDTO questionReqDTO){
         log.info("Update Question with id {}", questionId);
-        return DataResDTO.update(questionService.update_Question(questionId,questionReqDTO));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.update(questionService.update_Question(questionId,questionReqDTO)));
     }
 
     @DeleteMapping(ApiDefined.Question.ID)
@@ -100,10 +110,12 @@ public class QuestionController {
         @ApiResponse(responseCode = "200", description = "Question deleted successfully"),
         @ApiResponse(responseCode = "404", description = "Question not found")
     })
-    public DataResDTO<Void> deleteQuestion(
+    public ResponseEntity<DataResDTO<Void>> deleteQuestion(
             @Parameter(description = "Question ID") @PathVariable Long questionId){
         log.info("Delete Question with id {}", questionId);
         questionService.delete_Question(questionId);
-        return DataResDTO.delete();
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.delete());
     }
 }

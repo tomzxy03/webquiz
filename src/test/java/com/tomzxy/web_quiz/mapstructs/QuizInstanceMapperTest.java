@@ -2,9 +2,9 @@
 //
 //import com.tomzxy.web_quiz.dto.responses.QuizInstanceResDTO;
 //import com.tomzxy.web_quiz.enums.QuizInstanceStatus;
-//import com.tomzxy.web_quiz.models.User;
+//import com.tomzxy.web_quiz.models.User.User;
 //import com.tomzxy.web_quiz.models.Quiz.Quiz;
-//import com.tomzxy.web_quiz.models.Quiz.QuizInstance;
+//import com.tomzxy.web_quiz.models.responseUser.QuizInstance;
 //
 //import org.junit.jupiter.api.Test;
 //import org.springframework.boot.test.context.SpringBootTest;

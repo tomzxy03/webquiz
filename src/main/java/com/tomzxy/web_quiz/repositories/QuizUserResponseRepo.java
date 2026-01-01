@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.tomzxy.web_quiz.models.Quiz.QuizUserResponse;
+import com.tomzxy.web_quiz.models.QuizUser.QuizUserResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;

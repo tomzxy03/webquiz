@@ -2,7 +2,7 @@ package com.tomzxy.web_quiz.services;
 
 import com.tomzxy.web_quiz.dto.requests.QuestionReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
-import com.tomzxy.web_quiz.dto.responses.QuestionResDTO;
+import com.tomzxy.web_quiz.dto.responses.question.QuestionResDTO;
 
 import java.util.List;
 

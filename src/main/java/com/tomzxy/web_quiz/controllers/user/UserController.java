@@ -6,7 +6,7 @@ import com.tomzxy.web_quiz.dto.requests.UserReqDto;
 import com.tomzxy.web_quiz.dto.requests.UserProfileReqDTO;
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
-import com.tomzxy.web_quiz.dto.responses.UserResDTO;
+import com.tomzxy.web_quiz.dto.responses.user.UserResDTO;
 import com.tomzxy.web_quiz.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,7 +19,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @Slf4j
@@ -34,11 +38,13 @@ public class UserController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Users retrieved successfully")
     })
-    public DataResDTO<PageResDTO<?>> getAllUser(
+    public ResponseEntity<DataResDTO<PageResDTO<?>>> getAllUser(
             @Parameter(description = "Page number (0-based)") @RequestParam @Min(0) int page,
             @Parameter(description = "Page size (minimum 10)") @RequestParam @Min(10) int size){
         log.info("Get all users");
-        return DataResDTO.ok(userService.get_users_pageable(page,size));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(userService.get_users_pageable(page,size)));
     }
 
     @GetMapping(ApiDefined.User.ID)
@@ -47,10 +53,12 @@ public class UserController {
         @ApiResponse(responseCode = "200", description = "User found successfully"),
         @ApiResponse(responseCode = "404", description = "User not found")
     })
-    public DataResDTO<UserResDTO> getUser(
+    public ResponseEntity<DataResDTO<UserResDTO>> getUser(
             @Parameter(description = "User ID") @PathVariable Long userId){
         log.info("get user by {}", userId);
-        return DataResDTO.ok(userService.get_user(userId));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(userService.get_user(userId)));
     }
     
     @PostMapping("")
@@ -60,9 +68,11 @@ public class UserController {
             content = @Content(schema = @Schema(implementation = DataResDTO.class))),
         @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public DataResDTO<UserResDTO> addUser(@Valid @RequestBody UserReqDto userReqDto){
+    public ResponseEntity<DataResDTO<UserResDTO>> addUser(@Valid @RequestBody UserReqDto userReqDto){
         log.info("add user");
-        return DataResDTO.create(userService.create_user(userReqDto));
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(DataResDTO.create(userService.create_user(userReqDto)));
     }
 
     @PutMapping(ApiDefined.User.ID)
@@ -72,11 +82,13 @@ public class UserController {
         @ApiResponse(responseCode = "404", description = "User not found"),
         @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public DataResDTO<UserResDTO> updateUser(
+    public ResponseEntity<DataResDTO<UserResDTO>> updateUser(
             @Parameter(description = "User ID") @PathVariable Long userId, 
             @RequestBody @Valid UserReqDto userReqDto){
         log.info("Update user with id {}", userId);
-        return DataResDTO.update(userService.update_user(userId,userReqDto));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.update(userService.update_user(userId,userReqDto)));
     }
 
     @PutMapping(ApiDefined.Auth.UPDATE_INFO)
@@ -85,9 +97,11 @@ public class UserController {
         @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public DataResDTO<UserResDTO> updateProfile(@PathVariable Long userId, @RequestBody @Valid UserProfileReqDTO userProfileReqDTO){
+    public ResponseEntity<DataResDTO<UserResDTO>> updateProfile(@PathVariable Long userId, @RequestBody @Valid UserProfileReqDTO userProfileReqDTO){
         log.info("Update user profile");
-        return DataResDTO.update(userService.update_profile(userId,userProfileReqDTO));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.update(userService.update_profile(userId,userProfileReqDTO)));
     }
 
     @DeleteMapping(ApiDefined.User.ID)
@@ -96,10 +110,26 @@ public class UserController {
         @ApiResponse(responseCode = "200", description = "User deleted successfully"),
         @ApiResponse(responseCode = "404", description = "User not found")
     })
-    public DataResDTO<?> deleteUser(
+    public ResponseEntity<DataResDTO<Object>> deleteUser(
             @Parameter(description = "User ID") @PathVariable Long userId){
         log.info("Delete user with id {}", userId);
         userService.delete_user(userId);
-        return DataResDTO.delete();
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.delete());
+    }
+    @DeleteMapping(ApiDefined.User.DELETE_MANY)
+    @Operation(summary = "Delete list user", description = "Delete the users by their ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    public ResponseEntity<DataResDTO<Object>> deleteUsers(@RequestBody List<Long> userId){
+        log.info("Delete list user");
+        userService.delete_user_list(userId);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.delete());
+
     }
 }

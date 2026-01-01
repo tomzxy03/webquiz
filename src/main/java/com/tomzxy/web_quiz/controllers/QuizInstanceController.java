@@ -4,16 +4,14 @@ import com.tomzxy.web_quiz.dto.requests.quiz.QuizInstanceReqDTO;
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizSubmissionReqDTO;
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
 import com.tomzxy.web_quiz.dto.responses.QuizInstanceResDTO;
-import com.tomzxy.web_quiz.dto.responses.QuizResultDetailResDTO;
 import com.tomzxy.web_quiz.services.QuizInstanceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,7 +32,9 @@ public class QuizInstanceController {
     })
     public ResponseEntity<DataResDTO<QuizInstanceResDTO>> startQuiz(@RequestBody QuizInstanceReqDTO request) {
         QuizInstanceResDTO instance = quizInstanceService.createQuizInstance(request);
-        return ResponseEntity.ok(DataResDTO.ok(instance));
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(DataResDTO.create(instance));
     }
 
     @GetMapping("/{instanceId}")
@@ -47,7 +47,9 @@ public class QuizInstanceController {
             @Parameter(description = "Quiz instance ID") @PathVariable Long instanceId,
             @Parameter(description = "User ID") @RequestParam Long userId) {
         QuizInstanceResDTO instance = quizInstanceService.getQuizInstance(instanceId, userId);
-        return ResponseEntity.ok(DataResDTO.ok(instance));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(instance));
     }
 
     @PostMapping("/{instanceId}/submit")
@@ -62,7 +64,9 @@ public class QuizInstanceController {
             @RequestBody QuizSubmissionReqDTO request) {
         request.setQuizInstanceId(instanceId);
         QuizResultDetailResDTO result = quizInstanceService.submitQuiz(request);
-        return ResponseEntity.ok(DataResDTO.ok(result));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.update(result));
     }
 
     @GetMapping("/{instanceId}/result")
@@ -75,7 +79,9 @@ public class QuizInstanceController {
             @Parameter(description = "Quiz instance ID") @PathVariable Long instanceId,
             @Parameter(description = "User ID") @RequestParam Long userId) {
         QuizResultDetailResDTO result = quizInstanceService.getQuizResult(instanceId, userId);
-        return ResponseEntity.ok(DataResDTO.ok(result));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(result));
     }
 
     @DeleteMapping("/{instanceId}")
@@ -84,11 +90,13 @@ public class QuizInstanceController {
         @ApiResponse(responseCode = "200", description = "Quiz instance deleted successfully"),
         @ApiResponse(responseCode = "404", description = "Quiz instance not found")
     })
-    public ResponseEntity<DataResDTO<Void>> deleteQuizInstance(
+    public ResponseEntity<DataResDTO<Object>> deleteQuizInstance(
             @Parameter(description = "Quiz instance ID") @PathVariable Long instanceId,
             @Parameter(description = "User ID") @RequestParam Long userId) {
         quizInstanceService.deleteQuizInstance(instanceId, userId);
-        return ResponseEntity.ok(DataResDTO.delete());
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.delete());
     }
 
     @GetMapping("/check-eligibility")
@@ -100,6 +108,8 @@ public class QuizInstanceController {
             @Parameter(description = "Quiz ID") @RequestParam Long quizId,
             @Parameter(description = "User ID") @RequestParam Long userId) {
         boolean canStart = quizInstanceService.canUserStartQuiz(quizId, userId);
-        return ResponseEntity.ok(DataResDTO.ok(canStart));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(canStart));
     }
 } 

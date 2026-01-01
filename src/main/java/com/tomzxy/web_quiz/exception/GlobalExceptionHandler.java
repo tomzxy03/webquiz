@@ -16,15 +16,20 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
-    public DataResDTO<Object> handleApiException(ApiException apiException){
-        return DataResDTO.error(apiException.getAppCode(), apiException.getMessage());
+    public ResponseEntity<DataResDTO<Object>> handleApiException(ApiException apiException){
+        return ResponseEntity
+                .status(apiException.getAppCode().getHttpStatus())
+                .body(DataResDTO.error(apiException.getAppCode(), apiException.getMessage()));
     }
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public DataResDTO<Object> handlerValidation(MethodArgumentNotValidException ex){
+    public ResponseEntity<DataResDTO<Object>> handlerValidation(MethodArgumentNotValidException ex){
         String message = ex.getBindingResult().getFieldErrors().stream()
                 .map(e -> e.getField()+ ": "+ e.getDefaultMessage())
                 .collect(Collectors.joining(", "));
-        return DataResDTO.error(AppCode.BAD_REQUEST, message);
+        DataResDTO<Object> res = DataResDTO.error(AppCode.BAD_REQUEST, message);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(res);
     }
     @ExceptionHandler(Exception.class)
     public ResponseEntity<DataResDTO<?>> handleUnknown(Exception ex) {

@@ -1,6 +1,6 @@
 package com.tomzxy.web_quiz.mapstructs;
 
-import com.tomzxy.web_quiz.dto.responses.QuestionSnapshotResDTO;
+import com.tomzxy.web_quiz.dto.responses.question.QuestionSnapshotResDTO;
 import com.tomzxy.web_quiz.models.snapshot.QuestionSnapshot;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

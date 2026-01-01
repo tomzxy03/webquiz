@@ -3,12 +3,9 @@ package com.tomzxy.web_quiz.controllers;
 
 import com.tomzxy.web_quiz.containts.ApiDefined;
 import com.tomzxy.web_quiz.dto.requests.Notification.NotificationReqDTO;
-import com.tomzxy.web_quiz.dto.requests.UserReqDto;
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
-import com.tomzxy.web_quiz.dto.responses.NotificationResDTO;
+import com.tomzxy.web_quiz.dto.responses.Notification.NotificationResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
-import com.tomzxy.web_quiz.dto.responses.UserResDTO;
-import com.tomzxy.web_quiz.enums.AppCode;
 import com.tomzxy.web_quiz.services.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,12 +14,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.Table;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -38,13 +36,11 @@ public class NotificationController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "notifications retrieved successfully")
     })
-    public DataResDTO<PageResDTO<?>> getAllNotificationsWithPageable(@Min(0) int page, @Max(10) int size){
+    public ResponseEntity<DataResDTO<PageResDTO<?>>> getAllNotificationsWithPageable(@Min(0) int page, @Max(10) int size){
         log.info("Get all notifications");
-        try{
-            return DataResDTO.ok(notificationService.getAllNotification(page, size));
-        }catch (Exception e){
-            return DataResDTO.error(AppCode.NOT_FOUND, "Notification not found!");
-        }
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(notificationService.getAllNotification(page, size)));
     }
     @PostMapping("")
     @Operation(summary = "Create notification", description = "Create a new user")
@@ -53,13 +49,11 @@ public class NotificationController {
                     content = @Content(schema = @Schema(implementation = DataResDTO.class))),
             @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public DataResDTO<NotificationResDTO> createNotification(@RequestBody NotificationReqDTO notificationReqDTO){
+    public ResponseEntity<DataResDTO<NotificationResDTO>> createNotification(@RequestBody NotificationReqDTO notificationReqDTO){
         log.info("Create notification with title {}", notificationReqDTO.getTitle());
-        try{
-            return DataResDTO.create(notificationService.createNotification(notificationReqDTO));
-        }catch (Exception e){
-            return DataResDTO.error(AppCode.DATA_EXISTED, "Notification has been existed!");
-        }
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(DataResDTO.create(notificationService.createNotification(notificationReqDTO)));
     }
     @GetMapping(ApiDefined.Notification.ID)
     @Operation(summary = "Get notification by ID", description = "Retrieve a notification by their ID")
@@ -67,13 +61,11 @@ public class NotificationController {
             @ApiResponse(responseCode = "200", description = "notification found successfully"),
             @ApiResponse(responseCode = "404", description = "notification not found")
     })
-    public DataResDTO<NotificationResDTO> getNotificationById(Long notificationId){
+    public ResponseEntity<DataResDTO<NotificationResDTO>> getNotificationById(@PathVariable Long notificationId){
         log.info("Get notification by id {}", notificationId );
-        try{
-            return DataResDTO.ok(notificationService.getNotificationId(notificationId));
-        }catch (Exception e){
-            return DataResDTO.error(AppCode.NOT_FOUND, "Notification not found!");
-        }
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(notificationService.getNotificationId(notificationId)));
     }
     @PutMapping(ApiDefined.Notification.ID)
     @Operation(summary = "Update notification", description = "Update an existing notification")
@@ -82,11 +74,13 @@ public class NotificationController {
             @ApiResponse(responseCode = "404", description = "Notification not found"),
             @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public DataResDTO<NotificationResDTO> updateUser(
-            @Parameter(description = "User ID") @PathVariable Long notificationId,
+    public ResponseEntity<DataResDTO<NotificationResDTO>> updateNotification(
+            @Parameter(description = "Notification ID") @PathVariable Long notificationId,
             @RequestBody @Valid NotificationReqDTO notificationReqDTO){
         log.info("Update notification with id {}", notificationId);
-        return DataResDTO.update(notificationService.updateNotification(notificationId,notificationReqDTO));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.update(notificationService.updateNotification(notificationId,notificationReqDTO)));
     }
 
     @DeleteMapping(ApiDefined.Notification.ID)
@@ -95,11 +89,13 @@ public class NotificationController {
             @ApiResponse(responseCode = "200", description = "Notification deleted successfully"),
             @ApiResponse(responseCode = "404", description = "Notification not found")
     })
-    public DataResDTO<?> deleteUser(
-            @Parameter(description = "User ID") @PathVariable Long notificationId){
+    public ResponseEntity<DataResDTO<Object>> deleteNotification(
+            @Parameter(description = "Notification ID") @PathVariable Long notificationId){
         log.info("Delete notification with id {}", notificationId);
         notificationService.deleteNotification(notificationId);
-        return DataResDTO.delete();
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.delete());
     }
 
 }

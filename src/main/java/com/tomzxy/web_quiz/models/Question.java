@@ -1,8 +1,10 @@
 package com.tomzxy.web_quiz.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tomzxy.web_quiz.enums.Level;
 import com.tomzxy.web_quiz.enums.QuestionAndAnswerType;
+import com.tomzxy.web_quiz.models.Host.QuestionBank;
+import com.tomzxy.web_quiz.models.Host.QuestionFolder;
+import com.tomzxy.web_quiz.models.User.User;
 import jakarta.persistence.*;
 
 import lombok.*;
@@ -22,17 +24,17 @@ import java.util.Set;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @SuperBuilder
 @Table(name = "questions", indexes = {
-    @Index(name = "idx_question_type", columnList = "question_type"),
-    @Index(name = "idx_question_level", columnList = "level"),
-    @Index(name = "idx_question_created_at", columnList = "created_at")
+        @Index(name = "idx_question_type", columnList = "question_type"),
+        @Index(name = "idx_question_level", columnList = "level"),
+        @Index(name = "idx_question_created_at", columnList = "created_at"),
+        @Index(name = "idx_question_bank", columnList = "bank_id"),
+        @Index(name = "idx_question_folder", columnList = "folder_id"),
+        @Index(name = "idx_question_bank_folder", columnList = "bank_id, folder_id")
 })
 public class Question extends BaseEntity {
 
     @Column(name = "question_name", nullable = false, length = 1000)
     private String questionName;
-
-    @Column(name = "description", length = 500)
-    private String description;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "question_type", nullable = false, length = 20)
@@ -42,9 +44,19 @@ public class Question extends BaseEntity {
     @Column(name = "level", nullable = false, length = 20)
     private Level level;
 
-    @Column(name = "points", nullable = false)
-    private Integer points = 1;
+    // Thuộc về Question Bank nào (REQUIRED)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bank_id", nullable = false)
+    private QuestionBank bank;
 
+    // Thuộc về Folder nào (OPTIONAL - null nếu là question riêng lẻ)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "folder_id")
+    private QuestionFolder folder;  // Có thể null!
+
+
+    @Column(name = "content_hash", nullable = false,unique = true,length = 64)
+    private String contentHash; // to distinguish, comparing between question and question
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -52,7 +64,7 @@ public class Question extends BaseEntity {
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private Set<QuizQuestion> quizQuestions = new HashSet<>();
+    private Set<QuestionBank> hostQuestions = new HashSet<>();
 
     // Business Logic Methods
     public void addAnswer(Answer answer) {
@@ -128,15 +140,7 @@ public class Question extends BaseEntity {
         return level == Level.HARD;
     }
 
-    public void activate() {
-        this.setActive(true);
-        this.setUpdatedAt(java.time.LocalDateTime.now());
-    }
 
-    public void deactivate() {
-        this.setActive(false);
-        this.setUpdatedAt(java.time.LocalDateTime.now());
-    }
 
     public boolean isAvailable() {
         return isActive();
@@ -150,22 +154,21 @@ public class Question extends BaseEntity {
         return !answers.isEmpty();
     }
 
-    public boolean hasExplanation() {
-        return description != null && !description.trim().isEmpty();
-    }
-
-    // Enhanced Analytics Methods
-    public int getTotalUsage() {
-        return quizQuestions.size();
-    }
-
-    public boolean isFrequentlyUsed() {
-        return getTotalUsage() >= 5; // Define threshold for frequently used
-    }
-
-    public boolean isRarelyUsed() {
-        return getTotalUsage() <= 1;
-    }
+//    public boolean hasExplanation() {
+//        return description != null && !description.trim().isEmpty();
+//    }
+//    // Enhanced Analytics Methods
+//    public int getTotalUsage() {
+//        return quizQuestions.size();
+//    }
+//
+//    public boolean isFrequentlyUsed() {
+//        return getTotalUsage() >= 5; // Define threshold for frequently used
+//    }
+//
+//    public boolean isRarelyUsed() {
+//        return getTotalUsage() <= 1;
+//    }
 
     @Override
     public String toString() {
@@ -174,7 +177,6 @@ public class Question extends BaseEntity {
                 ", questionName='" + (questionName != null ? questionName.substring(0, Math.min(50, questionName.length())) + "..." : "null") + '\'' +
                 ", questionType=" + questionType +
                 ", level=" + level +
-                ", points=" + points +
                 ", isActive=" + isActive() +
                 '}';
     }
