@@ -1,20 +1,18 @@
 package com.tomzxy.web_quiz.models.Quiz;
 
-import com.tomzxy.web_quiz.enums.QuizAvailable;
-import com.tomzxy.web_quiz.enums.QuizOptions;
+import com.tomzxy.web_quiz.enums.QuizVisibility;
+import com.tomzxy.web_quiz.enums.QuizStatus;
 import com.tomzxy.web_quiz.enums.QuizType;
 import com.tomzxy.web_quiz.models.*;
 
 import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;
 import com.tomzxy.web_quiz.models.User.User;
-import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import jakarta.persistence.Index;
 import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.annotations.Type;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
@@ -63,11 +61,14 @@ public class Quiz extends BaseEntity {
     private Map<String, Object> questionSnapshot;
 
 
-    @Column(name = "total_attempts") //total attempt of user
-    private Integer totalAttempts = 0;
+    @Transient
+    public Long getTotalAttempts() {
+        return this.instances != null ? (long) this.instances.size() : 0L;
+    }
 
-    @Column(name = "is_public", nullable = false)
-    private boolean isPublic = false;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private QuizStatus status = QuizStatus.DRAFT;
 
 
     @Column(name = "start_date")
@@ -88,14 +89,13 @@ public class Quiz extends BaseEntity {
     @JoinColumn(name = "subject_id", nullable = false)
     private Subject subject;
 
-    @Builder.Default
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "options", columnDefinition = "json")
-    private Set<QuizOptions> options = new HashSet<>();
+    @Column(name = "config", columnDefinition = "jsonb")
+    private QuizConfig config;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "available_type")
-    private QuizAvailable quizAvailable; // trường hợp endTime == start time thì anytime và ngược lại.
+    @Column(name = "visibility")
+    private QuizVisibility visibility = QuizVisibility.PRIVATE;
 
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL)
     private List<QuizInstance> instances;
@@ -181,7 +181,7 @@ public class Quiz extends BaseEntity {
                 "id=" + getId() +
                 ", title='" + title + '\'' +
                 ", quizType=" + quizType +
-                ", totalQuestions=" + totalQuestions +
+                ", totalQuestions=" + getTotalQuestions() +
                 ", isAvailable=" + isActive() +
                 '}';
     }

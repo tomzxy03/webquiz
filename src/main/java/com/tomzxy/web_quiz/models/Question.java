@@ -62,10 +62,6 @@ public class Question extends BaseEntity {
     @Builder.Default
     private Set<Answer> answers = new HashSet<>();
 
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private Set<QuestionBank> hostQuestions = new HashSet<>();
-
     // Business Logic Methods
     public void addAnswer(Answer answer) {
         if (answer != null) {
@@ -88,87 +84,6 @@ public class Question extends BaseEntity {
             answer.setQuestion(null);
         }
     }
-
-    public Answer getCorrectAnswer() {
-        return answers.stream()
-                .filter(Answer::isImageAnswer)
-                .findFirst()
-                .orElse(null);
-    }
-
-    public Set<Answer> getCorrectAnswers() {
-        return answers.stream()
-                .filter(Answer::isAnswerCorrect)
-                .collect(java.util.stream.Collectors.toSet());
-    }
-
-    public boolean hasMultipleCorrectAnswers() {
-        return getCorrectAnswers().size() > 1;
-    }
-
-    public boolean isTextQuestion() {
-        return questionType == QuestionAndAnswerType.TEXT;
-    }
-
-    public boolean isImageQuestion() {
-        return questionType == QuestionAndAnswerType.IMAGE;
-    }
-
-    public boolean validateAnswer(String userAnswer) {
-        if (userAnswer == null || userAnswer.trim().isEmpty()) {
-            return false;
-        }
-
-        Set<Answer> correctAnswers = getCorrectAnswers();
-        if (correctAnswers.isEmpty()) {
-            return false;
-        }
-
-        // For now, check if user selected one of the correct answers
-        return correctAnswers.stream()
-                .anyMatch(answer -> answer.getId().toString().equals(userAnswer.trim()));
-    }
-    public boolean isEasy() {
-        return level == Level.EASY;
-    }
-
-    public boolean isMedium() {
-        return level == Level.MEDIUM;
-    }
-
-    public boolean isHard() {
-        return level == Level.HARD;
-    }
-
-
-
-    public boolean isAvailable() {
-        return isActive();
-    }
-
-    public int getAnswerCount() {
-        return answers.size();
-    }
-
-    public boolean hasAnswers() {
-        return !answers.isEmpty();
-    }
-
-//    public boolean hasExplanation() {
-//        return description != null && !description.trim().isEmpty();
-//    }
-//    // Enhanced Analytics Methods
-//    public int getTotalUsage() {
-//        return quizQuestions.size();
-//    }
-//
-//    public boolean isFrequentlyUsed() {
-//        return getTotalUsage() >= 5; // Define threshold for frequently used
-//    }
-//
-//    public boolean isRarelyUsed() {
-//        return getTotalUsage() <= 1;
-//    }
 
     @Override
     public String toString() {

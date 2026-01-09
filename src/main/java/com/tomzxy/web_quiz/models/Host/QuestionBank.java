@@ -6,10 +6,13 @@ import com.tomzxy.web_quiz.models.Question;
 import com.tomzxy.web_quiz.models.User.User;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.HashSet;
 import java.util.List;
 
 
 import java.util.ArrayList;
+import java.util.Set;
 
 
 @Entity
@@ -35,14 +38,14 @@ public class QuestionBank extends BaseEntity{
     private String description;
 
     // Các folders trong bank này
-    @OneToMany(mappedBy = "bank", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "bank", cascade = {CascadeType.MERGE,CascadeType.PERSIST}, orphanRemoval = true)
     @Builder.Default
     private List<QuestionFolder> folders = new ArrayList<>();
 
     // Các questions trong bank này (cả có folder và không folder)
-    @OneToMany(mappedBy = "bank", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "bank", cascade = {CascadeType.MERGE,CascadeType.PERSIST}, orphanRemoval = true)
     @Builder.Default
-    private List<Question> questions = new ArrayList<>();
+    private Set<Question> questions = new HashSet<>();
 
 
 }

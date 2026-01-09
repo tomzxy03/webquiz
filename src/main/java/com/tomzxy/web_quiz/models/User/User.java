@@ -51,7 +51,6 @@ public class User extends BaseEntity {
     @OneToOne(mappedBy = "owner", cascade = CascadeType.ALL)
     private QuestionBank hostQuestion;
 
-
     @Column(name = "is_email_verified", nullable = false)
     private boolean isEmailVerified = false;
 
