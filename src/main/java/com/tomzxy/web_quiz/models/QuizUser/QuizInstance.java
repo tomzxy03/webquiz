@@ -1,6 +1,7 @@
 package com.tomzxy.web_quiz.models.QuizUser;
 
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
+import com.tomzxy.web_quiz.models.snapshot.QuizQuestionSnapshot;
 import jakarta.persistence.*;
 import lombok.*;
 import jakarta.persistence.Index;
@@ -12,6 +13,8 @@ import java.util.Set;
 import com.tomzxy.web_quiz.enums.QuizInstanceStatus;
 import com.tomzxy.web_quiz.models.BaseEntity;
 import com.tomzxy.web_quiz.models.User.User;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Getter
@@ -40,9 +43,18 @@ public class QuizInstance extends BaseEntity {
     @Column(name = "started_at", nullable = false)
     private LocalDateTime startedAt;
 
+    @Column(name = "ended_at")
+    private LocalDateTime endedAt;
+
+
     @Builder.Default
     @Column(name = "total_points", nullable = false)
     private Integer totalPoints = 0;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "question_snapshot", columnDefinition = "jsonb")
+    private QuizQuestionSnapshot snapshot;
+
 
     @Builder.Default
     @Column(name = "earned_points", nullable = false)
@@ -53,7 +65,7 @@ public class QuizInstance extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     private QuizInstanceStatus status = QuizInstanceStatus.IN_PROGRESS;
 
-    @OneToMany(mappedBy = "quizInstance", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "quizInstance", cascade = {CascadeType.MERGE,CascadeType.PERSIST}, orphanRemoval = false)
     private Set<QuizUserResponse> userResponses = new HashSet<>();
 
     // Business Logic Methods
@@ -68,7 +80,8 @@ public class QuizInstance extends BaseEntity {
     }
 
     public boolean isSubmitted() {
-        return this.status == QuizInstanceStatus.SUBMITTED;
+        this.setEndedAt(LocalDateTime.now());
+        return this.status == QuizInstanceStatus.SUBMITTED ;
     }
 
     public boolean isTimedOut() {
@@ -76,8 +89,7 @@ public class QuizInstance extends BaseEntity {
     }
 
     public Long getElapsedTimeMinutes() {
-        LocalDateTime endTime = LocalDateTime.now();
-        return java.time.Duration.between(startedAt, endTime).toMinutes();
+        return java.time.Duration.between(startedAt, endedAt).toMinutes();
     }
 
     public double getScorePercentage() {

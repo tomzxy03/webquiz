@@ -20,7 +20,6 @@ public class UserResDTO {
     String phone;
     String email;
     Gender gender;
-    String dateOfBirth;
     Set<String> roles;
     String profilePictureUrl;
 }

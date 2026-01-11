@@ -5,10 +5,12 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import com.tomzxy.web_quiz.enums.ResponseStatus;
 import com.tomzxy.web_quiz.models.BaseEntity;
-import com.tomzxy.web_quiz.models.snapshot.QuestionSnapshot;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Getter
@@ -54,76 +56,14 @@ public class QuizUserResponse extends BaseEntity {
     @Column(name = "is_skipped", nullable = false)
     private boolean isSkipped = false;
 
-    @ManyToMany
-    @JoinTable(name = "quiz_user_responses_question_snapshots",
-        joinColumns = @JoinColumn(name = "quiz_user_response_id"),
-        inverseJoinColumns = @JoinColumn(name = "question_snapshot_id")
-    )
-    private List<QuestionSnapshot> questionSnapshots;
-
-    // Business Logic Methods
-    public void markAsCorrect() {
-        this.isCorrect = true;
-        this.isSkipped = false;
-        this.answeredAt = LocalDateTime.now();
-        this.setUpdatedAt(LocalDateTime.now());
-    }
-
-    public void markAsIncorrect() {
-        this.isCorrect = false;
-        this.isSkipped = false;
-        this.answeredAt = LocalDateTime.now();
-        this.setUpdatedAt(LocalDateTime.now());
-    }
-
-    public void markAsSkipped() {
-        this.isCorrect = false;
-        this.isSkipped = true;
-        this.selectedAnswerId = null;
-        this.selectedAnswerText = null;
-        this.answeredAt = LocalDateTime.now();
-        this.setUpdatedAt(LocalDateTime.now());
-    }
-
-    public void setAnswer(Long answerId, String answerText, boolean isCorrect) {
-        // Validation
-        if (answerId == null && (answerText == null || answerText.trim().isEmpty())) {
-            throw new IllegalArgumentException("Either answerId or answerText must be provided");
-        }
-        
-        this.selectedAnswerId = answerId;
-        this.selectedAnswerText = answerText;
-        this.isCorrect = isCorrect;
-        this.isSkipped = false;
-        this.answeredAt = LocalDateTime.now();
-        this.setUpdatedAt(LocalDateTime.now());
-    }
-
-    public boolean isAnswered() {
-        return selectedAnswerId != null && !isSkipped;
-    }
-
-    public boolean isNotAnswered() {
-        return !isAnswered() && !isSkipped;
-    }
-
-    public boolean isAnsweredCorrectly() {
-        return isCorrect && !isSkipped;
-    }
-
-    public boolean isAnsweredIncorrectly() {
-        return !isCorrect && !isSkipped && isAnswered();
-    }
 
     public ResponseStatus getStatus() {
         if (isSkipped) {
             return ResponseStatus.SKIPPED;
         } else if (isCorrect) {
             return ResponseStatus.CORRECT;
-        } else if (isAnswered()) {
-            return ResponseStatus.INCORRECT;
         } else {
-            return ResponseStatus.NOT_ANSWERED;
+            return ResponseStatus.INCORRECT;
         }
     }
 

@@ -1,4 +1,4 @@
-package com.tomzxy.web_quiz.dto.responses;
+package com.tomzxy.web_quiz.dto.responses.answer;
 
 
 import com.tomzxy.web_quiz.enums.QuestionAndAnswerType;
@@ -10,15 +10,14 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @Setter
 @NoArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+
 public class AnswerResDTO {
-    Long id;
 
-    String answerName;
+    private Long id;
 
-    QuestionAndAnswerType answerType;
+    private String answerText;
 
-    boolean answerCorrect;
+    private QuestionAndAnswerType answerType;
 
-    boolean isActive;
+    private Integer orderIndex; // dùng cho shuffle / snapshot
 }

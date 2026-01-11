@@ -3,7 +3,7 @@ package com.tomzxy.web_quiz.controllers;
 
 import com.tomzxy.web_quiz.containts.ApiDefined;
 import com.tomzxy.web_quiz.dto.requests.AnswerReqDTO;
-import com.tomzxy.web_quiz.dto.responses.AnswerResDTO;
+import com.tomzxy.web_quiz.dto.responses.answer.AnswerResDTO;
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.services.AnswerService;

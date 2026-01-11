@@ -1,7 +1,7 @@
 package com.tomzxy.web_quiz.mapstructs;
 
 import com.tomzxy.web_quiz.dto.requests.AnswerReqDTO;
-import com.tomzxy.web_quiz.dto.responses.AnswerResDTO;
+import com.tomzxy.web_quiz.dto.responses.answer.AnswerResDTO;
 import com.tomzxy.web_quiz.models.Answer;
 
 import org.mapstruct.*;

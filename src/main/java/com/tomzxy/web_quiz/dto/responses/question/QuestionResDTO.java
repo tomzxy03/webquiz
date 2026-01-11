@@ -1,11 +1,14 @@
 package com.tomzxy.web_quiz.dto.responses.question;
 
 
-import com.tomzxy.web_quiz.dto.responses.AnswerResDTO;
+import com.tomzxy.web_quiz.dto.responses.answer.AnswerResDTO;
+import com.tomzxy.web_quiz.enums.Level;
 import com.tomzxy.web_quiz.enums.QuestionAndAnswerType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Builder
@@ -15,16 +18,26 @@ import java.util.Set;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class QuestionResDTO {
-    Long id;
 
-    String questionName;
+    private Long id;
 
-    QuestionAndAnswerType questionType;
+    private String questionName;
 
-    boolean isActive;
+    private QuestionAndAnswerType questionType;
 
-    Integer points;
+    private Level level;
+
+    private Long bankId;
 
 
-    Set<AnswerResDTO> answers;
+    private Long folderId;        // nullable
+
+    private String folderName;    // nullable
+
+    private List<AnswerResDTO> answers;
+
+    private boolean isActive;
+
+    private LocalDateTime createdAt;
 }
+

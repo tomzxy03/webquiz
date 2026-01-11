@@ -31,12 +31,6 @@ public class QuestionBank extends BaseEntity{
     @JoinColumn(name = "owner_id", nullable = false, unique = true)
     private User owner;
 
-    @Column(nullable = false)
-    private String name;  // "My Question Bank"
-
-    @Column(columnDefinition = "TEXT")
-    private String description;
-
     // Các folders trong bank này
     @OneToMany(mappedBy = "bank", cascade = {CascadeType.MERGE,CascadeType.PERSIST}, orphanRemoval = true)
     @Builder.Default

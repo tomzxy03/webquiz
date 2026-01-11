@@ -10,13 +10,17 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @Setter
 @NoArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
 public class AnswerDetailResDTO {
+    private Long id;
 
-    String answerName;
+    private String answerText;
 
-    QuestionAndAnswerType answerType;
+    private QuestionAndAnswerType answerType;
 
-    boolean isCorrect;
+    private String isActive;
+
+    private Integer orderIndex; // dùng cho shuffle / snapshot
+
+    private boolean answerCorrect;
 
 }

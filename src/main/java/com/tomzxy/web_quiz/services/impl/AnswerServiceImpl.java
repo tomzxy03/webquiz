@@ -3,11 +3,9 @@ package com.tomzxy.web_quiz.services.impl;
 
 import com.tomzxy.web_quiz.dto.requests.AnswerReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
-import com.tomzxy.web_quiz.dto.responses.AnswerResDTO;
-import com.tomzxy.web_quiz.exception.ExistedException;
+import com.tomzxy.web_quiz.dto.responses.answer.AnswerResDTO;
 import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.mapstructs.AnswerMapper;
-import com.tomzxy.web_quiz.mapstructs.QuestionMapper;
 import com.tomzxy.web_quiz.models.Answer;
 import com.tomzxy.web_quiz.repositories.AnswerRepo;
 import com.tomzxy.web_quiz.services.ConvertToPageResDTO;
@@ -18,7 +16,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 

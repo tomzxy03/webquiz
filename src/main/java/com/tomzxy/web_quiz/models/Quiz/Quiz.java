@@ -7,6 +7,7 @@ import com.tomzxy.web_quiz.models.*;
 
 import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;
 import com.tomzxy.web_quiz.models.User.User;
+import com.tomzxy.web_quiz.models.snapshot.QuizQuestionSnapshot;
 import jakarta.persistence.*;
 
 import lombok.*;
@@ -57,8 +58,9 @@ public class Quiz extends BaseEntity {
     private Long version = 0L;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "question_snapshot", columnDefinition = "jsonb")
-    private Map<String, Object> questionSnapshot;
+    @Column(name = "question_template", columnDefinition = "jsonb")
+    private QuizQuestionSnapshot template;
+
 
 
     @Transient
