@@ -7,7 +7,6 @@ import com.tomzxy.web_quiz.dto.responses.*;
 import com.tomzxy.web_quiz.dto.responses.question.QuestionResultResDTO;
 import com.tomzxy.web_quiz.enums.AppCode;
 import com.tomzxy.web_quiz.enums.QuizInstanceStatus;
-import com.tomzxy.web_quiz.enums.QuizOptions;
 import com.tomzxy.web_quiz.enums.ResponseStatus;
 import com.tomzxy.web_quiz.exception.ApiException;
 import com.tomzxy.web_quiz.exception.NotFoundException;

@@ -2,8 +2,8 @@ package com.tomzxy.web_quiz.controllers.user;
 
 
 import com.tomzxy.web_quiz.containts.ApiDefined;
-import com.tomzxy.web_quiz.dto.requests.UserReqDto;
-import com.tomzxy.web_quiz.dto.requests.UserProfileReqDTO;
+import com.tomzxy.web_quiz.dto.requests.user.UserReqDto;
+import com.tomzxy.web_quiz.dto.requests.user.UserProfileReqDTO;
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.user.UserResDTO;

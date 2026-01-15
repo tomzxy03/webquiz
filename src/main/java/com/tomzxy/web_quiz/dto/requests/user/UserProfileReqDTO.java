@@ -1,4 +1,4 @@
-package com.tomzxy.web_quiz.dto.requests;
+package com.tomzxy.web_quiz.dto.requests.user;
 
 import com.tomzxy.web_quiz.enums.Gender;
 import com.tomzxy.web_quiz.validation.EnumValidate;
@@ -6,11 +6,13 @@ import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDate;
-
 @Getter
 @Setter
 public class UserProfileReqDTO {
+
+    @NotNull(message = "user name must be not null")
+    private String userName;
+
     @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$", message = "Invalid phone number format")
     private String phone;
 
@@ -21,8 +23,6 @@ public class UserProfileReqDTO {
     @EnumValidate(name = "gender", regex = "MALE|FEMALE|OTHER")
     private Gender gender;
 
-    @Past(message = "Date of birth must be in the past")
-    private LocalDate dateOfBirth;
 
     private String profilePictureUrl;
 } 

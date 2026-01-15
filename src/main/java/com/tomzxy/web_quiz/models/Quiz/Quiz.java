@@ -2,7 +2,6 @@ package com.tomzxy.web_quiz.models.Quiz;
 
 import com.tomzxy.web_quiz.enums.QuizVisibility;
 import com.tomzxy.web_quiz.enums.QuizStatus;
-import com.tomzxy.web_quiz.enums.QuizType;
 import com.tomzxy.web_quiz.models.*;
 
 import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;
@@ -19,7 +18,6 @@ import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @Entity
@@ -45,10 +43,6 @@ public class Quiz extends BaseEntity {
 
 //    @Column(name = "total_questions", nullable = false)
 //    private Integer totalQuestions = 0;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "quiz_type", nullable = false, length = 20)
-    private QuizType quizType;
 
     @Column(name = "time_limit_minutes")
     private Integer timeLimitMinutes;
@@ -182,7 +176,7 @@ public class Quiz extends BaseEntity {
         return "Quiz{" +
                 "id=" + getId() +
                 ", title='" + title + '\'' +
-                ", quizType=" + quizType +
+                ", quizType=" + visibility +
                 ", totalQuestions=" + getTotalQuestions() +
                 ", isAvailable=" + isActive() +
                 '}';

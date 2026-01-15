@@ -1,6 +1,5 @@
 package com.tomzxy.web_quiz.dto.requests.quiz;
 
-import com.tomzxy.web_quiz.enums.QuizOptions;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

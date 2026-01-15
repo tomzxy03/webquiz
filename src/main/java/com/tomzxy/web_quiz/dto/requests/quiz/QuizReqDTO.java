@@ -1,6 +1,5 @@
 package com.tomzxy.web_quiz.dto.requests.quiz;
 
-import com.tomzxy.web_quiz.enums.QuizType;
 import com.tomzxy.web_quiz.validation.EnumValidate;
 
 import jakarta.validation.constraints.*;

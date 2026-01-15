@@ -2,13 +2,10 @@ package com.tomzxy.web_quiz.services.impl;
 
 import com.tomzxy.web_quiz.dto.requests.Lobby.LobbyReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
-import com.tomzxy.web_quiz.dto.responses.lobby.LobbyMemberResDTO;
-import com.tomzxy.web_quiz.dto.responses.lobby.LobbyNotificationResDTO;
 import com.tomzxy.web_quiz.dto.responses.lobby.LobbyResDTO;
-import com.tomzxy.web_quiz.dto.responses.user.UserLobbyResDTO;
+import com.tomzxy.web_quiz.dto.responses.user.UserMemberResDTO;
 import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.mapstructs.LobbyMapper;
-import com.tomzxy.web_quiz.mapstructs.Notification.NotificationMapper;
 import com.tomzxy.web_quiz.mapstructs.Notification.NotificationUserMapper;
 import com.tomzxy.web_quiz.mapstructs.UserMapper;
 import com.tomzxy.web_quiz.models.Lobby;
@@ -78,8 +75,8 @@ public class LobbyServiceImpl implements LobbyService {
     public PageResDTO<?> getAllMembers(Long lobbyId, int page, int size) {
         Lobby lobby = getLobbyById(lobbyId);
         Set<User> users = lobby.getMembers();
-        Set<UserLobbyResDTO> userLobbyResDTOS = userMapper.toListUserLobbyResDTO(users);
-        LobbyMemberResDTO lobbyMemberResDTO = new LobbyMemberResDTO(lobby.getId(), userLobbyResDTOS);
+        Set<UserMemberResDTO> userMemberResDTOS = userMapper.toListUserLobbyResDTO(users);
+        com.tomzxy.web_quiz.dto.responses.lobby.LobbyMemberResDTO lobbyMemberResDTO = new com.tomzxy.web_quiz.dto.responses.lobby.LobbyMemberResDTO(lobby.getId(), userMemberResDTOS);
         return PageResDTO.builder()
                 .page(page)
                 .size(size)

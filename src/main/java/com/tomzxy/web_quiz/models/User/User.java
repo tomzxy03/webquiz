@@ -43,7 +43,7 @@ public class User extends BaseEntity {
     private Gender gender;
 
     @Column(name = "password_hash", nullable = false)
-    private String passwordHash;
+    private String password;
 
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;

@@ -17,7 +17,7 @@ public class AnswerDetailResDTO {
 
     private QuestionAndAnswerType answerType;
 
-    private String isActive;
+    private boolean isActive;
 
     private Integer orderIndex; // dùng cho shuffle / snapshot
 

@@ -1,6 +1,5 @@
 package com.tomzxy.web_quiz.repositories;
 
-import com.tomzxy.web_quiz.enums.QuizType;
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
 
 import org.springframework.data.domain.Page;

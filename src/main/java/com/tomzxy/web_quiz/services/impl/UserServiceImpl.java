@@ -1,8 +1,8 @@
 package com.tomzxy.web_quiz.services.impl;
 
 
-import com.tomzxy.web_quiz.dto.requests.UserReqDto;
-import com.tomzxy.web_quiz.dto.requests.UserProfileReqDTO;
+import com.tomzxy.web_quiz.dto.requests.user.UserReqDto;
+import com.tomzxy.web_quiz.dto.requests.user.UserProfileReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.user.UserResDTO;
 import com.tomzxy.web_quiz.exception.NotFoundException;
@@ -19,7 +19,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j

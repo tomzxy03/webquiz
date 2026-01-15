@@ -1,9 +1,9 @@
 package com.tomzxy.web_quiz.mapstructs;
 
-import com.tomzxy.web_quiz.dto.requests.UserReqDto;
-import com.tomzxy.web_quiz.dto.responses.user.UserLobbyResDTO;
+import com.tomzxy.web_quiz.dto.requests.user.UserReqDto;
+import com.tomzxy.web_quiz.dto.responses.user.UserMemberResDTO;
 import com.tomzxy.web_quiz.dto.responses.user.UserResDTO;
-import com.tomzxy.web_quiz.dto.requests.UserProfileReqDTO;
+import com.tomzxy.web_quiz.dto.requests.user.UserProfileReqDTO;
 import com.tomzxy.web_quiz.models.User.User;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
@@ -27,7 +27,7 @@ public interface UserMapper {
     List<UserResDTO> toListUserResDTO(List<User> users);
 
 
-    Set<UserLobbyResDTO> toListUserLobbyResDTO(Set<User> users);
+    Set<UserMemberResDTO> toListUserLobbyResDTO(Set<User> users);
 
     @Mapping(target = "roles", ignore = true)
     @Mapping(target = "passwordHash", source = "password")

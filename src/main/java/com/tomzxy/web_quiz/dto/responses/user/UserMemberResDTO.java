@@ -11,7 +11,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class UserLobbyResDTO {
+public class UserMemberResDTO {
     private Long id;
     private String userName;
     private String profilePictureUrl;

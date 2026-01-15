@@ -1,9 +1,7 @@
 package com.tomzxy.web_quiz.dto.responses.Quiz;
 
-import com.tomzxy.web_quiz.enums.QuizType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import java.util.Set;
 
 
 @Builder
