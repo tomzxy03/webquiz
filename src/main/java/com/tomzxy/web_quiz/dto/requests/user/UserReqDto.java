@@ -1,6 +1,5 @@
 package com.tomzxy.web_quiz.dto.requests.user;
 
-import com.tomzxy.web_quiz.enums.Gender;
 import com.tomzxy.web_quiz.validation.EnumValidate;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
@@ -17,16 +16,9 @@ public class UserReqDto {
     @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "Username can only contain letters, numbers, and underscores")
     private String userName;
 
-    @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$", message = "Invalid phone number format")
-    private String phone;
-
     @Email(message = "Invalid email format")
     @NotBlank(message = "Email is required")
     private String email;
-
-    @EnumValidate(name = "gender", regex = "MALE|FEMALE|OTHER")
-    private Gender gender;
-
 
     @NotBlank(message = "Password is required")
     @Size(min = 8, message = "Password must be at least 8 characters long")

@@ -1,6 +1,5 @@
 package com.tomzxy.web_quiz.models.User;
 
-import com.tomzxy.web_quiz.enums.Gender;
 import com.tomzxy.web_quiz.models.*;
 import com.tomzxy.web_quiz.models.Host.QuestionBank;
 import com.tomzxy.web_quiz.models.NotificationUser.Notification;
@@ -32,15 +31,8 @@ public class User extends BaseEntity {
     @Column(name = "user_name", unique = true, nullable = false, length = 50)
     private String userName;
 
-    @Column(name = "phone", length = 20)
-    private String phone;
-
     @Column(name = "email", unique = true, nullable = false, length = 100)
     private String email;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "gender", length = 10)
-    private Gender gender;
 
     @Column(name = "password_hash", nullable = false)
     private String password;
@@ -54,8 +46,7 @@ public class User extends BaseEntity {
     @Column(name = "is_email_verified", nullable = false)
     private boolean isEmailVerified = false;
 
-    @Column(name = "is_phone_verified", nullable = false)
-    private boolean isPhoneVerified = false;
+
 
     @Column(name = "profile_picture_url", length = 500)
     private String profilePictureUrl;

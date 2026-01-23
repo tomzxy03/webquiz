@@ -44,37 +44,12 @@ public abstract class BaseEntity implements Serializable {
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
 
-    @Column(name = "created_by")
-    private String createdBy;
 
-    @Column(name = "updated_by")
-    private String updatedBy;
     @PrePersist
     protected void onCreate() {
         if (uuid == null) {
             uuid = UUID.randomUUID().toString();
         }
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
-        if (updatedAt == null) {
-            updatedAt = LocalDateTime.now();
-        }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    public void softDelete() {
-        this.isActive = false;
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    public void restore() {
-        this.isActive = true;
-        this.updatedAt = LocalDateTime.now();
     }
 
     @Override

@@ -1,8 +1,6 @@
 package com.tomzxy.web_quiz.dto.responses.user;
 
 
-import com.tomzxy.web_quiz.enums.Gender;
-
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import java.util.Set;

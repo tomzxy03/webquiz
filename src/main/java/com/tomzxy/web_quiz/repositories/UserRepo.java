@@ -1,7 +1,6 @@
 package com.tomzxy.web_quiz.repositories;
 
 import com.tomzxy.web_quiz.models.User.User;
-import com.tomzxy.web_quiz.enums.Gender;
 import lombok.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

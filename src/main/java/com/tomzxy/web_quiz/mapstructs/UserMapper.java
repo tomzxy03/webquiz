@@ -4,7 +4,9 @@ import com.tomzxy.web_quiz.dto.requests.user.UserReqDto;
 import com.tomzxy.web_quiz.dto.responses.user.UserMemberResDTO;
 import com.tomzxy.web_quiz.dto.responses.user.UserResDTO;
 import com.tomzxy.web_quiz.dto.requests.user.UserProfileReqDTO;
+import com.tomzxy.web_quiz.models.Role;
 import com.tomzxy.web_quiz.models.User.User;
+import jakarta.persistence.PrePersist;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
@@ -26,6 +28,8 @@ public interface UserMapper {
 
     List<UserResDTO> toListUserResDTO(List<User> users);
 
+    @Mapping(target = "roleName", source = "roles", qualifiedByName = "mapRoleName")
+    UserMemberResDTO toUserMemberResDTO(User user);
 
     Set<UserMemberResDTO> toListUserLobbyResDTO(Set<User> users);
 
@@ -35,6 +39,11 @@ public interface UserMapper {
 
     void updateUserProfile(@MappingTarget User user, UserProfileReqDTO userProfileReqDTO);
 
-
-
+    @Named("mapRoleName")
+    default String mapRoleName(Set<Role> roles) {
+        if (roles == null || roles.isEmpty()) {
+            return null;
+        }
+        return roles.iterator().next().getName();
+    }
 }
