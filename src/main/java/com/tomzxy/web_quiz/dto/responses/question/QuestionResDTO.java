@@ -29,15 +29,10 @@ public class QuestionResDTO {
 
     private Long bankId;
 
-
     private Long folderId;        // nullable
 
     private String folderName;    // nullable
 
     private List<AnswerResDTO> answers;
-
-    private boolean isActive;
-
-    private LocalDateTime createdAt;
 }
 

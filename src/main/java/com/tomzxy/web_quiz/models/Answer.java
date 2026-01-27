@@ -26,9 +26,6 @@ public class Answer extends BaseEntity {
     @Column(name = "answer_name", nullable = false, length = 500)
     private String answerName;
 
-    @Column(name = "description", length = 1000)
-    private String description;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "answer_type", nullable = false, length = 20)
     private QuestionAndAnswerType answerType;
@@ -63,10 +60,6 @@ public class Answer extends BaseEntity {
 
     public boolean isAvailable() {
         return isActive();
-    }
-
-    public boolean hasDescription() {
-        return description != null && !description.trim().isEmpty();
     }
 
     @Override

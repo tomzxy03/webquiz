@@ -12,17 +12,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AnswerSnapshot {
 
-    // Snapshot id
     private String snapshotId;   // UUID
 
-    // Trace back
     private Long originalAnswerId;
 
-    // Order
-    private Integer orderIndex;
 
-    // Content
     private String content;
+
     private QuestionAndAnswerType type; // TEXT / IMAGE
 }
 

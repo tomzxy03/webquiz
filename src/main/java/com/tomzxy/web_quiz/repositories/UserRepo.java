@@ -32,18 +32,12 @@ public interface UserRepo extends JpaRepository<User, Long>, JpaSpecificationExe
     Optional<User> findByUserNameAndIsActiveTrue(String userName);
     Optional<User> findByEmailAndIsActiveTrue(String email);
     boolean existsByEmailAndIsActiveTrue(String email);
-    boolean existsByPhoneAndIsActiveTrue(String phone);
-    
+
     // Search functionality
     @Query("SELECT u FROM User u WHERE (LOWER(u.userName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
-           "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
-           "OR LOWER(u.phone) LIKE LOWER(CONCAT('%', :searchTerm, '%'))) AND u.isActive = :isActive")
+           "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :searchTerm, '%'))  AND u.isActive = :isActive")
     Page<User> searchUsers(@Param("searchTerm") String searchTerm, @Param("isActive") boolean isActive, Pageable pageable);
-    
-    // Filter by gender
-    @Query("SELECT u FROM User u WHERE u.gender = :gender AND u.isActive = :isActive")
-    Page<User> findByGender(@Param("gender") Gender gender, @Param("isActive") boolean isActive,  Pageable pageable);
-    
+
     // Filter by date of birth range
     @Query("SELECT u FROM User u WHERE u.dateOfBirth BETWEEN :startDate AND :endDate AND u.isActive = :isActive")
     Page<User> findByDobBetween(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("isActive") boolean isActive, Pageable pageable);
@@ -65,10 +59,7 @@ public interface UserRepo extends JpaRepository<User, Long>, JpaSpecificationExe
     Page<User> findByLobbyId(@Param("lobbyId") Long lobbyId, @Param("isActive") boolean isActive, Pageable pageable);
     @Query("SELECT u FROM User u JOIN u.lobbies l WHERE l.id = :lobbyId AND u.isActive = true")
     List<User> findByLobbyId(@Param("lobbyId") Long lobbyId);
-    // Find users with specific phone number pattern
-    @Query("SELECT u FROM User u WHERE u.phone LIKE :phonePattern AND u.isActive = :isActive")
-    Page<User> findByPhonePattern(@Param("phonePattern") String phonePattern, @Param("isActive") boolean isActive, Pageable pageable);
-    
+
     // Find users by email domain
     @Query("SELECT u FROM User u WHERE u.email LIKE CONCAT('%@', :domain) AND u.isActive = :isActive")
     Page<User> findByEmailDomain(@Param("domain") String domain, @Param("isActive") boolean isActive, Pageable pageable);
@@ -76,11 +67,7 @@ public interface UserRepo extends JpaRepository<User, Long>, JpaSpecificationExe
     // Count users by role
     @Query("SELECT COUNT(u) FROM User u JOIN u.roles r WHERE r.name = :roleName AND u.isActive = :isActive")
     long countByRoleName(@Param("roleName") String roleName, @Param("isActive") boolean isActive);
-    
-    // Count users by gender
-    @Query("SELECT COUNT(u) FROM User u WHERE u.gender = :gender AND u.isActive = :isActive")
-    long countByGender(@Param("gender") Gender gender, @Param("isActive") boolean isActive);
-    
+
     // Find recent users
     @Query("SELECT u FROM User u WHERE u.isActive = :isActive ORDER BY u.createdAt DESC")
     Page<User> findRecentUsers(@Param("isActive") boolean isActive, Pageable pageable);

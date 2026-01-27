@@ -7,7 +7,9 @@ import lombok.*;
 import jakarta.persistence.Index;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.tomzxy.web_quiz.enums.QuizInstanceStatus;
@@ -55,7 +57,6 @@ public class QuizInstance extends BaseEntity {
     @Column(name = "question_snapshot", columnDefinition = "jsonb")
     private QuizQuestionSnapshot snapshot;
 
-
     @Builder.Default
     @Column(name = "earned_points", nullable = false)
     private Integer earnedPoints = 0;
@@ -67,6 +68,14 @@ public class QuizInstance extends BaseEntity {
 
     @OneToMany(mappedBy = "quizInstance", cascade = {CascadeType.MERGE,CascadeType.PERSIST}, orphanRemoval = false)
     private Set<QuizUserResponse> userResponses = new HashSet<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "question_order", columnDefinition = "jsonb", nullable = false)
+    private List<String> questionOrder = new ArrayList<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "question_order", columnDefinition = "jsonb", nullable = false)
+    private List<String> answerOrder = new ArrayList<>();
 
     // Business Logic Methods
 

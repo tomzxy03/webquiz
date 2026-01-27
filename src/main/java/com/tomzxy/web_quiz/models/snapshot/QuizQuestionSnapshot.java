@@ -15,7 +15,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuizQuestionSnapshot {
-
+    private Long quizId;
+    private String shuffleSeed;
     private Integer version;            // snapshot schema version
     private LocalDateTime generatedAt;   // thời điểm tạo snapshot
     private Boolean shuffledQuestions;

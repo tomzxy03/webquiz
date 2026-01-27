@@ -1,5 +1,6 @@
 package com.tomzxy.web_quiz.dto.requests.quiz;
 
+import com.tomzxy.web_quiz.enums.QuizVisibility;
 import com.tomzxy.web_quiz.validation.EnumValidate;
 
 import jakarta.validation.constraints.*;
@@ -20,8 +21,8 @@ public class QuizReqDTO {
     @Max(value = 100, message = "Total questions cannot exceed 100")
     private Integer totalQuestions = 0;
 
-    @EnumValidate(name = "quizType", regex = "PUBLIC|GROUP")
-    private QuizType quizType;
+    @EnumValidate(name = "visibility", regex = "PUBLIC|PRIVATE|CLASS_ONLY")
+    private QuizVisibility visibility;
 
     @Min(value = 1, message = "Time limit must be at least 1 minute")
     @Max(value = 180, message = "Time limit cannot exceed 3 hours")

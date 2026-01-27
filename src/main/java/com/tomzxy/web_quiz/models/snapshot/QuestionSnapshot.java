@@ -1,5 +1,6 @@
 package com.tomzxy.web_quiz.models.snapshot;
 
+import com.tomzxy.web_quiz.enums.QuestionAndAnswerType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,11 +16,9 @@ import java.util.List;
 public class QuestionSnapshot {
 
     private String key;              // "Q1", UUID, hoặc hash
-    private Integer order;           // thứ tự sau shuffle
 
     private String content;          // nội dung câu hỏi
-    private String type;             // TEXT, IMAGE, ...
-    private String level;            // EASY / MEDIUM / HARD
+    private QuestionAndAnswerType type;             // TEXT, IMAGE, ...
 
     private Integer points;
 
