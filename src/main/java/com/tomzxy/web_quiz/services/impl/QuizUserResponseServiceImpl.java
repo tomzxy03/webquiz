@@ -83,8 +83,8 @@ public class QuizUserResponseServiceImpl implements QuizUserResponseService {
         QuizUserResponse response = quizUserResponseRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("User response not found"));
         
-        response.softDelete();
-        quizUserResponseRepo.save(response);
+        response.setActive(false);
+        response = quizUserResponseRepo.save(response);
     }
 
     @Override

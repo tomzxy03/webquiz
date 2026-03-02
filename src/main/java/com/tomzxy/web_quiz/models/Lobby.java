@@ -1,9 +1,10 @@
 package com.tomzxy.web_quiz.models;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.tomzxy.web_quiz.containts.ApiDefined;
 import com.tomzxy.web_quiz.models.NotificationUser.Notification;
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
 
@@ -11,7 +12,6 @@ import com.tomzxy.web_quiz.models.User.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,7 +24,6 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @Getter
 @Setter
-@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "lobbies")
 public class Lobby extends BaseEntity{
@@ -41,13 +40,13 @@ public class Lobby extends BaseEntity{
     @JoinTable(name = "lobby_user",
         joinColumns = @JoinColumn(name = "lobby_id"),
         inverseJoinColumns = @JoinColumn(name = "user_id"))
-    private Set<User> members;
+    private Set<User> members = new HashSet<>();
 
     @OneToMany(mappedBy = "lobby")
-    private List<Quiz> quizzes;
+    private List<Quiz> quizzes = new ArrayList<>();
 
     @OneToMany(mappedBy = "lobby")
-    private List<Notification> notifications;
+    private List<Notification> notifications = new ArrayList<>();
 
 
 }

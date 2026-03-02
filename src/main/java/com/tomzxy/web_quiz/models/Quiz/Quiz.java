@@ -6,7 +6,6 @@ import com.tomzxy.web_quiz.models.*;
 
 import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;
 import com.tomzxy.web_quiz.models.User.User;
-import com.tomzxy.web_quiz.models.snapshot.QuizQuestionSnapshot;
 import jakarta.persistence.*;
 
 import lombok.*;
@@ -23,49 +22,29 @@ import java.util.Set;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
 @Getter
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "quizzes", indexes = {
-    @Index(name = "idx_quiz_host", columnList = "host_id"),
-    @Index(name = "idx_quiz_subject", columnList = "subject_id"),
-    @Index(name = "idx_quiz_type", columnList = "quiz_type"),
-    @Index(name = "idx_quiz_created_at", columnList = "created_at")
+        @Index(name = "idx_quiz_host", columnList = "host_id"),
+        @Index(name = "idx_quiz_subject", columnList = "subject_id"),
+        @Index(name = "idx_quiz_visibility", columnList = "visibility"),
+        @Index(name = "idx_quiz_created_at", columnList = "created_at")
 })
 public class Quiz extends BaseEntity {
-    
+
     @Column(name = "title", nullable = false, length = 200)
     private String title;
 
     @Column(name = "description", length = 1000)
     private String description;
 
-//    @Column(name = "total_questions", nullable = false)
-//    private Integer totalQuestions = 0;
-
     @Column(name = "time_limit_minutes")
     private Integer timeLimitMinutes;
-
-    @Version
-    @Column(name = "version")
-    private Long version = 0L;
-
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "question_template", columnDefinition = "jsonb")
-    private QuizQuestionSnapshot template;
-
-
-
-    @Transient
-    public Long getTotalAttempts() {
-        return this.instances != null ? (long) this.instances.size() : 0L;
-    }
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private QuizStatus status = QuizStatus.DRAFT;
-
 
     @Column(name = "start_date")
     private LocalDateTime startDate;
@@ -99,84 +78,25 @@ public class Quiz extends BaseEntity {
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<QuizQuestionLink> quizQuestionLinks = new HashSet<>();
 
-
+    @Column(name = "max_attempt")
+    private int maxAttempt;
 
     @Transient
     public Integer getTotalQuestions() {
         return this.quizQuestionLinks != null ? this.quizQuestionLinks.size() : 0;
     }
 
-//    public boolean isAvailable() {
-//        LocalDateTime now = LocalDateTime.now();
-//        if(!isActive()){
-//            return false;
-//        }
-//        if(quizAvailable == QuizAvailable.SCHEDULED && (startDate == null || now.isAfter(startDate)) &&
-//        (endDate == null || now.isBefore(endDate))){
-//            return false;
-//        }
-//        return true;
-//    }
-//
-//    public boolean isExpired() {
-//        return endDate != null && LocalDateTime.now().isAfter(endDate);
-//    }
-//
-//    public boolean isNotStarted() {
-//        return startDate != null && LocalDateTime.now().isBefore(startDate);
-//    }
-//
-//    public long getRemainingTimeMinutes() {
-//        if (endDate == null) {
-//            return timeLimitMinutes != null ? timeLimitMinutes : Long.MAX_VALUE;
-//        }
-//        LocalDateTime now = LocalDateTime.now();
-//        if (now.isAfter(endDate)) {
-//            return 0;
-//        }
-//        return java.time.Duration.between(now, endDate).toMinutes();
-//    }
-
-//    public boolean canUserAttempt(User user) {
-//        if (!isAvailable()) {
-//            return false;
-//        }
-//
-//
-//        // Check if quiz have been retried
-//        return options.contains(QuizOptions.ALLOW_RETRY);
-//    }
-//
-//    public QuizInstance getUserLatestInstance(User user) {
-//        return instances.stream()
-//                .filter(instance -> instance.getUser().equals(user))
-//                .max((r1, r2) -> r1.getCreatedAt().compareTo(r2.getCreatedAt()))
-//                .orElse(null);
-//    }
-//
-//
-//    public void activate() {
-//        this.setActive(true);
-//        this.setUpdatedAt(LocalDateTime.now());
-//    }
-//
-//    public void deactivate() {
-//        this.setActive(false);
-//        this.setUpdatedAt(LocalDateTime.now());
-//    }
-//
-//
-//    public boolean hasTimeLimit() {
-//        return timeLimitMinutes != null && timeLimitMinutes > 0;
-//    }
-
+    @Transient
+    public Long getTotalAttempts() {
+        return this.instances != null ? (long) this.instances.size() : 0L;
+    }
 
     @Override
     public String toString() {
         return "Quiz{" +
                 "id=" + getId() +
                 ", title='" + title + '\'' +
-                ", quizType=" + visibility +
+                ", visibility=" + visibility +
                 ", totalQuestions=" + getTotalQuestions() +
                 ", isAvailable=" + isActive() +
                 '}';

@@ -11,7 +11,6 @@ import java.util.List;
 public interface QuizUserResponseMapper {
 
     @Mapping(target = "quizInstanceId", source = "quizInstance.id")
-    @Mapping(target = "questionSnapshots", source = "questionSnapshots")
     @Mapping(target = "isAnswered", expression = "java(quizUserResponse.isAnswered())")
     @Mapping(target = "isNotAnswered", expression = "java(quizUserResponse.isNotAnswered())")
     @Mapping(target = "isAnsweredCorrectly", expression = "java(quizUserResponse.isAnsweredCorrectly())")
@@ -20,11 +19,13 @@ public interface QuizUserResponseMapper {
     QuizUserResponseResDTO toQuizUserResponseResDTO(QuizUserResponse quizUserResponse);
 
     @Mapping(target = "quizInstance", ignore = true)
-    @Mapping(target = "questionSnapshots", ignore = true)
+    @Mapping(target = "questionSnapshotKey", ignore = true)
+    @Mapping(target = "questionId", ignore = true)
     QuizUserResponse toQuizUserResponse(QuizUserResponseReqDTO quizUserResponseReqDTO);
 
     @Mapping(target = "quizInstance", ignore = true)
-    @Mapping(target = "questionSnapshots", ignore = true)
+    @Mapping(target = "questionSnapshotKey", ignore = true)
+    @Mapping(target = "questionId", ignore = true)
     void updateQuizUserResponseFromDto(QuizUserResponseReqDTO quizUserResponseReqDTO, @MappingTarget QuizUserResponse quizUserResponse);
 
     List<QuizUserResponseResDTO> toQuizUserResponseResDTOList(List<QuizUserResponse> quizUserResponses);

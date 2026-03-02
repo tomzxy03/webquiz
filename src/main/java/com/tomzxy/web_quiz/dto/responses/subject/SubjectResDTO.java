@@ -1,4 +1,4 @@
-package com.tomzxy.web_quiz.dto.responses;
+package com.tomzxy.web_quiz.dto.responses.subject;
 
 
 import lombok.*;
@@ -13,7 +13,6 @@ import lombok.experimental.FieldDefaults;
 public class SubjectResDTO {
     Long id;
     String subjectName;
-
     String description;
 
 }

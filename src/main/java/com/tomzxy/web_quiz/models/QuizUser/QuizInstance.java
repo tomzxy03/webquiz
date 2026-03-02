@@ -21,16 +21,15 @@ import org.hibernate.type.SqlTypes;
 @Entity
 @Getter
 @Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder    
 @Table(name = "quiz_instances", indexes = {
     @Index(name = "idx_quiz_instance_quiz", columnList = "quiz_id"),
     @Index(name = "idx_quiz_instance_user", columnList = "user_id"),
     @Index(name = "idx_quiz_instance_status", columnList = "status"),
     @Index(name = "idx_quiz_instance_started", columnList = "started_at")
 })
-// the quizInstance be created whenever user join quiz. It's include general result of user.
 
 public class QuizInstance extends BaseEntity {
 
@@ -48,8 +47,6 @@ public class QuizInstance extends BaseEntity {
     @Column(name = "ended_at")
     private LocalDateTime endedAt;
 
-
-    @Builder.Default
     @Column(name = "total_points", nullable = false)
     private Integer totalPoints = 0;
 
@@ -57,11 +54,9 @@ public class QuizInstance extends BaseEntity {
     @Column(name = "question_snapshot", columnDefinition = "jsonb")
     private QuizQuestionSnapshot snapshot;
 
-    @Builder.Default
     @Column(name = "earned_points", nullable = false)
     private Integer earnedPoints = 0;
 
-    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private QuizInstanceStatus status = QuizInstanceStatus.IN_PROGRESS;
@@ -69,13 +64,15 @@ public class QuizInstance extends BaseEntity {
     @OneToMany(mappedBy = "quizInstance", cascade = {CascadeType.MERGE,CascadeType.PERSIST}, orphanRemoval = false)
     private Set<QuizUserResponse> userResponses = new HashSet<>();
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "question_order", columnDefinition = "jsonb", nullable = false)
-    private List<String> questionOrder = new ArrayList<>();
-
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "question_order", columnDefinition = "jsonb", nullable = false)
-    private List<String> answerOrder = new ArrayList<>();
+//    @JdbcTypeCode(SqlTypes.JSON)
+//    @Builder.Default
+//    @Column(name = "question_order", columnDefinition = "jsonb", nullable = false)
+//    private List<String> questionOrder = new ArrayList<>();
+//
+//    @JdbcTypeCode(SqlTypes.JSON)
+//    @Builder.Default
+//    @Column(name = "answer_order", columnDefinition = "jsonb", nullable = false)
+//    private List<String> answerOrder = new ArrayList<>();
 
     // Business Logic Methods
 
@@ -98,6 +95,7 @@ public class QuizInstance extends BaseEntity {
     }
 
     public Long getElapsedTimeMinutes() {
+        if (endedAt == null) return null;
         return java.time.Duration.between(startedAt, endedAt).toMinutes();
     }
 

@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/quiz_db
-    username: postgres
-    password: postgres
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -13,6 +13,12 @@ spring:
       hibernate:
         format_sql: true
 
-  sql:
-    init:
-      mode: never
+  redis:
+    host: ${SPRING_REDIS_HOST}
+    port: ${SPRING_REDIS_PORT}
+
+jwt:
+  secret: ${SECRET_KEY}
+  access-expiration: 900000
+  refresh-expiration: 604800000
+

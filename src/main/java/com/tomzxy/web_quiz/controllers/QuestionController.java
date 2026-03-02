@@ -22,6 +22,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping(path = ApiDefined.Question.BASE)
 @Tag(name = "Questions", description = "Question management APIs")
+@Validated
 public class QuestionController {
     private final QuestionService questionService;
 

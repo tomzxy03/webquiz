@@ -15,9 +15,7 @@ import java.util.Set;
 public class UserResDTO {
     Long id;
     String userName;
-    String phone;
     String email;
-    Gender gender;
     Set<String> roles;
     String profilePictureUrl;
 }

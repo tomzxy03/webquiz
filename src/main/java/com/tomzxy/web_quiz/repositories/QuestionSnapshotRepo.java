@@ -12,18 +12,18 @@ import java.util.Optional;
 @Repository
 public interface QuestionSnapshotRepo extends JpaRepository<QuestionSnapshot, Long> {
     
-    @Query("SELECT qs FROM QuestionSnapshot qs WHERE qs.questionText = :questionText")
-    Optional<QuestionSnapshot> findByQuestionText(@Param("questionText") String questionText);
+    @Query("SELECT qs FROM QuestionSnapshot qs WHERE qs.content = :content")
+    Optional<QuestionSnapshot> findByContent(@Param("content") String content);
     
-    @Query("SELECT qs FROM QuestionSnapshot qs WHERE qs.questionType = :questionType")
+    @Query("SELECT qs FROM QuestionSnapshot qs WHERE qs.type = :questionType")
     List<QuestionSnapshot> findByQuestionType(@Param("questionType") String questionType);
     
-    @Query("SELECT qs FROM QuestionSnapshot qs WHERE qs.questionPoints = :points")
+    @Query("SELECT qs FROM QuestionSnapshot qs WHERE qs.points = :points")
     List<QuestionSnapshot> findByQuestionPoints(@Param("points") Integer points);
     
     @Query("SELECT qs FROM QuestionSnapshot qs WHERE qs.isActive = true")
     List<QuestionSnapshot> findActiveQuestionSnapshots();
     
-    @Query("SELECT qs FROM QuestionSnapshot qs WHERE qs.questionText LIKE %:text%")
-    List<QuestionSnapshot> findByQuestionTextContaining(@Param("text") String text);
+    @Query("SELECT qs FROM QuestionSnapshot qs WHERE qs.content LIKE %:text%")
+    List<QuestionSnapshot> findByContentContaining(@Param("text") String text);
 }

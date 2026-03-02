@@ -3,13 +3,10 @@ package com.tomzxy.web_quiz.models;
 import com.tomzxy.web_quiz.enums.Level;
 import com.tomzxy.web_quiz.enums.QuestionAndAnswerType;
 import com.tomzxy.web_quiz.models.Host.QuestionBank;
-import com.tomzxy.web_quiz.models.Host.QuestionFolder;
-import com.tomzxy.web_quiz.models.User.User;
 import jakarta.persistence.*;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import lombok.experimental.SuperBuilder;
 import jakarta.persistence.Index;
 
 import java.util.Collection;
@@ -22,7 +19,6 @@ import java.util.Set;
 @Setter
 @Getter
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@SuperBuilder
 @Table(name = "questions", indexes = {
         @Index(name = "idx_question_type", columnList = "question_type"),
         @Index(name = "idx_question_level", columnList = "level"),
@@ -46,20 +42,21 @@ public class Question extends BaseEntity {
 
     // Thuộc về Question Bank nào (REQUIRED)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "bank_id", nullable = false)
+    @JoinColumn(name = "bank_id", nullable = true)
     private QuestionBank bank;
 
     // Thuộc về Folder nào (OPTIONAL - null nếu là question riêng lẻ)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "folder_id")
-    private QuestionFolder folder;  // Có thể null!
+    private Folder folder; // Có thể null!
 
-
-    @Column(name = "content_hash", nullable = false,unique = true,length = 64)
+    @Column(name = "content_hash", nullable = false, unique = true, length = 64)
     private String contentHash; // to distinguish, comparing between question and question
 
+    @Column(name = "points", nullable = false)
+    private Integer points = 1;
+
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
     private Set<Answer> answers = new HashSet<>();
 
     // Business Logic Methods
@@ -70,7 +67,6 @@ public class Question extends BaseEntity {
         }
     }
 
-
     public void addAnswers(Collection<Answer> answersList) {
         if (answersList != null && !answersList.isEmpty()) {
             for (Answer answer : answersList) {
@@ -78,7 +74,7 @@ public class Question extends BaseEntity {
             }
         }
     }
-    
+
     public void removeAnswer(Answer answer) {
         if (answer != null && answers.remove(answer)) {
             answer.setQuestion(null);
@@ -89,7 +85,10 @@ public class Question extends BaseEntity {
     public String toString() {
         return "Question{" +
                 "id=" + getId() +
-                ", questionName='" + (questionName != null ? questionName.substring(0, Math.min(50, questionName.length())) + "..." : "null") + '\'' +
+                ", questionName='"
+                + (questionName != null ? questionName.substring(0, Math.min(50, questionName.length())) + "..."
+                        : "null")
+                + '\'' +
                 ", questionType=" + questionType +
                 ", level=" + level +
                 ", isActive=" + isActive() +

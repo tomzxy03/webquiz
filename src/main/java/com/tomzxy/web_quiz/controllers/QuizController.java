@@ -27,17 +27,17 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(path = ApiDefined.Quiz.BASE)
 @Tag(name = "Quizzes", description = "Quiz management APIs")
 public class QuizController {
-    
+
     private final QuizService quizService;
 
     @GetMapping()
     @Operation(summary = "Get all quizzes", description = "Retrieve all quizzes with pagination")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Quizzes retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Quizzes retrieved successfully")
     })
     public ResponseEntity<DataResDTO<PageResDTO<?>>> getAllQuizzes(
-            @Parameter(description = "Page number (0-based)") @RequestParam @Min(0) int page,
-            @Parameter(description = "Page size (minimum 10)") @RequestParam @Min(10) int size) {
+            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") @Min(0) int page,
+            @Parameter(description = "Page size (minimum 10)") @RequestParam(defaultValue = "10") @Min(10) int size) {
         log.info("Get all quizzes");
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -47,8 +47,8 @@ public class QuizController {
     @GetMapping(ApiDefined.Quiz.ID)
     @Operation(summary = "Get quiz by ID", description = "Retrieve a quiz by its ID")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Quiz found successfully"),
-        @ApiResponse(responseCode = "404", description = "Quiz not found")
+            @ApiResponse(responseCode = "200", description = "Quiz found successfully"),
+            @ApiResponse(responseCode = "404", description = "Quiz not found")
     })
     public ResponseEntity<DataResDTO<QuizResDTO>> getQuiz(
             @Parameter(description = "Quiz ID") @PathVariable Long quizId) {
@@ -61,9 +61,8 @@ public class QuizController {
     @PostMapping()
     @Operation(summary = "Create quiz", description = "Create a new quiz")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Quiz created successfully",
-            content = @Content(schema = @Schema(implementation = DataResDTO.class))),
-        @ApiResponse(responseCode = "400", description = "Invalid request data")
+            @ApiResponse(responseCode = "201", description = "Quiz created successfully", content = @Content(schema = @Schema(implementation = DataResDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
     public ResponseEntity<DataResDTO<QuizResDTO>> createQuiz(@Valid @RequestBody QuizReqDTO quizReqDTO) {
         log.info("Create quiz");
@@ -75,9 +74,9 @@ public class QuizController {
     @PutMapping(ApiDefined.Quiz.ID)
     @Operation(summary = "Update quiz", description = "Update an existing quiz")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Quiz updated successfully"),
-        @ApiResponse(responseCode = "404", description = "Quiz not found"),
-        @ApiResponse(responseCode = "400", description = "Invalid request data")
+            @ApiResponse(responseCode = "200", description = "Quiz updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Quiz not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
     public ResponseEntity<DataResDTO<QuizResDTO>> updateQuiz(
             @Parameter(description = "Quiz ID") @PathVariable Long quizId,
@@ -91,8 +90,8 @@ public class QuizController {
     @DeleteMapping(ApiDefined.Quiz.ID)
     @Operation(summary = "Delete quiz", description = "Delete a quiz by its ID")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Quiz deleted successfully"),
-        @ApiResponse(responseCode = "404", description = "Quiz not found")
+            @ApiResponse(responseCode = "200", description = "Quiz deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Quiz not found")
     })
     public ResponseEntity<DataResDTO<Void>> deleteQuiz(
             @Parameter(description = "Quiz ID") @PathVariable Long quizId) {

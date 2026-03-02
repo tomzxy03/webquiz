@@ -23,19 +23,6 @@ public interface QuizInstanceMapper {
     QuizInstanceResDTO toQuizInstanceResDTO(QuizInstance quizInstance);
 
 
-    // QuizInstance to QuizResultDetailResDTO
-    @Mapping(target = "quizInstanceId", source = "id")
-    @Mapping(target = "quizId", source = "quiz.id")
-    @Mapping(target = "quizTitle", source = "quiz.title")
-    @Mapping(target = "userId", source = "user.id")
-    @Mapping(target = "userName", source = "user.userName")
-    @Mapping(target = "status", source = "status", qualifiedByName = "statusToString")
-    @Mapping(target = "scorePercentage", source = "scorePercentage")
-    @Mapping(target = "totalTimeSpentMinutes", source = "elapsedTimeMinutes")
-    @Mapping(target = "questionResults", ignore = true) // Will be handled manually in service
-    QuizResultDetailResDTO toQuizResultDetailResDTO(QuizInstance quizInstance);
-
-
     // Helper method to convert status enum to string
     @Named("statusToString")
     default String statusToString(com.tomzxy.web_quiz.enums.QuizInstanceStatus status) {

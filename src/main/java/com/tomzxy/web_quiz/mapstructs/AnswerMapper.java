@@ -1,33 +1,27 @@
 package com.tomzxy.web_quiz.mapstructs;
 
+import java.util.List;
+import java.util.Set;
+
+
 import com.tomzxy.web_quiz.dto.requests.AnswerReqDTO;
 import com.tomzxy.web_quiz.dto.responses.answer.AnswerResDTO;
 import com.tomzxy.web_quiz.models.Answer;
 
-import org.mapstruct.*;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.factory.Mappers;
-
-import java.util.List;
-import java.util.Set;
 
 @Mapper(componentModel = "spring")
 public interface AnswerMapper {
     AnswerMapper MAPPER = Mappers.getMapper(AnswerMapper.class);
 
-    @Mapping(target ="question", ignore = true )
-
     Answer toAnswer(AnswerReqDTO answerReqDTO);
 
-    @Mapping(source = "active", target = "isActive")
+    @Mapping(source = "answerName", target = "answerText")
     AnswerResDTO toAnswerResDTO(Answer answer);
-
-    @Mapping(source = "active", target = "isActive")
     List<AnswerResDTO> toListAnswerResDTO(List<Answer> answers);
-
-    @Mapping(target = "question", ignore = true)
-
-    Set<Answer> toListAnswer(Set<AnswerReqDTO> answers);
-    
+    Set<Answer> toSetAnswer(Set<AnswerReqDTO> answerReqDTOs);
     void updateAnswer(@MappingTarget Answer answer, AnswerReqDTO answerReqDTO);
-
 }

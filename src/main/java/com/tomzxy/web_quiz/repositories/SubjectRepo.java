@@ -1,5 +1,6 @@
 package com.tomzxy.web_quiz.repositories;
 
+import com.tomzxy.web_quiz.dto.responses.subject.SubjectDetailResDTO;
 import com.tomzxy.web_quiz.models.Subject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,7 +15,7 @@ import java.util.Optional;
 
 @Repository
 public interface SubjectRepo extends JpaRepository<Subject, Long>, JpaSpecificationExecutor<Subject> {
-    
+
     // Basic CRUD with pagination
     @Query("SELECT s FROM Subject s WHERE s.isActive = :isActive")
     Page<Subject> findAllActive(@Param("isActive") boolean isActive, Pageable pageable);
@@ -24,48 +25,64 @@ public interface SubjectRepo extends JpaRepository<Subject, Long>, JpaSpecificat
 
     @Query("SELECT s FROM Subject s WHERE s.isActive = :isActive")
     Optional<List<Subject>> findAllByActive(@Param("isActive") boolean isActive);
+
     // Find by subject name
     @Query("SELECT s FROM Subject s WHERE s.subjectName = :subjectName AND s.isActive = :isActive")
     Optional<Subject> findBySubjectName(@Param("subjectName") String subjectName);
-    
+
     // Check if subject exists by name
     @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Subject s " +
-           "WHERE s.subjectName = :subjectName AND s.isActive = :isActive")
+            "WHERE s.subjectName = :subjectName AND s.isActive = :isActive")
     boolean existsBySubjectName(@Param("subjectName") String subjectName);
-    
-    
+
     // Find subjects by quizzes count
     @Query("SELECT s FROM Subject s WHERE SIZE(s.quizzes) = :quizCount AND s.isActive = :isActive")
-    Page<Subject> findByQuizCount(@Param("quizCount") int quizCount, @Param("isActive") boolean isActive, Pageable pageable);
-    
+    Page<Subject> findByQuizCount(@Param("quizCount") int quizCount, @Param("isActive") boolean isActive,
+            Pageable pageable);
+
     // Find subjects with minimum quizzes count
     @Query("SELECT s FROM Subject s WHERE SIZE(s.quizzes) >= :minQuizCount AND s.isActive = :isActive")
-    Page<Subject> findByMinQuizCount(@Param("minQuizCount") int minQuizCount, @Param("isActive") boolean isActive, Pageable pageable);
-    
-   
-    
+    Page<Subject> findByMinQuizCount(@Param("minQuizCount") int minQuizCount, @Param("isActive") boolean isActive,
+            Pageable pageable);
+
     // Find subjects with most quizzes
     @Query("SELECT s FROM Subject s WHERE s.isActive = :isActive ORDER BY SIZE(s.quizzes) DESC")
     Page<Subject> findSubjectsWithMostQuizzes(@Param("isActive") boolean isActive, Pageable pageable);
-    
+
     // Find recent subjects
     @Query("SELECT s FROM Subject s WHERE s.isActive = :isActive ORDER BY s.createdAt DESC")
     Page<Subject> findRecentSubjects(@Param("isActive") boolean isActive, Pageable pageable);
-    
+
     // Count subjects by quiz count
     @Query("SELECT COUNT(s) FROM Subject s WHERE SIZE(s.quizzes) = :quizCount AND s.isActive = :isActive")
     long countByQuizCount(@Param("quizCount") int quizCount, @Param("isActive") boolean isActive);
-    
+
+    // Count quizzes by subject
+    @Query("""
+            SELECT new com.tomzxy.web_quiz.dto.responses.subject.SubjectDetailResDTO(
+                s.id,
+                s.subjectName,
+                s.description,
+                COUNT(q.id)
+            )
+            FROM Subject s
+            LEFT JOIN s.quizzes q
+            WHERE s.isActive = :isActive
+            GROUP BY s.id, s.subjectName, s.description
+            """)
+    Optional<List<SubjectDetailResDTO>> getAllSubjectsAndCountOfQuizzes(@Param("isActive") boolean isActive);
+
     // Find all subject names
     @Query("SELECT s.subjectName FROM Subject s WHERE s.isActive = :isActive")
     List<String> findAllSubjectNames(@Param("isActive") boolean isActive);
-    
+
     // Find subjects by ID list
     @Query("SELECT s FROM Subject s WHERE s.id IN :ids AND s.isActive = :isActive")
     List<Subject> findByIds(@Param("ids") List<Long> ids, @Param("isActive") boolean isActive);
-    
+
     // Find subjects with description containing specific text
     @Query("SELECT s FROM Subject s WHERE LOWER(s.description) LIKE LOWER(CONCAT('%', :descriptionText, '%')) AND s.isActive = :isActive")
-    Page<Subject> findByDescriptionContaining(@Param("descriptionText") String descriptionText, @Param("isActive") boolean isActive, Pageable pageable);
-    
+    Page<Subject> findByDescriptionContaining(@Param("descriptionText") String descriptionText,
+            @Param("isActive") boolean isActive, Pageable pageable);
+
 }

@@ -1,13 +1,17 @@
 package com.tomzxy.web_quiz.models.Quiz;
 
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import lombok.*;
 
 import java.io.Serializable;
 import java.util.Objects;
 
 @Embeddable
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class QuizQuestionId implements Serializable {
     @Column(name = "quiz_id")
     private Long quizId;
@@ -16,7 +20,8 @@ public class QuizQuestionId implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || getClass() != o.getClass())
+            return false;
         QuizQuestionId that = (QuizQuestionId) o;
         return Objects.equals(quizId, that.quizId) && Objects.equals(questionId, that.questionId);
     }

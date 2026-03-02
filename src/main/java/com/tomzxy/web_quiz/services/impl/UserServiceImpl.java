@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,9 +28,10 @@ public class UserServiceImpl implements UserService {
     private final UserRepo userRepo;
     private final UserMapper userMapper;
     private final ConvertToPageResDTO convertToPageResDTO;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     @Override
-    public PageResDTO<?> get_users_pageable(int size, int page) {
+    public PageResDTO<?> get_users_pageable(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<User> users = userRepo.findAllByActive(true, pageable);
 
@@ -40,6 +42,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResDTO create_user(UserReqDto userReqDto) {
         User user = userMapper.toUser(userReqDto);
+        user.setPassword(passwordEncoder.encode(userReqDto.getPassword()));
         return userMapper.toUserResDTO(userRepo.save(user));
     }
 

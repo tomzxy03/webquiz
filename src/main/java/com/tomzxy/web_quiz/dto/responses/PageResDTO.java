@@ -10,9 +10,10 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PageResDTO <T>{
+public class PageResDTO<T> {
     int page;
     int size;
     int total_page;
+    long total;
     List<T> items;
 }

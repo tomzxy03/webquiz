@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Builder
 @Getter
 @Setter
 @Table(name = "permission")
@@ -30,4 +29,11 @@ public class Permission{
 
     @OneToMany(mappedBy = "permission", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     Set<RolePermissionObject> rolePermissionObjects = new HashSet<>();
+
+    public Permission(String permissionName, String description){
+        this.permissionName=permissionName;
+        this.description=description;
+
+    }
+
 } 

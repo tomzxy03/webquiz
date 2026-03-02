@@ -7,5 +7,4 @@ public class NotFoundException extends ApiException{
         super(AppCode.NOT_FOUND, message);
     }
 
-
 }

@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Builder
 @Getter
 @Setter
 @Table(name = "role")
@@ -25,7 +24,7 @@ public class Role extends BaseEntity{
     @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
     Set<User> user;
 
-    @OneToMany(mappedBy = "role", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToMany(mappedBy = "role", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
     @Column(name = "role_object")
     Set<RolePermissionObject> rolePermissionObjects = new HashSet<>();
 }

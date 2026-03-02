@@ -4,36 +4,31 @@ import com.tomzxy.web_quiz.dto.requests.quiz.QuizInstanceReqDTO;
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizSubmissionReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.QuizInstanceResDTO;
-import com.tomzxy.web_quiz.models.Quiz.Quiz;
+import com.tomzxy.web_quiz.dto.responses.Quiz.QuizResultDetailResDTO;
 
 public interface QuizInstanceService {
-    
 
-    QuizInstanceResDTO createQuizInstance(QuizInstanceReqDTO request);
-    
+  QuizInstanceResDTO createQuizInstance(QuizInstanceReqDTO request);
 
-    QuizInstanceResDTO getQuizInstance(Long instanceId, Long userId);
-    
-    PageResDTO<?> getAllQuizInstances(int page, int size);
+  QuizInstanceResDTO getQuizInstance(Long instanceId, Long userId);
 
-    PageResDTO<?> getAllQuizInstancesByLobbyId(Long lobbyId, int page, int size);
+  PageResDTO<?> getAllQuizInstances(int page, int size);
 
-    PageResDTO<?> getAllQuizInstancesByUserId(Long userId, int page, int size);
+  PageResDTO<?> getAllQuizInstancesByLobbyId(Long lobbyId, int page, int size);
 
-    PageResDTO<?> getAllQuizInstancesByQuizId(Long quizId, int page, int size);
+  PageResDTO<?> getAllQuizInstancesByUserId(Long userId, int page, int size);
 
-    PageResDTO<?> getAllQuizInstancesByQuizIdAndUserId(Long quizId, Long userId, int page, int size);
+  PageResDTO<?> getAllQuizInstancesByQuizId(Long quizId, int page, int size);
 
-  //  PageResDTO<?> getAllQuizInstancesByQuizIdAndLobbyId(Long quizId, Long lobbyId, int page, int size);
-    
-   
-    boolean canUserStartQuiz(Long quizId, Long userId);
+  PageResDTO<?> getAllQuizInstancesByQuizIdAndUserId(Long quizId, Long userId, int page, int size);
 
-    QuizInstanceResDTO submitQuiz(QuizSubmissionReqDTO request);
+  boolean canUserStartQuiz(Long quizId, Long userId);
 
+  QuizResultDetailResDTO submitQuiz(QuizSubmissionReqDTO request);
 
-    void handleTimedOutInstances();
-    
+  QuizResultDetailResDTO getQuizResult(Long instanceId, Long userId);
 
-    void deleteQuizInstance(Long instanceId, Long userId);
-} 
+  void handleTimedOutInstances();
+
+  void deleteQuizInstance(Long instanceId, Long userId);
+}

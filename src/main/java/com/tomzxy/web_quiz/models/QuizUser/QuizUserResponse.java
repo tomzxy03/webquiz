@@ -32,6 +32,12 @@ public class QuizUserResponse extends BaseEntity {
     @JoinColumn(name = "quiz_instance_id", nullable = false)
     private QuizInstance quizInstance;
 
+    @Column(name = "question_id", nullable = false)
+    private Long questionId;
+
+    @Column(name = "question_snapshot_key")
+    private String questionSnapshotKey;
+
     @Column(name = "selected_answer_id")
     private Long selectedAnswerId; // ID của đáp án user chọn
 
@@ -65,6 +71,26 @@ public class QuizUserResponse extends BaseEntity {
         } else {
             return ResponseStatus.INCORRECT;
         }
+    }
+
+    /** True if user selected an answer (by id or text). */
+    public boolean isAnswered() {
+        return !isSkipped && (selectedAnswerId != null || (selectedAnswerText != null && !selectedAnswerText.isBlank()));
+    }
+
+    /** True if answered and correct. */
+    public boolean isAnsweredCorrectly() {
+        return isAnswered() && isCorrect;
+    }
+
+    /** True if answered and incorrect. */
+    public boolean isAnsweredIncorrectly() {
+        return isAnswered() && !isCorrect;
+    }
+
+    /** True if skipped or no answer selected. */
+    public boolean isNotAnswered() {
+        return isSkipped || (selectedAnswerId == null && (selectedAnswerText == null || selectedAnswerText.isBlank()));
     }
 
     @Override

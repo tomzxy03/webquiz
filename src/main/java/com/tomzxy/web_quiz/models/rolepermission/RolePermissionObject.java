@@ -23,7 +23,7 @@ public class RolePermissionObject {
     @JoinColumn(name = "role_id")
     Role role;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("permissionName")
     @JoinColumn(name = "permission_name")
     Permission permission;

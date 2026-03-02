@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping(path = ApiDefined.User.BASE)
 @Tag(name = "Users", description = "User management APIs")
+@Validated
 public class UserController {
     private final UserService userService;
 
@@ -39,8 +41,8 @@ public class UserController {
         @ApiResponse(responseCode = "200", description = "Users retrieved successfully")
     })
     public ResponseEntity<DataResDTO<PageResDTO<?>>> getAllUser(
-            @Parameter(description = "Page number (0-based)") @RequestParam @Min(0) int page,
-            @Parameter(description = "Page size (minimum 10)") @RequestParam @Min(10) int size){
+            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") @Min(0) int page,
+            @Parameter(description = "Page size (minimum 10)") @RequestParam(defaultValue = "10") @Min(10) int size){
         log.info("Get all users");
         return ResponseEntity
                 .status(HttpStatus.OK)

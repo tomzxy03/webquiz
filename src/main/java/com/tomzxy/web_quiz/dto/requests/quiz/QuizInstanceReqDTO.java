@@ -1,26 +1,20 @@
 package com.tomzxy.web_quiz.dto.requests.quiz;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.tomzxy.web_quiz.models.QuizConfig;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuizInstanceReqDTO {
-    
+    @NotNull(message = "Quiz ID is required")
     private Long quizId;
-    private Long userId;
-    private Long lobbyId;
-    private Set<QuizOptions> options;
-    private Integer timeLimitMinutes;
-    private Integer totalPoints;
-    private LocalDateTime startedAt;
-
-    
 } 

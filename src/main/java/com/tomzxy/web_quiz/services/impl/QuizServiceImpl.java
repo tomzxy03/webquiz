@@ -5,16 +5,19 @@ import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.Quiz.QuizResDTO;
 import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.mapstructs.QuizMapper;
+import com.tomzxy.web_quiz.models.Quiz.QuizQuestionId;
+import com.tomzxy.web_quiz.models.Quiz.QuizQuestionLink;
 import com.tomzxy.web_quiz.models.User.User;
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
 import com.tomzxy.web_quiz.models.Lobby;
 import com.tomzxy.web_quiz.models.Question;
-import com.tomzxy.web_quiz.models.Answer;
+import com.tomzxy.web_quiz.models.Subject;
 import com.tomzxy.web_quiz.repositories.QuizRepo;
 import com.tomzxy.web_quiz.repositories.UserRepo;
 import com.tomzxy.web_quiz.repositories.LobbyRepo;
 import com.tomzxy.web_quiz.repositories.QuestionRepo;
-import com.tomzxy.web_quiz.repositories.AnswerRepo;
+import com.tomzxy.web_quiz.repositories.SubjectRepo;
+import com.tomzxy.web_quiz.repositories.QuizQuestionLinkRepo;
 import com.tomzxy.web_quiz.services.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.services.QuizService;
 import org.springframework.data.domain.Page;
@@ -23,244 +26,150 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional
 public class QuizServiceImpl implements QuizService {
+
     private final QuizRepo quizRepo;
-
     private final UserRepo userRepo;
-
     private final LobbyRepo lobbyRepo;
-
     private final QuestionRepo questionRepo;
-
-    private final AnswerRepo answerRepo;
-
+    private final SubjectRepo subjectRepo;
+    private final QuizQuestionLinkRepo quizQuestionLinkRepo;
     private final QuizMapper quizMapper;
-
     private final ConvertToPageResDTO convertToPageResDTO;
 
     @Override
     @Transactional(readOnly = true)
-    public PageResDTO<?> getAll(int page,int size) {
+    public PageResDTO<?> getAll(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        try {
-            Page<Quiz> quizzes = quizRepo.findAll(pageable);
-            return convertToPageResDTO.convertPageResponse(quizzes, pageable,
-            quizMapper::toDto);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to retrieve quizzes: " + e.getMessage());
-        }
+        Page<Quiz> quizzes = quizRepo.findAll(pageable);
+        return convertToPageResDTO.convertPageResponse(quizzes, pageable, quizMapper::toDto);
     }
 
     @Override
     @Transactional(readOnly = true)
     public QuizResDTO getById(Long id) {
-        try {
-            Quiz quiz = quizRepo.findById(id)
-                    .orElseThrow(() -> new NotFoundException("Quiz not found with id: " + id));
-            return quizMapper.toDto(quiz);
-        } catch (NotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to retrieve quiz: " + e.getMessage());
-        }
+        Quiz quiz = quizRepo.findById(id)
+                .orElseThrow(() -> new NotFoundException("Quiz not found with id: " + id));
+        return quizMapper.toDto(quiz);
     }
 
     @Override
     @Transactional
     public QuizResDTO create(QuizReqDTO dto) {
-        try {
-            // Validate host exists
-            User host = userRepo.findById(dto.getHostId())
-                    .orElseThrow(() -> new NotFoundException("Host user not found with id: " + dto.getHostId()));
+        // Validate host exists
+        User host = userRepo.findById(dto.getHostId())
+                .orElseThrow(() -> new NotFoundException("Host user not found with id: " + dto.getHostId()));
 
-            // Validate group if provided
-            Lobby group = null;
-            if (dto.getLobbyId() != null) {
-                group = lobbyRepo.findById(dto.getLobbyId())
-                        .orElseThrow(() -> new NotFoundException("Group not found with id: " + dto.getLobbyId()));
-            }
+        // Validate subject exists
+        Subject subject = subjectRepo.findById(dto.getSubjectId())
+                .orElseThrow(() -> new NotFoundException("Subject not found with id: " + dto.getSubjectId()));
 
-            // Create quiz
-            Quiz quiz = quizMapper.toEntity(dto);
-            quiz.setHost(host);
-            quiz.setLobby(group);
-            
-            // Validate total questions match
-            if (dto.getQuestions() != null && dto.getQuestions().size() != dto.getTotalQuestions()) {
-                throw new RuntimeException("Total questions count must match the number of questions provided");
-            }
-
-            // Process questions and answers
-            if (dto.getQuestions() != null) {
-                Set<QuizQuestion> quizQuestions = processQuizQuestions(dto.getQuestions());
-                quiz.addQuestions(quizQuestions);
-            }
-
-            quiz = quizRepo.save(quiz);
-            return mapToDtoWithRelations(quiz);
-        } catch (NotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create quiz: " + e.getMessage());
+        // Validate group if provided
+        Lobby group = null;
+        if (dto.getLobbyId() != null) {
+            group = lobbyRepo.findById(dto.getLobbyId())
+                    .orElseThrow(() -> new NotFoundException("Group not found with id: " + dto.getLobbyId()));
         }
+
+        // Create quiz entity
+        Quiz quiz = quizMapper.toEntity(dto);
+        quiz.setHost(host);
+        quiz.setSubject(subject);
+        quiz.setLobby(group);
+
+        quiz = quizRepo.save(quiz);
+
+        // Process question links
+        if (dto.getQuestionIds() != null && !dto.getQuestionIds().isEmpty()) {
+            createQuestionLinks(quiz, dto.getQuestionIds());
+        }
+
+        return quizMapper.toDto(quiz);
     }
 
     @Override
+    @Transactional
     public QuizResDTO update(Long id, QuizReqDTO dto) {
-        try {
-            Quiz existingQuiz = quizRepo.findById(id)
-                    .orElseThrow(() -> new NotFoundException("Quiz not found with id: " + id));
+        Quiz existingQuiz = quizRepo.findById(id)
+                .orElseThrow(() -> new NotFoundException("Quiz not found with id: " + id));
 
-            // Validate host exists
-            User host = userRepo.findById(dto.getHostId())
-                    .orElseThrow(() -> new NotFoundException("Host user not found with id: " + dto.getHostId()));
+        // Validate host exists
+        User host = userRepo.findById(dto.getHostId())
+                .orElseThrow(() -> new NotFoundException("Host user not found with id: " + dto.getHostId()));
 
-            // Validate group if provided
-            Lobby group = null;
-            if (dto.getLobbyId() != null) {
-                group = lobbyRepo.findById(dto.getLobbyId())
-                        .orElseThrow(() -> new NotFoundException("Group not found with id: " + dto.getLobbyId()));
-                
-                // Validate host is member of the group
-                if (!group.getMembers().contains(host)) {
-                    throw new RuntimeException("Host must be a member of the specified group");
-                }
-            }
+        // Validate subject exists
+        Subject subject = subjectRepo.findById(dto.getSubjectId())
+                .orElseThrow(() -> new NotFoundException("Subject not found with id: " + dto.getSubjectId()));
 
-            // Update quiz
-            Quiz updatedQuiz = quizMapper.toEntity(dto);
-            updatedQuiz.setId(existingQuiz.getId());
-            updatedQuiz.setHost(host);
-            updatedQuiz.setLobby(group);
-            
-            // Validate total questions match
-            if (dto.getQuestions() != null && dto.getQuestions().size() != dto.getTotalQuestions()) {
-                throw new RuntimeException("Total questions count must match the number of questions provided");
-            }
-
-            // Process questions and answers
-            if (dto.getQuestions() != null) {
-                Set<QuizQuestion> quizQuestions = processQuizQuestions(dto.getQuestions());
-                updatedQuiz.addQuestions(quizQuestions);
-            }
-
-            updatedQuiz = quizRepo.save(updatedQuiz);
-            return mapToDtoWithRelations(updatedQuiz);
-        } catch (NotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to update quiz: " + e.getMessage());
+        // Validate group if provided
+        Lobby group = null;
+        if (dto.getLobbyId() != null) {
+            group = lobbyRepo.findById(dto.getLobbyId())
+                    .orElseThrow(() -> new NotFoundException("Group not found with id: " + dto.getLobbyId()));
         }
+
+        // Update basic fields
+        existingQuiz.setTitle(dto.getTitle());
+        existingQuiz.setDescription(dto.getDescription());
+        existingQuiz.setTimeLimitMinutes(dto.getTimeLimitMinutes());
+        existingQuiz.setVisibility(dto.getVisibility());
+        existingQuiz.setMaxAttempt(dto.getMaxAttempts() != null ? dto.getMaxAttempts() : 1);
+        existingQuiz.setHost(host);
+        existingQuiz.setSubject(subject);
+        existingQuiz.setLobby(group);
+
+        if (dto.getStartDate() != null) {
+            existingQuiz.setStartDate(dto.getStartDate());
+        }
+
+        existingQuiz = quizRepo.save(existingQuiz);
+
+        // Re-create question links if provided
+        if (dto.getQuestionIds() != null && !dto.getQuestionIds().isEmpty()) {
+            // Remove old links
+            existingQuiz.getQuizQuestionLinks().clear();
+            quizRepo.save(existingQuiz);
+            // Create new links
+            createQuestionLinks(existingQuiz, dto.getQuestionIds());
+        }
+
+        return quizMapper.toDto(existingQuiz);
     }
 
     @Override
+    @Transactional
     public void delete(Long id) {
-        try {
-            Quiz quiz = quizRepo.findById(id)
-                    .orElseThrow(() -> new NotFoundException("Quiz not found with id: " + id));
-            quiz.softDelete();
-            quizRepo.save(quiz);
-        } catch (NotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to delete quiz: " + e.getMessage());
+        Quiz quiz = quizRepo.findById(id)
+                .orElseThrow(() -> new NotFoundException("Quiz not found with id: " + id));
+        quiz.deactivate();
+        quizRepo.save(quiz);
+    }
+
+    /**
+     * Create QuizQuestionLink entries for each question ID in the set.
+     */
+    private void createQuestionLinks(Quiz quiz, Set<Long> questionIds) {
+        for (Long questionId : questionIds) {
+            Question question = questionRepo.findById(questionId)
+                    .orElseThrow(() -> new NotFoundException("Question not found with id: " + questionId));
+
+            QuizQuestionId linkId = new QuizQuestionId(quiz.getId(), question.getId());
+            QuizQuestionLink link = QuizQuestionLink.builder()
+                    .id(linkId)
+                    .quiz(quiz)
+                    .question(question)
+                    .points(question.getPoints() != null ? question.getPoints() : 1)
+                    .build();
+
+            quizQuestionLinkRepo.save(link);
         }
     }
-
-    /**
-     * Process quiz questions and answers, handling existing vs custom content
-     */
-    private Set<QuizQuestion> processQuizQuestions(Set<QuizQuestionReqDTO> questionDtos) {
-        return questionDtos.stream()
-                .map(this::mapToQuizQuestionEntity)
-                .collect(Collectors.toSet());
-    }
-
-    /**
-     * Process a single quiz question, creating QuizQuestion with proper relationships
-     */
-    private QuizQuestion mapToQuizQuestionEntity(QuizQuestionReqDTO questionDto) {
-        QuizQuestion quizQuestion = new QuizQuestion();
-        if (Boolean.TRUE.equals(questionDto.getIsCustom())) {
-            // custom question
-            if (questionDto.getCustomQuestion() == null || questionDto.getCustomQuestion().isBlank()) {
-                throw new IllegalArgumentException("Custom question text must not be empty");
-            }
-            quizQuestion.setCustomQuestion(questionDto.getCustomQuestion());
-            quizQuestion.setQuestion(null);
-        } else {
-            // existing question
-            if (questionDto.getQuestionId() == null) {
-                throw new IllegalArgumentException("Question ID is required for existing question");
-            }
-            Question existing = questionRepo.findById(questionDto.getQuestionId())
-                    .orElseThrow(() -> new NotFoundException("Question not found with id: " + questionDto.getQuestionId()));
-            quizQuestion.setQuestion(existing);
-            quizQuestion.setCustomQuestion(null);
-        }
-
-        // Process answers for this question
-        if (questionDto.getQuizAnswers() != null) {
-            Set<QuizAnswer> quizAnswers = processQuizAnswers(questionDto.getQuizAnswers());
-            quizQuestion.saveAnswers(quizAnswers);
-        }
-
-        return quizQuestion;
-    }
-
-
-    /**
-     * Process quiz answers, handling existing vs custom content
-     */
-    private Set<QuizAnswer> processQuizAnswers(Set<QuizAnswerReqDTO> answerDtos) {
-        return answerDtos.stream()
-                .map(this::mapToQuizAnswerEntity)
-                .collect(Collectors.toSet());
-    }
-
-    /**
-     * Process a single quiz answer, creating QuizAnswer with proper relationships
-     */
-    private QuizAnswer mapToQuizAnswerEntity(QuizAnswerReqDTO answerDto) {
-        QuizAnswer quizAnswer = new QuizAnswer();
-        quizAnswer.setCustom(answerDto.isCustom());
-        quizAnswer.setCorrect(answerDto.isCorrect());
-
-        if (answerDto.isCustom()) {
-            if (answerDto.getCustomAnswer() == null || answerDto.getCustomAnswer().isBlank()) {
-                throw new IllegalArgumentException("Custom answer text must not be empty");
-            }
-            quizAnswer.setCustomAnswer(answerDto.getCustomAnswer());
-            quizAnswer.setAnswer(null);
-        } else {
-            if (answerDto.getAnswerId() == null) {
-                throw new IllegalArgumentException("Answer ID is required when isCustom = false");
-            }
-
-            Answer existingAnswer = answerRepo.findById(answerDto.getAnswerId())
-                    .orElseThrow(() -> new NotFoundException(
-                            "Answer not found with id: " + answerDto.getAnswerId()
-                    ));
-            quizAnswer.setAnswer(existingAnswer);
-            quizAnswer.setCustomAnswer(null);
-        }
-
-        return quizAnswer;
-    }
-
-    /**
-     * Map quiz to DTO with all related data
-     */
-    private QuizResDTO mapToDtoWithRelations(Quiz quiz) {
-        QuizResDTO dto = quizMapper.toDto(quiz);
-        // Additional mapping logic can be added here if needed
-        return dto;
-    }
-} 
+}

@@ -1,25 +1,27 @@
 package com.tomzxy.web_quiz.models.snapshot;
 
 import com.tomzxy.web_quiz.enums.QuestionAndAnswerType;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.tomzxy.web_quiz.models.BaseEntity;
+import jakarta.persistence.*;
+import lombok.*;
 
-@Data
+@Entity
 @Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class AnswerSnapshot {
-
+public class AnswerSnapshot extends BaseEntity {
     private String snapshotId;   // UUID
-
     private Long originalAnswerId;
-
-
+    private Integer orderIndex;
     private String content;
+    @Enumerated(EnumType.STRING)
+    private QuestionAndAnswerType type;
 
-    private QuestionAndAnswerType type; // TEXT / IMAGE
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_snapshot_id")
+    private QuestionSnapshot questionSnapshot;
 }
 
 

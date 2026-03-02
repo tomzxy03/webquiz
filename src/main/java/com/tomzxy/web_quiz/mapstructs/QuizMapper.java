@@ -17,7 +17,7 @@ public interface QuizMapper {
     // Map from DTO to Entity - ignore audit fields and relationships
     @Mapping(target = "host", ignore = true)
     @Mapping(target = "lobby", ignore = true)
-    @Mapping(target = "questions", ignore = true)
+    @Mapping(target = "quizQuestionLinks", ignore = true)
     @Mapping(target = "instances", ignore = true)
     @Mapping(target = "subject", ignore = true)
     Quiz toEntity(QuizReqDTO dto);
@@ -25,12 +25,14 @@ public interface QuizMapper {
     // Map from Entity to DTO - handle nested mappings
     @Mapping(target = "hostName", source = "host.userName")
     @Mapping(target = "lobbyName", source = "lobby.lobbyName")
-    @Mapping(target = "questions", ignore = true) // Will be handled manually in service
+    @Mapping(source = "visibility", target = "quizVisibility")
+    @Mapping(target = "totalQuestion", expression = "java(entity.getTotalQuestions() != null ? entity.getTotalQuestions() : 0)")
     QuizResDTO toDto(Quiz entity);
 
 
     @Mapping(target = "hostName", source = "host.userName")
     @Mapping(target = "lobbyName", source = "lobby.lobbyName")
+    @Mapping(source = "visibility", target = "quizVisibility")
     @Mapping(target = "questions", ignore = true) // Will be handled manually in service
     List<QuizResDTO> toListDto(List<Quiz> quizs);
 

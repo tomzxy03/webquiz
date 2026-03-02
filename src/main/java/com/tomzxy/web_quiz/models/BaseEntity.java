@@ -2,11 +2,9 @@ package com.tomzxy.web_quiz.models;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.experimental.SuperBuilder;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -21,7 +19,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @MappedSuperclass
-@SuperBuilder
 public abstract class BaseEntity implements Serializable {
     
     @Id
@@ -40,7 +37,6 @@ public abstract class BaseEntity implements Serializable {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Builder.Default
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
 

@@ -4,7 +4,6 @@ package com.tomzxy.web_quiz.mapstructs;
 import com.tomzxy.web_quiz.dto.requests.RoleReqDTO;
 import com.tomzxy.web_quiz.dto.responses.RoleResDTO;
 import com.tomzxy.web_quiz.models.Role;
-import com.tomzxy.web_quiz.models.Role;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;

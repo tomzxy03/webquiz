@@ -12,7 +12,13 @@ import java.util.List;
 public interface QuestionSnapshotMapper {
     QuestionSnapshotMapper INSTANCE = Mappers.getMapper(QuestionSnapshotMapper.class);
 
-    @Mapping(target = "answerSnapshots", source = "answerSnapshots")
+    @Mapping(target = "answerSnapshots", source = "answers")
+    @Mapping(target = "questionText", source = "content")
+    @Mapping(target = "questionType", source = "type")
+    @Mapping(target = "questionPoints", source = "points")
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     QuestionSnapshotResDTO toQuestionSnapshotResDTO(QuestionSnapshot questionSnapshot);
 
     List<QuestionSnapshotResDTO> toQuestionSnapshotResDTOList(List<QuestionSnapshot> questionSnapshots);

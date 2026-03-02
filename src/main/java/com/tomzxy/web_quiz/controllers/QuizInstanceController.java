@@ -3,6 +3,7 @@ package com.tomzxy.web_quiz.controllers;
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizInstanceReqDTO;
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizSubmissionReqDTO;
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
+import com.tomzxy.web_quiz.dto.responses.Quiz.QuizResultDetailResDTO;
 import com.tomzxy.web_quiz.dto.responses.QuizInstanceResDTO;
 import com.tomzxy.web_quiz.services.QuizInstanceService;
 import io.swagger.v3.oas.annotations.Operation;

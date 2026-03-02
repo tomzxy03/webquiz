@@ -1,6 +1,7 @@
 package com.tomzxy.web_quiz.repositories;
 
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
+import com.tomzxy.web_quiz.enums.QuizVisibility;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,8 +29,8 @@ public interface QuizRepo extends JpaRepository<Quiz, Long>, JpaSpecificationExe
     Page<Quiz> findByLobbyId(@Param("lobbyId") Long lobbyId, Pageable pageable);
     
     // Find by quiz type
-    @Query("SELECT q FROM Quiz q WHERE q.quizType = :quizType AND q.isActive = true")
-    Page<Quiz> findByQuizType(@Param("quizType") QuizType quizType, Pageable pageable);
+    @Query("SELECT q FROM Quiz q WHERE q.visibility = :quizVisibility AND q.isActive = true")
+    Page<Quiz> findByQuizVisibility(@Param("quizVisibility") QuizVisibility quizVisibility, Pageable pageable);
     
     // Search by title or description
     @Query("SELECT q FROM Quiz q WHERE (LOWER(q.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
@@ -74,10 +75,10 @@ public interface QuizRepo extends JpaRepository<Quiz, Long>, JpaSpecificationExe
     boolean existsByTitleAndHostId(@Param("title") String title, @Param("hostId") Long hostId);
     
     // Find all quiz types used by a host
-    @Query("SELECT DISTINCT q.quizType FROM Quiz q WHERE q.host.id = :hostId AND q.isActive = true")
-    List<QuizType> findQuizTypesByHostId(@Param("hostId") Long hostId);
+    @Query("SELECT DISTINCT q.visibility FROM Quiz q WHERE q.host.id = :hostId AND q.isActive = true")
+    List<QuizVisibility> findQuizVisibilitiesByHostId(@Param("hostId") Long hostId);
     
     // Find quizzes with questions count
-    @Query("SELECT q FROM Quiz q WHERE SIZE(q.questions) = :questionCount AND q.isActive = true")
+    @Query("SELECT q FROM Quiz q WHERE SIZE(q.quizQuestionLinks) = :questionCount AND q.isActive = true")
     Page<Quiz> findByQuestionsCount(@Param("questionCount") int questionCount, Pageable pageable);
 } 

@@ -1,8 +1,10 @@
 package com.tomzxy.web_quiz.dto.responses.Quiz;
 
+import com.tomzxy.web_quiz.enums.QuizStatus;
+import com.tomzxy.web_quiz.enums.QuizVisibility;
+
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
 
 @Builder
 @AllArgsConstructor
@@ -15,7 +17,8 @@ public class QuizResDTO {
     private String title;
     private String description;
     private int totalQuestion;
-    private QuizType quizType;
+    private QuizVisibility quizVisibility;
+    private QuizStatus status;
     private String hostName;
     private String lobbyName;
 } 

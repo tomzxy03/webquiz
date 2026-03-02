@@ -1,11 +1,14 @@
 package com.tomzxy.web_quiz.services.impl;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.tomzxy.web_quiz.dto.requests.QuestionReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.question.QuestionResDTO;
+import com.tomzxy.web_quiz.enums.AppCode;
+import com.tomzxy.web_quiz.exception.ApiException;
 import com.tomzxy.web_quiz.exception.ExistedException;
-import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.mapstructs.AnswerMapper;
 import com.tomzxy.web_quiz.mapstructs.QuestionMapper;
 import com.tomzxy.web_quiz.models.Answer;
@@ -15,14 +18,17 @@ import com.tomzxy.web_quiz.services.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.services.QuestionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+
+import static java.util.stream.Collectors.toList;
+import static org.springframework.util.DigestUtils.*;
 
 @Service
 @RequiredArgsConstructor
@@ -39,38 +45,52 @@ public class QuestionServiceImpl implements QuestionService {
         Page<Question> questions = questionRepo.findAll(pageable);
         // config to use mapstruct
         return convertToPageResDTO.convertPageResponse(questions,pageable,questionMapper::toQuestionResDTO);
-
     }
 
     @Override
     @Transactional
     public void create_Question(QuestionReqDTO questionReqDTO) {
         boolean flag = questionRepo.existsByQuestionName(questionReqDTO.getQuestionName());// check if the question name is already existed
-        log.info(questionReqDTO.getAnswers().toString());
+        log.info("create question and answer {} {}", questionReqDTO.getQuestionName(), questionReqDTO.getAnswers());
 
         if(flag){
-            throw new ExistedException("Question has been existed");
+            throw new ExistedException(AppCode.DATA_EXISTED, "Question has been existed");
         }
         Question question = questionMapper.toQuestion(questionReqDTO); // convert the question request dto to question
-        
-        System.out.println(question.toString());
-        Set<Answer> answers = answerMapper.toListAnswer(questionReqDTO.getAnswers());// convert the answer request dto to answer
+
+        Set<Answer> answers = answerMapper.toSetAnswer(questionReqDTO.getAnswers());// convert the answer request dto to answer
         answers.forEach(Answer::activate);
         question.addAnswers(answers); // save the answers to the question
+        question.setContentHash(generateContentHash(question));
         question.activate();
         questionRepo.save(question); // save the question to the database
     }
 
     @Override
     @Transactional
-    public void create_Questions(List<QuestionReqDTO> questionReqDTO) {
-        List<Question> questions = questionMapper.toListQuestion(questionReqDTO); // convert the question request dto to question
-        List<String> incomingNames = questions.stream()
-                        .map(Question::getQuestionName).toList(); // get the question name from the question
-        List<String> existedNames = questionRepo.findAllQuestionNames(incomingNames); // check if the question name is already existed
-        
-        if(!existedNames.isEmpty()){
-            throw  new ExistedException("Question(s) already exist: "+ existedNames);
+    public void create_Questions(List<QuestionReqDTO> dtos) {
+
+        List<Question> questions = questionMapper.toListQuestion(dtos);
+
+        // Generate content hash
+        for (Question q : questions) {
+            String hash = generateContentHash(q);
+            q.setContentHash(hash);
+        }
+
+        //Collect hashes
+        List<String> incomingHashes = questions.stream()
+                .map(Question::getContentHash)
+                .toList();
+
+        //Check duplicate in DB
+        List<String> existedHashes = questionRepo.findAllByContentHashIn(incomingHashes);
+
+        if (!existedHashes.isEmpty()) {
+            throw new ExistedException(
+                    AppCode.DATA_EXISTED,
+                    "Question content duplicated"
+            );
         }
         questionRepo.saveAll(questions);
     }
@@ -78,8 +98,13 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public QuestionResDTO update_Question(Long question_id, QuestionReqDTO questionReqDTO) {
         Question question = findQuestion(question_id);
+
         questionMapper.updateQuestion(question,questionReqDTO); // update the question
-        Set<Answer> answers = answerMapper.toListAnswer(questionReqDTO.getAnswers()); // convert the answer request dto to answer
+        String newHash = generateContentHash(question);
+        if(!newHash.equals(question.getContentHash())){
+            question.setContentHash(newHash);
+        }
+        Set<Answer> answers = answerMapper.toSetAnswer(questionReqDTO.getAnswers()); // convert the answer request dto to answer
         question.addAnswers(answers); // save the answers to the question
         // save the question to the database
         return questionMapper.toQuestionResDTO(questionRepo.save(question));
@@ -96,6 +121,36 @@ public class QuestionServiceImpl implements QuestionService {
 
     }
     public Question findQuestion(Long question_id){
-        return questionRepo.findById(question_id).orElseThrow(()->new NotFoundException("Question not found!"));
+        return questionRepo.findById(question_id).orElseThrow(()->new ApiException(AppCode.NOT_AVAILABLE, "Question not found!"));
+    }
+    public String generateContentHash(Question question){
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+            // Sort answer
+            List<Map<String, Object>> sortedAnswers = question.getAnswers()
+                    .stream().sorted(Comparator.comparing(Answer::getAnswerName))
+                    .map(a -> Map.<String, Object>of(
+                            "content", normalize(a.getAnswerName()),
+                            "correct", a.isAnswerCorrect()
+                    ))
+                    .toList();
+
+            Map<String, Object> payload = new TreeMap<>();
+            payload.put("questionName", normalize(question.getQuestionName()));
+            payload.put("questionType", question.getQuestionType().name());
+            payload.put("answers", sortedAnswers);
+
+            String json = objectMapper.writeValueAsString(payload);
+
+            return DigestUtils.sha256Hex(json);
+
+        }catch (Exception e){
+            throw new RuntimeException("Failed to hash content of question", e);
+        }
+    }
+    public String normalize(String input){
+        if(input == null) return "";
+        return input.trim().replaceAll("\\s+", " ");
     }
 }

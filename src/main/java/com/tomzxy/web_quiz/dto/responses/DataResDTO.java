@@ -4,7 +4,6 @@ package com.tomzxy.web_quiz.dto.responses;
 import com.tomzxy.web_quiz.enums.AppCode;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.springframework.web.service.annotation.GetExchange;
 
 @Builder
 @AllArgsConstructor

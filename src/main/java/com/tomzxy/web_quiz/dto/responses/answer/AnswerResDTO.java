@@ -3,7 +3,6 @@ package com.tomzxy.web_quiz.dto.responses.answer;
 
 import com.tomzxy.web_quiz.enums.QuestionAndAnswerType;
 import lombok.*;
-import lombok.experimental.FieldDefaults;
 
 @Builder
 @AllArgsConstructor

@@ -15,13 +15,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Builder
 @Getter
 @Setter
 @Table(name = "users", indexes = {
     @Index(name = "idx_user_email", columnList = "email"),
-    @Index(name = "idx_user_username", columnList = "user_name"),
-    @Index(name = "idx_user_phone", columnList = "phone")
+    @Index(name = "idx_user_username", columnList = "user_name")
 })
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
@@ -45,8 +43,6 @@ public class User extends BaseEntity {
 
     @Column(name = "is_email_verified", nullable = false)
     private boolean isEmailVerified = false;
-
-
 
     @Column(name = "profile_picture_url", length = 500)
     private String profilePictureUrl;

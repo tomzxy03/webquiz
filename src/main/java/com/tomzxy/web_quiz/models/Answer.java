@@ -1,6 +1,5 @@
 package com.tomzxy.web_quiz.models;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tomzxy.web_quiz.enums.QuestionAndAnswerType;
 import jakarta.persistence.*;
 
@@ -14,12 +13,9 @@ import jakarta.persistence.Index;
 @Setter
 @Getter
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Builder
 @Table(name = "answers", indexes = {
     @Index(name = "idx_answer_question", columnList = "question_id"),
     @Index(name = "idx_answer_correct", columnList = "answer_correct"),
-    @Index(name = "idx_answer_option_order", columnList = "option_order"),
-    @Index(name = "idx_answer_option_label", columnList = "option_label")
 })
 public class Answer extends BaseEntity {
     

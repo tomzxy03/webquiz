@@ -4,7 +4,8 @@ package com.tomzxy.web_quiz.controllers;
 import com.tomzxy.web_quiz.containts.ApiDefined;
 import com.tomzxy.web_quiz.dto.requests.SubjectReqDTO;
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
-import com.tomzxy.web_quiz.dto.responses.SubjectResDTO;
+import com.tomzxy.web_quiz.dto.responses.subject.SubjectDetailResDTO;
+import com.tomzxy.web_quiz.dto.responses.subject.SubjectResDTO;
 import com.tomzxy.web_quiz.services.SubjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -39,6 +40,17 @@ public class SubjectController {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(DataResDTO.ok(subjectService.get_all_subject()));
+    }
+    @GetMapping(ApiDefined.Subject.QUIZ)
+    @Operation(summary = "Get all subjects with quiz count", description = "Retrieve all subjects with quiz count")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Subjects retrieved successfully")
+    })
+    public ResponseEntity<DataResDTO<List<SubjectDetailResDTO>>> getAllSubjectAndQuizCount(){
+        log.info("Get all Subjects and Quiz counted");
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(DataResDTO.ok(subjectService.get_all_subject_and_quiz()));
     }
 
     @GetMapping(ApiDefined.Subject.ID)

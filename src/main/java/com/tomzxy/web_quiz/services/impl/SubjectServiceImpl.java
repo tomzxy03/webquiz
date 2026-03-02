@@ -1,16 +1,17 @@
 package com.tomzxy.web_quiz.services.impl;
 
 
+import com.tomzxy.web_quiz.dto.responses.subject.SubjectDetailResDTO;
 import com.tomzxy.web_quiz.models.Subject;
 import com.tomzxy.web_quiz.dto.requests.SubjectReqDTO;
-import com.tomzxy.web_quiz.dto.responses.SubjectResDTO;
+import com.tomzxy.web_quiz.dto.responses.subject.SubjectResDTO;
 import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.mapstructs.SubjectMapper;
-import com.tomzxy.web_quiz.models.Subject;
 import com.tomzxy.web_quiz.repositories.SubjectRepo;
 import com.tomzxy.web_quiz.services.SubjectService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,6 +28,11 @@ public class SubjectServiceImpl implements SubjectService {
     public List<SubjectResDTO> get_all_subject() {
         List<Subject> subjects = subjectRepo.findAllByActive(true).orElseThrow(() -> new NotFoundException("Subject not found!"));
         return subjects.stream().map(subjectMapper::toSubjectResDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<SubjectDetailResDTO> get_all_subject_and_quiz(){
+        return subjectRepo.getAllSubjectsAndCountOfQuizzes(true).orElseThrow(() -> new NotFoundException("Subject not found"));
     }
 
     @Override

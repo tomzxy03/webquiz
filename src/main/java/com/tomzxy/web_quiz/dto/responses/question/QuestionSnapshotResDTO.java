@@ -22,5 +22,5 @@ public class QuestionSnapshotResDTO {
     private List<AnswersSnapshotResDTO> answerSnapshots;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private Boolean isActive;
+
 }

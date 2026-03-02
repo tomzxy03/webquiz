@@ -21,7 +21,10 @@ public enum AppCode {
     USER_NOT_ELIGIBLE(403, "User not eligible", HttpStatus.FORBIDDEN),
     NOT_AVAILABLE(404, "Not available", HttpStatus.NOT_FOUND),
     NOT_PERMISSION(401, "Not be permission", HttpStatus.UNAUTHORIZED),
-    UNKNOWN_ERROR(500, "Unknown error", HttpStatus.INTERNAL_SERVER_ERROR);
+    UNKNOWN_ERROR(500, "Unknown error", HttpStatus.INTERNAL_SERVER_ERROR),
+    EMAIL_ALREADY_REGISTERED(409, "Email already registered", HttpStatus.CONFLICT),
+    USERNAME_ALREADY_TAKEN(409, "Username already taken", HttpStatus.CONFLICT),
+    INVALID_CREDENTIALS(401, "Invalid credentials", HttpStatus.UNAUTHORIZED);
 
     private final int code;
     private final String message;
