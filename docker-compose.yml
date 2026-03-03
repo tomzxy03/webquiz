@@ -39,6 +39,9 @@ services:
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+
+      JWT_SECRET: ${JWT_SECRET}
+
     volumes:
       - ./logs:/app/logs
 

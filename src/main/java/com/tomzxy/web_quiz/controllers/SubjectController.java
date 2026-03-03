@@ -1,6 +1,5 @@
 package com.tomzxy.web_quiz.controllers;
 
-
 import com.tomzxy.web_quiz.containts.ApiDefined;
 import com.tomzxy.web_quiz.dto.requests.SubjectReqDTO;
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
@@ -20,6 +19,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -32,21 +32,24 @@ public class SubjectController {
 
     @GetMapping()
     @Operation(summary = "Get all subjects", description = "Retrieve all subjects")
+    @PreAuthorize("hasAuthority('subject_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Subjects retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Subjects retrieved successfully")
     })
-    public ResponseEntity<DataResDTO<List<SubjectResDTO>>> getAllSubject(){
+    public ResponseEntity<DataResDTO<List<SubjectResDTO>>> getAllSubject() {
         log.info("Get all Subjects");
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(DataResDTO.ok(subjectService.get_all_subject()));
     }
+
     @GetMapping(ApiDefined.Subject.QUIZ)
     @Operation(summary = "Get all subjects with quiz count", description = "Retrieve all subjects with quiz count")
+    @PreAuthorize("hasAuthority('subject_VIEW')")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Subjects retrieved successfully")
     })
-    public ResponseEntity<DataResDTO<List<SubjectDetailResDTO>>> getAllSubjectAndQuizCount(){
+    public ResponseEntity<DataResDTO<List<SubjectDetailResDTO>>> getAllSubjectAndQuizCount() {
         log.info("Get all Subjects and Quiz counted");
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -55,25 +58,27 @@ public class SubjectController {
 
     @GetMapping(ApiDefined.Subject.ID)
     @Operation(summary = "Get subject by ID", description = "Retrieve a subject by its ID")
+    @PreAuthorize("hasAuthority('subject_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Subject found successfully"),
-        @ApiResponse(responseCode = "404", description = "Subject not found")
+            @ApiResponse(responseCode = "200", description = "Subject found successfully"),
+            @ApiResponse(responseCode = "404", description = "Subject not found")
     })
     public ResponseEntity<DataResDTO<SubjectResDTO>> getSubject(
-            @Parameter(description = "Subject ID") @PathVariable Long subjectId){
+            @Parameter(description = "Subject ID") @PathVariable Long subjectId) {
         log.info("get Subject by {}", subjectId);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(DataResDTO.ok(subjectService.get_subject(subjectId)));
     }
-    
+
     @PostMapping()
     @Operation(summary = "Create subject", description = "Create a new subject")
+    @PreAuthorize("hasAuthority('subject_CREATE')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Subject created successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid request data")
+            @ApiResponse(responseCode = "201", description = "Subject created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public ResponseEntity<DataResDTO<Void>> addSubject(@Valid @RequestBody SubjectReqDTO subjectReqDTO){
+    public ResponseEntity<DataResDTO<Void>> addSubject(@Valid @RequestBody SubjectReqDTO subjectReqDTO) {
         log.info("add Subject");
         subjectService.create_subject(subjectReqDTO);
         return ResponseEntity
@@ -83,28 +88,30 @@ public class SubjectController {
 
     @PutMapping(ApiDefined.Subject.ID)
     @Operation(summary = "Update subject", description = "Update an existing subject")
+    @PreAuthorize("hasAuthority('subject_UPDATE')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Subject updated successfully"),
-        @ApiResponse(responseCode = "404", description = "Subject not found"),
-        @ApiResponse(responseCode = "400", description = "Invalid request data")
+            @ApiResponse(responseCode = "200", description = "Subject updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Subject not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
     public ResponseEntity<DataResDTO<SubjectResDTO>> updateSubject(
-            @Parameter(description = "Subject ID") @PathVariable Long subjectId, 
-            @RequestBody @Valid SubjectReqDTO subjectReqDTO){
+            @Parameter(description = "Subject ID") @PathVariable Long subjectId,
+            @RequestBody @Valid SubjectReqDTO subjectReqDTO) {
         log.info("Update Subject with id {}", subjectId);
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(DataResDTO.update(subjectService.update_subject(subjectId,subjectReqDTO)));
+                .body(DataResDTO.update(subjectService.update_subject(subjectId, subjectReqDTO)));
     }
 
     @DeleteMapping(ApiDefined.Subject.ID)
     @Operation(summary = "Delete subject", description = "Delete a subject by its ID")
+    @PreAuthorize("hasAuthority('subject_DELETE')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Subject deleted successfully"),
-        @ApiResponse(responseCode = "404", description = "Subject not found")
+            @ApiResponse(responseCode = "200", description = "Subject deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Subject not found")
     })
     public ResponseEntity<DataResDTO<Void>> deleteSubject(
-            @Parameter(description = "Subject ID") @PathVariable Long subjectId){
+            @Parameter(description = "Subject ID") @PathVariable Long subjectId) {
         log.info("Delete Subject with id {}", subjectId);
         subjectService.delete_subject(subjectId);
         return ResponseEntity

@@ -10,13 +10,19 @@ import com.tomzxy.web_quiz.repositories.RefreshTokenRepository;
 import com.tomzxy.web_quiz.repositories.UserRepo;
 import com.tomzxy.web_quiz.services.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
+
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -30,20 +36,24 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final JWTService jwtService;
     private final UserRepo userRepository; // để load user từ subject
-    private final int maxActiveTokens = 5;        // config
-    private final Duration refreshTokenValidity = Duration.ofDays(30);
+    @Value("${jwt.refresh-expiration}")
+    private long refreshTokenValidity;
+    private final UserDetailsService userDetailsService;
 
     @Override
+    @Transactional
     public TokenResDTO createRefreshToken(User user, DeviceInfo deviceInfo) {
         // 1. Giới hạn số lượng token active
         Instant now = Instant.now();
         long activeCount = refreshTokenRepository.countByUserAndRevokedFalseAndExpiredAtAfter(user, now);
+        // config
+        int maxActiveTokens = 5;
         if (activeCount >= maxActiveTokens) {
             // Xóa token cũ nhất (theo issuedAt)
             Pageable pageable = PageRequest.of(0, 1, Sort.by(Sort.Direction.ASC, "issuedAt"));
-            List<RefreshToken> oldest = refreshTokenRepository.findByUserAndRevokedFalseAndExpiredAtAfter(user, now);
+            Page<RefreshToken> oldest = refreshTokenRepository.findByUserAndRevokedFalseAndExpiredAtAfter(user, now, pageable);
             if (!oldest.isEmpty()) {
-                RefreshToken toRevoke = oldest.getFirst();
+                RefreshToken toRevoke = oldest.getContent().get(0);
                 toRevoke.setRevoked(true);
                 refreshTokenRepository.save(toRevoke);
                 log.info("Revoked oldest refresh token for user {}", user.getId());
@@ -53,15 +63,17 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         // 2. Tạo jti (UUID)
         String jti = UUID.randomUUID().toString();
 
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
+
         // 3. Tạo JWT refresh token
-        String refreshTokenString = jwtService.generateRefreshToken((UserDetails) user, jti);
+        String refreshTokenString = jwtService.generateRefreshToken(userDetails, jti);
 
         // 4. Lưu entity
         RefreshToken entity = new RefreshToken();
         entity.setJti(jti);
         entity.setUser(user);
         entity.setIssuedAt(now);
-        entity.setExpiredAt(now.plus(refreshTokenValidity));
+        entity.setExpiredAt(now.plus(Duration.ofSeconds(refreshTokenValidity)));
         entity.setRevoked(false);
         entity.setDeviceId(deviceInfo.getDeviceId());
         entity.setDeviceName(deviceInfo.getDeviceName());
@@ -71,15 +83,16 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         refreshTokenRepository.save(entity);
 
         // 5. Tạo access token (dùng method hiện có)
-        String accessToken = jwtService.generateAccessToken((UserDetails) user);
+        String accessToken = jwtService.generateAccessToken(userDetails);
 
         return new TokenResDTO(accessToken, refreshTokenString);
     }
 
     @Override
+    @Transactional
     public TokenResDTO rotateRefreshToken(String refreshToken) {
         // 1. Verify JWT và lấy thông tin
-        if (!jwtService.isTokenValid(refreshToken, null)) { // cần method isTokenValid không cần UserDetails? hoặc tạo method riêng
+        if (!jwtService.validateToken(refreshToken) || !jwtService.isRefreshToken(refreshToken)) { // cần method isTokenValid không cần UserDetails? hoặc tạo method riêng
             throw new InvalidRefreshTokenException("Invalid refresh token signature");
         }
         String jti = jwtService.extractJti(refreshToken);
@@ -91,6 +104,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
         // 3. Kiểm tra revoked và expired
         if (entity.isRevoked()) {
+            revokeAllUserTokens(entity.getUser());
             throw new InvalidRefreshTokenException("Refresh token has been revoked");
         }
         if (entity.getExpiredAt().isBefore(Instant.now())) {
@@ -101,7 +115,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
         // 4. Cập nhật lastUsedAt
         entity.setLastUsedAt(Instant.now());
-        refreshTokenRepository.save(entity);
 
         // 5. Revoke token cũ (rotation)
         entity.setRevoked(true);
@@ -126,7 +139,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         newEntity.setJti(newJti);
         newEntity.setUser(user);
         newEntity.setIssuedAt(Instant.now());
-        newEntity.setExpiredAt(Instant.now().plus(refreshTokenValidity));
+        newEntity.setExpiredAt(Instant.now().plus(Duration.ofSeconds(refreshTokenValidity)));
         newEntity.setRevoked(false);
         newEntity.setDeviceId(deviceInfo.getDeviceId());
         newEntity.setDeviceName(deviceInfo.getDeviceName());
@@ -147,19 +160,16 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         refreshTokenRepository.save(entity);
     }
 
+    @Transactional
     @Override
     public void revokeAllUserTokens(User user) {
-        Instant now = Instant.now();
-        List<RefreshToken> active = refreshTokenRepository.findByUserAndRevokedFalseAndExpiredAtAfter(user, now);
-        active.forEach(t -> t.setRevoked(true));
-        refreshTokenRepository.saveAll(active);
+        refreshTokenRepository.revokeAllActiveTokens(user, Instant.now());
     }
 
     @Override
     @Scheduled(cron = "0 0 2 * * ?")
     public void cleanupExpiredTokens() {
-        Instant threshold = Instant.now().minus(Duration.ofDays(7));
-        refreshTokenRepository.deleteByExpiredAtBefore(threshold);
-        log.info("Cleaned up expired refresh tokens before {}", threshold);
+        refreshTokenRepository.deleteByExpiredAtBefore(Instant.now());
+        log.info("Cleaned up expired refresh tokens before {}", Instant.now());
     }
 }

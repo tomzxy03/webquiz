@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -43,13 +44,14 @@ public class AuthController {
     }
 
     @PostMapping(ApiDefined.Auth.LOGOUT)
-    @Operation(summary = "User logout", description = "Invalidate the current authentication token")
+    @Operation(summary = "User logout", description = "Revoke refresh token")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<DataResDTO<Boolean>> logout(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        String token = extractToken(authHeader);
-        authService.logout(token);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(DataResDTO.ok(true));
+            @Valid @RequestBody RefreshTokenReqDTO refreshTokenReqDTO) {
+
+        authService.logout(refreshTokenReqDTO.getRefreshToken());
+
+        return ResponseEntity.ok(DataResDTO.ok(true));
     }
 
     @PostMapping(ApiDefined.Auth.REFRESH)
@@ -62,17 +64,10 @@ public class AuthController {
 
     @GetMapping(ApiDefined.Auth.ME)
     @Operation(summary = "Get current user", description = "Get the currently authenticated user's information")
-    public ResponseEntity<DataResDTO<UserResDTO>> getMe(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        String token = extractToken(authHeader);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(DataResDTO.ok(authService.getMe(token)));
-    }
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<DataResDTO<UserResDTO>> getMe() {
 
-    private String extractToken(String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
-        }
-        return authHeader != null ? authHeader : "";
+        return ResponseEntity.ok(
+                DataResDTO.ok(authService.getMe()));
     }
 }

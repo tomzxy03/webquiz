@@ -18,7 +18,7 @@ spring:
     port: ${SPRING_REDIS_PORT}
 
 jwt:
-  secret: ${SECRET_KEY}
+  secret: ${JWT_SECRET}
   access-expiration: 900000
   refresh-expiration: 604800000
 

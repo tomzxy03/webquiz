@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -27,13 +28,14 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(path = ApiDefined.Role.BASE)
 @Tag(name = "Roles", description = "Role management APIs")
 public class RoleController {
-    
+
     private final RoleService roleService;
 
     @GetMapping()
     @Operation(summary = "Get all roles", description = "Retrieve all roles with pagination")
+    @PreAuthorize("hasAuthority('role_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Roles retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Roles retrieved successfully")
     })
     public ResponseEntity<DataResDTO<PageResDTO<RoleResDTO>>> getAllRoles(
             @Parameter(description = "Page number (0-based)") @RequestParam @Min(0) int page,
@@ -46,9 +48,10 @@ public class RoleController {
 
     @GetMapping(ApiDefined.Role.ID)
     @Operation(summary = "Get role by ID", description = "Retrieve a role by its ID")
+    @PreAuthorize("hasAuthority('role_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Role found successfully"),
-        @ApiResponse(responseCode = "404", description = "Role not found")
+            @ApiResponse(responseCode = "200", description = "Role found successfully"),
+            @ApiResponse(responseCode = "404", description = "Role not found")
     })
     public ResponseEntity<DataResDTO<RoleResDTO>> getRole(
             @Parameter(description = "Role ID") @PathVariable Long roleId) {
@@ -60,10 +63,10 @@ public class RoleController {
 
     @PostMapping()
     @Operation(summary = "Create role", description = "Create a new role")
+    @PreAuthorize("hasAuthority('role_CREATE')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Role created successfully",
-            content = @Content(schema = @Schema(implementation = DataResDTO.class))),
-        @ApiResponse(responseCode = "400", description = "Invalid request data")
+            @ApiResponse(responseCode = "201", description = "Role created successfully", content = @Content(schema = @Schema(implementation = DataResDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
     public ResponseEntity<DataResDTO<RoleResDTO>> createRole(@Valid @RequestBody RoleReqDTO roleReqDTO) {
         log.info("Create role");
@@ -74,10 +77,11 @@ public class RoleController {
 
     @PutMapping(ApiDefined.Role.ID)
     @Operation(summary = "Update role", description = "Update an existing role")
+    @PreAuthorize("hasAuthority('role_UPDATE')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Role updated successfully"),
-        @ApiResponse(responseCode = "404", description = "Role not found"),
-        @ApiResponse(responseCode = "400", description = "Invalid request data")
+            @ApiResponse(responseCode = "200", description = "Role updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Role not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
     public ResponseEntity<DataResDTO<RoleResDTO>> updateRole(
             @Parameter(description = "Role ID") @PathVariable Long roleId,
@@ -90,9 +94,10 @@ public class RoleController {
 
     @DeleteMapping(ApiDefined.Role.ID)
     @Operation(summary = "Delete role", description = "Delete a role by its ID")
+    @PreAuthorize("hasAuthority('role_DELETE')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Role deleted successfully"),
-        @ApiResponse(responseCode = "404", description = "Role not found")
+            @ApiResponse(responseCode = "200", description = "Role deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Role not found")
     })
     public ResponseEntity<DataResDTO<Void>> deleteRole(
             @Parameter(description = "Role ID") @PathVariable Long roleId) {
@@ -102,4 +107,4 @@ public class RoleController {
                 .status(HttpStatus.OK)
                 .body(DataResDTO.delete());
     }
-} 
+}

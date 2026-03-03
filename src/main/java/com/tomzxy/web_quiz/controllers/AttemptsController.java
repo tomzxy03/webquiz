@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,8 +32,9 @@ public class AttemptsController {
 
     @GetMapping
     @Operation(summary = "Get all exam attempts", description = "Retrieve all exam attempts with optional filters")
+    @PreAuthorize("hasAuthority('quiz_result_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Attempts retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Attempts retrieved successfully")
     })
     public ResponseEntity<DataResDTO<List<AttemptResDTO>>> getAllAttempts(
             @Parameter(description = "User ID filter") @RequestParam(required = false) Long userId,
@@ -46,9 +48,10 @@ public class AttemptsController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get exam attempt detail by ID", description = "Retrieve detailed information about a specific attempt")
+    @PreAuthorize("hasAuthority('quiz_result_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Attempt found successfully"),
-        @ApiResponse(responseCode = "404", description = "Attempt not found")
+            @ApiResponse(responseCode = "200", description = "Attempt found successfully"),
+            @ApiResponse(responseCode = "404", description = "Attempt not found")
     })
     public ResponseEntity<DataResDTO<AttemptDetailResDTO>> getAttemptById(
             @Parameter(description = "Attempt ID") @PathVariable Long id) {
@@ -61,8 +64,9 @@ public class AttemptsController {
 
     @GetMapping("/user/{userId}")
     @Operation(summary = "Get all attempts by user", description = "Retrieve all attempts for a specific user")
+    @PreAuthorize("hasAuthority('quiz_result_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Attempts retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Attempts retrieved successfully")
     })
     public ResponseEntity<DataResDTO<List<AttemptResDTO>>> getAttemptsByUser(
             @Parameter(description = "User ID") @PathVariable Long userId) {
@@ -75,8 +79,9 @@ public class AttemptsController {
 
     @GetMapping("/quiz/{quizId}/user/{userId}")
     @Operation(summary = "Get attempts for specific quiz and user", description = "Retrieve attempts for a specific quiz and user combination")
+    @PreAuthorize("hasAuthority('quiz_result_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Attempts retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Attempts retrieved successfully")
     })
     public ResponseEntity<DataResDTO<List<AttemptResDTO>>> getAttemptsByQuizAndUser(
             @Parameter(description = "Quiz ID") @PathVariable Long quizId,
@@ -90,10 +95,11 @@ public class AttemptsController {
 
     @PostMapping
     @Operation(summary = "Create new exam attempt", description = "Create a new exam attempt with answers")
+    @PreAuthorize("hasAuthority('quiz_result_CREATE')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Attempt created successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid request data"),
-        @ApiResponse(responseCode = "404", description = "Quiz not found")
+            @ApiResponse(responseCode = "201", description = "Attempt created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @ApiResponse(responseCode = "404", description = "Quiz not found")
     })
     public ResponseEntity<DataResDTO<AttemptDetailResDTO>> createAttempt(
             @Valid @RequestBody CreateAttemptReqDTO request) {
@@ -106,9 +112,10 @@ public class AttemptsController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete exam attempt", description = "Delete an exam attempt by ID")
+    @PreAuthorize("hasAuthority('quiz_result_DELETE')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Attempt deleted successfully"),
-        @ApiResponse(responseCode = "404", description = "Attempt not found")
+            @ApiResponse(responseCode = "200", description = "Attempt deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Attempt not found")
     })
     public ResponseEntity<DataResDTO<Object>> deleteAttempt(
             @Parameter(description = "Attempt ID") @PathVariable Long id) {
@@ -121,8 +128,9 @@ public class AttemptsController {
 
     @GetMapping("/user/{userId}/statistics")
     @Operation(summary = "Get user statistics", description = "Retrieve statistics for a specific user")
+    @PreAuthorize("hasAuthority('quiz_result_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Statistics retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Statistics retrieved successfully")
     })
     public ResponseEntity<DataResDTO<UserStatisticsResDTO>> getUserStatistics(
             @Parameter(description = "User ID") @PathVariable Long userId) {

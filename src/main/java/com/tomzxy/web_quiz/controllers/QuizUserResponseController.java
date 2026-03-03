@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -35,12 +36,13 @@ public class QuizUserResponseController {
     // CRUD operations
     @PostMapping
     @Operation(summary = "Create user response", description = "Create a new quiz user response")
+    @PreAuthorize("hasAuthority('answer_user_CREATE')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "User response created successfully",
-            content = @Content(schema = @Schema(implementation = DataResDTO.class))),
-        @ApiResponse(responseCode = "400", description = "Invalid request data")
+            @ApiResponse(responseCode = "201", description = "User response created successfully", content = @Content(schema = @Schema(implementation = DataResDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public ResponseEntity<DataResDTO<QuizUserResponseResDTO>> createUserResponse(@Valid @RequestBody QuizUserResponseReqDTO request) {
+    public ResponseEntity<DataResDTO<QuizUserResponseResDTO>> createUserResponse(
+            @Valid @RequestBody QuizUserResponseReqDTO request) {
         log.info("Create user response");
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -49,10 +51,11 @@ public class QuizUserResponseController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Update user response", description = "Update an existing quiz user response")
+    @PreAuthorize("hasAuthority('answer_user_UPDATE')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "User response updated successfully"),
-        @ApiResponse(responseCode = "404", description = "User response not found"),
-        @ApiResponse(responseCode = "400", description = "Invalid request data")
+            @ApiResponse(responseCode = "200", description = "User response updated successfully"),
+            @ApiResponse(responseCode = "404", description = "User response not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
     public ResponseEntity<DataResDTO<QuizUserResponseResDTO>> updateUserResponse(
             @Parameter(description = "User response ID") @PathVariable Long id,
@@ -65,9 +68,10 @@ public class QuizUserResponseController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get user response by ID", description = "Retrieve a quiz user response by its ID")
+    @PreAuthorize("hasAuthority('answer_user_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "User response found successfully"),
-        @ApiResponse(responseCode = "404", description = "User response not found")
+            @ApiResponse(responseCode = "200", description = "User response found successfully"),
+            @ApiResponse(responseCode = "404", description = "User response not found")
     })
     public ResponseEntity<DataResDTO<QuizUserResponseResDTO>> getUserResponseById(
             @Parameter(description = "User response ID") @PathVariable Long id) {
@@ -79,9 +83,10 @@ public class QuizUserResponseController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete user response", description = "Delete a quiz user response by its ID")
+    @PreAuthorize("hasAuthority('answer_user_DELETE')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "User response deleted successfully"),
-        @ApiResponse(responseCode = "404", description = "User response not found")
+            @ApiResponse(responseCode = "200", description = "User response deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "User response not found")
     })
     public ResponseEntity<DataResDTO<Void>> deleteUserResponse(
             @Parameter(description = "User response ID") @PathVariable Long id) {
@@ -94,8 +99,9 @@ public class QuizUserResponseController {
 
     @GetMapping
     @Operation(summary = "Get all user responses", description = "Retrieve all quiz user responses with pagination")
+    @PreAuthorize("hasAuthority('answer_user_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "User responses retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "User responses retrieved successfully")
     })
     public ResponseEntity<DataResDTO<PageResDTO<?>>> getAllUserResponses(
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
@@ -109,9 +115,10 @@ public class QuizUserResponseController {
     // Business operations
     @PostMapping("/submit")
     @Operation(summary = "Submit answer", description = "Submit an answer for a quiz question")
+    @PreAuthorize("hasAuthority('answer_user_CREATE')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Answer submitted successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid request data")
+            @ApiResponse(responseCode = "200", description = "Answer submitted successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
     public ResponseEntity<DataResDTO<QuizUserResponseResDTO>> submitAnswer(
             @Parameter(description = "Quiz instance question ID") @RequestParam Long quizInstanceQuestionId,
@@ -121,14 +128,16 @@ public class QuizUserResponseController {
         log.info("Submit answer for question {}", quizInstanceQuestionId);
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(DataResDTO.ok(quizUserResponseService.submitAnswer(quizInstanceQuestionId, userId, selectedAnswerId, userAnswer)));
+                .body(DataResDTO.ok(quizUserResponseService.submitAnswer(quizInstanceQuestionId, userId,
+                        selectedAnswerId, userAnswer)));
     }
 
     @PutMapping("/{responseId}/answer")
     @Operation(summary = "Update answer", description = "Update an existing answer")
+    @PreAuthorize("hasAuthority('answer_user_UPDATE')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Answer updated successfully"),
-        @ApiResponse(responseCode = "404", description = "Response not found")
+            @ApiResponse(responseCode = "200", description = "Answer updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Response not found")
     })
     public ResponseEntity<DataResDTO<QuizUserResponseResDTO>> updateAnswer(
             @Parameter(description = "Response ID") @PathVariable Long responseId,
@@ -142,8 +151,9 @@ public class QuizUserResponseController {
 
     @PostMapping("/skip")
     @Operation(summary = "Skip question", description = "Skip a quiz question")
+    @PreAuthorize("hasAuthority('answer_user_CREATE')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Question skipped successfully")
+            @ApiResponse(responseCode = "200", description = "Question skipped successfully")
     })
     public ResponseEntity<DataResDTO<QuizUserResponseResDTO>> skipQuestion(
             @Parameter(description = "Quiz instance question ID") @RequestParam Long quizInstanceQuestionId,
@@ -156,8 +166,9 @@ public class QuizUserResponseController {
 
     @GetMapping("/user/{userId}")
     @Operation(summary = "Get user responses", description = "Get all responses for a specific user")
+    @PreAuthorize("hasAuthority('answer_user_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "User responses retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "User responses retrieved successfully")
     })
     public ResponseEntity<DataResDTO<List<QuizUserResponseResDTO>>> getUserResponses(
             @Parameter(description = "User ID") @PathVariable Long userId) {
@@ -169,8 +180,9 @@ public class QuizUserResponseController {
 
     @GetMapping("/user/{userId}/page")
     @Operation(summary = "Get user responses with pagination", description = "Get paginated responses for a specific user")
+    @PreAuthorize("hasAuthority('answer_user_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "User responses retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "User responses retrieved successfully")
     })
     public ResponseEntity<DataResDTO<PageResDTO<?>>> getUserResponses(
             @Parameter(description = "User ID") @PathVariable Long userId,
@@ -184,8 +196,9 @@ public class QuizUserResponseController {
 
     @GetMapping("/quiz-instance/{quizInstanceId}")
     @Operation(summary = "Get quiz instance responses", description = "Get all responses for a specific quiz instance")
+    @PreAuthorize("hasAuthority('answer_user_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Quiz instance responses retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Quiz instance responses retrieved successfully")
     })
     public ResponseEntity<DataResDTO<List<QuizUserResponseResDTO>>> getQuizInstanceResponses(
             @Parameter(description = "Quiz instance ID") @PathVariable Long quizInstanceId) {
@@ -197,8 +210,9 @@ public class QuizUserResponseController {
 
     @GetMapping("/quiz-instance/{quizInstanceId}/user/{userId}")
     @Operation(summary = "Get user quiz instance responses", description = "Get all responses for a specific user in a quiz instance")
+    @PreAuthorize("hasAuthority('answer_user_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "User quiz instance responses retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "User quiz instance responses retrieved successfully")
     })
     public ResponseEntity<DataResDTO<List<QuizUserResponseResDTO>>> getUserQuizInstanceResponses(
             @Parameter(description = "Quiz instance ID") @PathVariable Long quizInstanceId,
@@ -211,8 +225,9 @@ public class QuizUserResponseController {
 
     @GetMapping("/correct")
     @Operation(summary = "Get correct responses", description = "Get all correct or incorrect responses")
+    @PreAuthorize("hasAuthority('answer_user_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Correct responses retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Correct responses retrieved successfully")
     })
     public ResponseEntity<DataResDTO<List<QuizUserResponseResDTO>>> getCorrectResponses(
             @Parameter(description = "Whether to get correct responses") @RequestParam Boolean isCorrect) {
@@ -224,8 +239,9 @@ public class QuizUserResponseController {
 
     @GetMapping("/correct/page")
     @Operation(summary = "Get correct responses with pagination", description = "Get paginated correct or incorrect responses")
+    @PreAuthorize("hasAuthority('answer_user_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Correct responses retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Correct responses retrieved successfully")
     })
     public ResponseEntity<DataResDTO<PageResDTO<?>>> getCorrectResponses(
             @Parameter(description = "Whether to get correct responses") @RequestParam Boolean isCorrect,
@@ -239,8 +255,9 @@ public class QuizUserResponseController {
 
     @GetMapping("/time-range")
     @Operation(summary = "Get responses by time range", description = "Get responses within a specific time range")
+    @PreAuthorize("hasAuthority('answer_user_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Responses retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Responses retrieved successfully")
     })
     public ResponseEntity<DataResDTO<List<QuizUserResponseResDTO>>> getResponsesByTimeRange(
             @Parameter(description = "Minimum time in seconds") @RequestParam(required = false) Integer minTime,
@@ -253,8 +270,9 @@ public class QuizUserResponseController {
 
     @GetMapping("/date-range")
     @Operation(summary = "Get responses by date range", description = "Get responses within a specific date range")
+    @PreAuthorize("hasAuthority('answer_user_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Responses retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Responses retrieved successfully")
     })
     public ResponseEntity<DataResDTO<List<QuizUserResponseResDTO>>> getResponsesByDateRange(
             @Parameter(description = "Start date") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
@@ -267,8 +285,9 @@ public class QuizUserResponseController {
 
     @GetMapping("/recent")
     @Operation(summary = "Get recent responses", description = "Get responses since a specific date")
+    @PreAuthorize("hasAuthority('answer_user_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Recent responses retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Recent responses retrieved successfully")
     })
     public ResponseEntity<DataResDTO<List<QuizUserResponseResDTO>>> getRecentResponses(
             @Parameter(description = "Since date") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime sinceDate) {
@@ -280,8 +299,9 @@ public class QuizUserResponseController {
 
     @GetMapping("/skipped")
     @Operation(summary = "Get skipped questions", description = "Get all skipped questions")
+    @PreAuthorize("hasAuthority('answer_user_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Skipped questions retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Skipped questions retrieved successfully")
     })
     public ResponseEntity<DataResDTO<List<QuizUserResponseResDTO>>> getSkippedQuestions() {
         log.info("Get skipped questions");
@@ -292,8 +312,9 @@ public class QuizUserResponseController {
 
     @GetMapping("/answered")
     @Operation(summary = "Get answered questions", description = "Get all answered questions")
+    @PreAuthorize("hasAuthority('answer_user_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Answered questions retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Answered questions retrieved successfully")
     })
     public ResponseEntity<DataResDTO<List<QuizUserResponseResDTO>>> getAnsweredQuestions() {
         log.info("Get answered questions");
@@ -301,4 +322,4 @@ public class QuizUserResponseController {
                 .status(HttpStatus.OK)
                 .body(DataResDTO.ok(quizUserResponseService.getAnsweredQuestions()));
     }
-} 
+}

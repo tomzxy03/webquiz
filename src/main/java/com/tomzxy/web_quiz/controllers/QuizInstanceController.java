@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,10 +27,11 @@ public class QuizInstanceController {
 
     @PostMapping("/start")
     @Operation(summary = "Start quiz instance", description = "Start a new quiz instance for a user")
+    @PreAuthorize("hasAuthority('quiz_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Quiz instance started successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid request data"),
-        @ApiResponse(responseCode = "404", description = "Quiz or user not found")
+            @ApiResponse(responseCode = "200", description = "Quiz instance started successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @ApiResponse(responseCode = "404", description = "Quiz or user not found")
     })
     public ResponseEntity<DataResDTO<QuizInstanceResDTO>> startQuiz(@RequestBody QuizInstanceReqDTO request) {
         QuizInstanceResDTO instance = quizInstanceService.createQuizInstance(request);
@@ -40,9 +42,10 @@ public class QuizInstanceController {
 
     @GetMapping("/{instanceId}")
     @Operation(summary = "Get quiz instance", description = "Retrieve a quiz instance by its ID")
+    @PreAuthorize("hasAuthority('quiz_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Quiz instance found successfully"),
-        @ApiResponse(responseCode = "404", description = "Quiz instance not found")
+            @ApiResponse(responseCode = "200", description = "Quiz instance found successfully"),
+            @ApiResponse(responseCode = "404", description = "Quiz instance not found")
     })
     public ResponseEntity<DataResDTO<QuizInstanceResDTO>> getQuizInstance(
             @Parameter(description = "Quiz instance ID") @PathVariable Long instanceId,
@@ -55,10 +58,11 @@ public class QuizInstanceController {
 
     @PostMapping("/{instanceId}/submit")
     @Operation(summary = "Submit quiz", description = "Submit answers for a quiz instance")
+    @PreAuthorize("hasAuthority('quiz_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Quiz submitted successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid request data"),
-        @ApiResponse(responseCode = "404", description = "Quiz instance not found")
+            @ApiResponse(responseCode = "200", description = "Quiz submitted successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @ApiResponse(responseCode = "404", description = "Quiz instance not found")
     })
     public ResponseEntity<DataResDTO<QuizResultDetailResDTO>> submitQuiz(
             @Parameter(description = "Quiz instance ID") @PathVariable Long instanceId,
@@ -72,9 +76,10 @@ public class QuizInstanceController {
 
     @GetMapping("/{instanceId}/result")
     @Operation(summary = "Get quiz result", description = "Get the result of a completed quiz instance")
+    @PreAuthorize("hasAuthority('quiz_result_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Quiz result retrieved successfully"),
-        @ApiResponse(responseCode = "404", description = "Quiz instance or result not found")
+            @ApiResponse(responseCode = "200", description = "Quiz result retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Quiz instance or result not found")
     })
     public ResponseEntity<DataResDTO<QuizResultDetailResDTO>> getQuizResult(
             @Parameter(description = "Quiz instance ID") @PathVariable Long instanceId,
@@ -87,9 +92,10 @@ public class QuizInstanceController {
 
     @DeleteMapping("/{instanceId}")
     @Operation(summary = "Delete quiz instance", description = "Delete a quiz instance")
+    @PreAuthorize("hasAuthority('quiz_result_DELETE')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Quiz instance deleted successfully"),
-        @ApiResponse(responseCode = "404", description = "Quiz instance not found")
+            @ApiResponse(responseCode = "200", description = "Quiz instance deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Quiz instance not found")
     })
     public ResponseEntity<DataResDTO<Object>> deleteQuizInstance(
             @Parameter(description = "Quiz instance ID") @PathVariable Long instanceId,
@@ -102,8 +108,9 @@ public class QuizInstanceController {
 
     @GetMapping("/check-eligibility")
     @Operation(summary = "Check user eligibility", description = "Check if a user can start a specific quiz")
+    @PreAuthorize("hasAuthority('quiz_VIEW')")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Eligibility check completed successfully")
+            @ApiResponse(responseCode = "200", description = "Eligibility check completed successfully")
     })
     public ResponseEntity<DataResDTO<Boolean>> checkUserEligibility(
             @Parameter(description = "Quiz ID") @RequestParam Long quizId,
@@ -113,4 +120,4 @@ public class QuizInstanceController {
                 .status(HttpStatus.OK)
                 .body(DataResDTO.ok(canStart));
     }
-} 
+}

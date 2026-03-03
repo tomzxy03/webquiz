@@ -8,10 +8,12 @@ import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.mapstructs.LobbyMapper;
 import com.tomzxy.web_quiz.mapstructs.UserMapper;
 import com.tomzxy.web_quiz.models.Lobby;
+import com.tomzxy.web_quiz.models.Role;
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
 import com.tomzxy.web_quiz.models.User.User;
 import com.tomzxy.web_quiz.repositories.LobbyRepo;
 import com.tomzxy.web_quiz.repositories.QuizRepo;
+import com.tomzxy.web_quiz.repositories.RoleRepo;
 import com.tomzxy.web_quiz.repositories.UserRepo;
 import com.tomzxy.web_quiz.services.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.services.LobbyService;
@@ -36,12 +38,21 @@ public class LobbyServiceImpl implements LobbyService {
     private final ConvertToPageResDTO convertToPageResDTO;
     private final UserMapper userMapper;
     private final UserRepo userRepo;
+    private final RoleRepo roleRepo;
     private final QuizRepo quizRepo;
 
     @Override
-    public LobbyResDTO createLobby(LobbyReqDTO lobbyReqDTO) {
+    @Transactional
+    public LobbyResDTO createLobby(Long userId, LobbyReqDTO lobbyReqDTO) {
         Lobby lobby = lobbyMapper.toLobby(lobbyReqDTO);
         lobby.setCodeInvite(generateRandomHexString());
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found: " + userId));
+        lobby.setHostName(user.getUserName());
+        Role hostRole = roleRepo.findByName("HOST")
+                .orElseThrow(() -> new NotFoundException("Role not found: HOST"));
+        user.setRoles(Set.of(hostRole));
+        userRepo.save(user);
         return lobbyMapper.toLobbyResDTO(lobbyRepo.save(lobby));
     }
 

@@ -1,39 +1,42 @@
 package com.tomzxy.web_quiz.services.impl;
 
+import com.tomzxy.web_quiz.configs.security.CustomUserDetails;
+import com.tomzxy.web_quiz.dto.requests.DeviceInfo;
 import com.tomzxy.web_quiz.dto.requests.auth.LoginReqDTO;
 import com.tomzxy.web_quiz.dto.requests.auth.RefreshTokenReqDTO;
 import com.tomzxy.web_quiz.dto.requests.auth.SignupReqDTO;
+import com.tomzxy.web_quiz.dto.responses.TokenResDTO;
 import com.tomzxy.web_quiz.dto.responses.auth.AuthResDTO;
 import com.tomzxy.web_quiz.dto.responses.user.UserResDTO;
 import com.tomzxy.web_quiz.enums.AppCode;
-import com.tomzxy.web_quiz.exception.ApiException;
 import com.tomzxy.web_quiz.exception.ExistedException;
 import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.mapstructs.AuthMapper;
 import com.tomzxy.web_quiz.mapstructs.UserMapper;
+import com.tomzxy.web_quiz.models.Role;
 import com.tomzxy.web_quiz.models.User.User;
+import com.tomzxy.web_quiz.repositories.RoleRepo;
 import com.tomzxy.web_quiz.repositories.UserRepo;
 import com.tomzxy.web_quiz.services.AuthService;
+import com.tomzxy.web_quiz.services.RefreshTokenService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Set;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.time.Instant;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-
-/**
- * Improved token-based auth service with proper password encoding,
- * token expiration, and refresh token rotation.
- *
- * Note: In-memory storage (ConcurrentHashMap) is suitable for development/demo only.
- * For production, replace with JWT + Redis or database-backed solution.
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -44,155 +47,146 @@ public class AuthServiceImpl implements AuthService {
     private final UserMapper userMapper;
     private final AuthMapper authMapper;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JWTService jwtService;
+    private final RefreshTokenService refreshTokenService;
+    private final RoleRepo roleRepo;
 
-    // Token store: token -> TokenInfo
-    private static final Map<String, TokenInfo> TOKEN_STORE = new ConcurrentHashMap<>();
+    @Value("${jwt.access-expiration}")
+    private long accessExpirationMs;              
 
-    @Value("${auth.access-token-expiry-seconds:900}")      // 15 minutes default
-    private long accessTokenExpirySeconds;
+    
+    @Value("${jwt.refresh-expiration}")
+    private long refreshExpirationMs;
 
-    @Value("${auth.refresh-token-expiry-seconds:2592000}") // 30 days default
-    private long refreshTokenExpirySeconds;
-
-    // Inner class to hold token metadata
-    private record TokenInfo(Long userId, Instant expiry, TokenType type) {}
-    private enum TokenType { ACCESS, REFRESH }
+    @Autowired
+    private HttpServletRequest request;
 
     @Override
     public AuthResDTO login(LoginReqDTO loginReqDTO) {
-        User user = userRepo.findByEmail(loginReqDTO.getEmail())
-                .orElseThrow(() -> new NotFoundException("User not found with email: " + loginReqDTO.getEmail()));
+        // Authenticate user
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginReqDTO.getEmail(),
+                        loginReqDTO.getPassword()
+                )
+        );
 
-        // Fixed: use BCrypt matches
-        if (!passwordEncoder.matches(loginReqDTO.getPassword(), user.getPassword())) {
-            throw new ApiException(AppCode.INVALID_CREDENTIALS, "Invalid credentials");
-        }
+        // Set authentication in security context (optional)
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String accessToken = generateToken(user.getId(), TokenType.ACCESS, accessTokenExpirySeconds);
-        String refreshToken = generateToken(user.getId(), TokenType.REFRESH, refreshTokenExpirySeconds);
+        // Retrieve the authenticated user from the principal (assumes CustomUserDetails)
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        User user = userDetails.getUser();
+
+        // Extract device information from request
+        DeviceInfo deviceInfo = extractDeviceInfo();
+
+        // Create refresh token (and access token) via RefreshTokenService
+        TokenResDTO tokens = refreshTokenService.createRefreshToken(user, deviceInfo);
 
         return AuthResDTO.builder()
-                .token(accessToken)
-                .refreshToken(refreshToken)
+                .token(tokens.accessToken())
+                .refreshToken(tokens.refreshToken())
                 .user(userMapper.toUserResDTO(user))
-                .expiresIn(accessTokenExpirySeconds)
+                .expiresIn(accessExpirationMs)
                 .build();
     }
 
     @Override
+    @Transactional
     public AuthResDTO signup(SignupReqDTO signupReqDTO) {
+        // Check if user already exists
         if (userRepo.existsByEmail(signupReqDTO.getEmail())) {
-            throw new ExistedException(AppCode.EMAIL_ALREADY_REGISTERED, "Email already registered: " + signupReqDTO.getEmail());
-        }
-        if (userRepo.existsByUserName(signupReqDTO.getUserName())) {
-            throw new ExistedException(AppCode.USERNAME_ALREADY_TAKEN, "Username already taken: " + signupReqDTO.getUserName());
+            throw new ExistedException(AppCode.EMAIL_ALREADY_REGISTERED,
+                    "User already exists with email: " + signupReqDTO.getEmail());
         }
 
+        // Map and encode password
         User user = authMapper.toUser(signupReqDTO);
-        user.setPassword(passwordEncoder.encode(signupReqDTO.getPassword())); // encode password
+        user.setPassword(passwordEncoder.encode(signupReqDTO.getPassword()));
+        Role role = roleRepo.findByName("USER").orElseThrow(() -> new NotFoundException("Role not found: USER"));
+        user.setRoles(Set.of(role));
 
+        // Save user
         user = userRepo.save(user);
 
-        String accessToken = generateToken(user.getId(), TokenType.ACCESS, accessTokenExpirySeconds);
-        String refreshToken = generateToken(user.getId(), TokenType.REFRESH, refreshTokenExpirySeconds);
+        // Extract device information
+        DeviceInfo deviceInfo = extractDeviceInfo();
+
+        // Create tokens
+        TokenResDTO tokens = refreshTokenService.createRefreshToken(user, deviceInfo);
 
         return AuthResDTO.builder()
-                .token(accessToken)
-                .refreshToken(refreshToken)
+                .token(tokens.accessToken())
+                .refreshToken(tokens.refreshToken())
                 .user(userMapper.toUserResDTO(user))
-                .expiresIn(accessTokenExpirySeconds)
+                .expiresIn(accessExpirationMs)
                 .build();
     }
 
     @Override
-    public void logout(String token) {
-        TOKEN_STORE.remove(token);
-        log.info("Token invalidated: {}", token);
+    public void logout(String refreshToken) {
+        // Revoke the refresh token (and optionally blacklist access token)
+        refreshTokenService.revokeRefreshToken(refreshToken);
+        // Clear security context
+        SecurityContextHolder.clearContext();
     }
 
     @Override
-    public AuthResDTO refreshToken(RefreshTokenReqDTO refreshTokenReqDTO) {
-        String oldRefreshToken = refreshTokenReqDTO.getRefreshToken();
-        TokenInfo info = TOKEN_STORE.get(oldRefreshToken);
+    public AuthResDTO refreshToken(RefreshTokenReqDTO dto) {
+        // Rotate refresh token and get new tokens
+        TokenResDTO tokens = refreshTokenService.rotateRefreshToken(dto.getRefreshToken());
 
-        // Validate refresh token
-        if (info == null || info.type() != TokenType.REFRESH || info.expiry().isBefore(Instant.now())) {
-            throw new ApiException(AppCode.INVALID_CREDENTIALS, "Invalid or expired refresh token");
-        }
+        // Extract username from the new access token (or refresh token)
+        String username = jwtService.extractUsername(tokens.accessToken());
 
-        // Revoke old refresh token (rotation)
-        TOKEN_STORE.remove(oldRefreshToken);
-
-        // Fetch user
-        User user = userRepo.findById(info.userId())
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        // Issue new tokens
-        String newAccessToken = generateToken(user.getId(), TokenType.ACCESS, accessTokenExpirySeconds);
-        String newRefreshToken = generateToken(user.getId(), TokenType.REFRESH, refreshTokenExpirySeconds);
+        // Fetch user for response
+        User user = userRepo.findByEmail(username)
+                .orElseThrow(() -> new NotFoundException("User not found: " + username));
 
         return AuthResDTO.builder()
-                .token(newAccessToken)
-                .refreshToken(newRefreshToken)
+                .token(tokens.accessToken())
+                .refreshToken(tokens.refreshToken())
                 .user(userMapper.toUserResDTO(user))
-                .expiresIn(accessTokenExpirySeconds)
+                .expiresIn(accessExpirationMs)
                 .build();
     }
 
     @Override
-    public UserResDTO getMe(String token) {
-        TokenInfo info = validateToken(token, TokenType.ACCESS);
-        User user = userRepo.findById(info.userId())
-                .orElseThrow(() -> new NotFoundException("User not found"));
+    public UserResDTO getMe() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        User user = userRepo.findByEmail(username)
+                .orElseThrow(() -> new NotFoundException("User not found: " + username));
+
         return userMapper.toUserResDTO(user);
     }
 
     /**
-     * Validates an access token and returns its info.
+     * Extracts device information from the current HTTP request.
+     * Uses RequestContextHolder to obtain the request when not explicitly passed.
+     * Note: This approach ties the service to the web layer; consider passing DeviceInfo
+     * as a parameter from the controller for better testability.
      */
-    private TokenInfo validateToken(String token, TokenType expectedType) {
-        TokenInfo info = TOKEN_STORE.get(token);
-        if (info == null) {
-            throw new ApiException(AppCode.INVALID_CREDENTIALS, "Token not found");
+    private DeviceInfo extractDeviceInfo() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes == null) {
+            // Fallback for non-web contexts (e.g., tests)
+            return new DeviceInfo("unknown", "unknown", "0.0.0.0", "unknown");
         }
-        if (info.type() != expectedType) {
-            throw new ApiException(AppCode.INVALID_CREDENTIALS, "Invalid token type");
-        }
-        if (info.expiry().isBefore(Instant.now())) {
-            // Automatically clean up expired token
-            TOKEN_STORE.remove(token);
-            throw new ApiException(AppCode.INVALID_CREDENTIALS, "Token expired");
-        }
-        return info;
-    }
+        HttpServletRequest request = attributes.getRequest();
+        String deviceId = request.getHeader("X-Device-ID");
+        String deviceName = request.getHeader("X-Device-Name");
+        String ipAddress = request.getRemoteAddr();
+        String userAgent = request.getHeader("User-Agent");
 
-    /**
-     * Generates a new token and stores it.
-     */
-    private String generateToken(Long userId, TokenType type, long expirySeconds) {
-        String token = UUID.randomUUID().toString().replace("-", "");
-        Instant expiry = Instant.now().plusSeconds(expirySeconds);
-        TOKEN_STORE.put(token, new TokenInfo(userId, expiry, type));
-        return token;
-    }
-
-    /**
-     * Scheduled cleanup of expired tokens (runs every hour).
-     */
-    @Scheduled(fixedDelay = 3600000) // 1 hour
-    public void cleanupExpiredTokens() {
-        int count = 0;
-        var now = Instant.now();
-        var iterator = TOKEN_STORE.entrySet().iterator();
-        while (iterator.hasNext()) {
-            var entry = iterator.next();
-            if (entry.getValue().expiry().isBefore(now)) {
-                iterator.remove();
-                count++;
-            }
-        }
-        if (count > 0) {
-            log.info("Cleaned up {} expired tokens", count);
-        }
+        return new DeviceInfo(
+                deviceId != null ? deviceId : "unknown",
+                deviceName != null ? deviceName : "unknown",
+                ipAddress,
+                userAgent != null ? userAgent : "unknown"
+        );
     }
 }

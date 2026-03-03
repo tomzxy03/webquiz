@@ -1,7 +1,6 @@
 package com.tomzxy.web_quiz.configs.init;
 
 
-import com.tomzxy.web_quiz.dto.responses.PermissionResDTO;
 import com.tomzxy.web_quiz.mapstructs.PermissionMapper;
 import com.tomzxy.web_quiz.models.Permission;
 import com.tomzxy.web_quiz.repositories.PermissionRepo;
@@ -28,10 +27,7 @@ public class InitDataService implements CommandLineRunner {
             new AbstractMap.SimpleEntry<String,String>("UPDATE" , "sửa dữ liệu"),
             new AbstractMap.SimpleEntry<String,String>("DELETE" , "xóa dữ liệu")
     );
-    public InitDataService(PermissionRepo permissionRepository, PermissionMapper permissionMapper) {
-        this.permissionRepo = permissionRepository;
-        this.permissionMapper = permissionMapper;
-    }
+
     @Override
     public void run(String... args) throws Exception {
         for(Map.Entry<String,String> item: ACTIVES.entrySet()){

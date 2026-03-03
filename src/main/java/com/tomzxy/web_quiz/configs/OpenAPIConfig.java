@@ -6,11 +6,13 @@ import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.License;
 
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+
 import java.util.Arrays;
 
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.beans.factory.annotation.Value;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -28,6 +30,9 @@ public class OpenAPIConfig {
 
     @Bean
     public OpenAPI myOpenAPI() {
+
+        final String securitySchemeName = "bearerAuth";
+
         Server devServer = new Server();
         devServer.setUrl(devUrl);
         devServer.setDescription("Server URL in Development environment");
@@ -41,21 +46,35 @@ public class OpenAPIConfig {
         contact.setName("TomZxy");
         contact.setUrl("https://www.tomzxy.com");
 
-        License mitLicense = new License().name("MIT License").url("https://choosealicense.com/licenses/mit/");
+        License mitLicense = new License()
+                .name("MIT License")
+                .url("https://choosealicense.com/licenses/mit/");
 
         Info info = new Info()
-            .title("Web Quiz API")
-            .version("1.0")
-            .contact(contact)
-            .description("This API exposes endpoints to manage Web Quiz.")
-            .license(mitLicense);
+                .title("Web Quiz API")
+                .version("1.0")
+                .contact(contact)
+                .description("This API exposes endpoints to manage Web Quiz.")
+                .license(mitLicense);
 
         return new OpenAPI()
                 .info(info)
-                .servers(Arrays.asList(devServer, prodServer));
+                .servers(Arrays.asList(devServer, prodServer))
+
+                // 👇 thêm phần này
+                .addSecurityItem(new SecurityRequirement()
+                        .addList(securitySchemeName))
+                .components(new io.swagger.v3.oas.models.Components()
+                        .addSecuritySchemes(securitySchemeName,
+                                new SecurityScheme()
+                                        .name(securitySchemeName)
+                                        .type(SecurityScheme.Type.HTTP)
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT")));
     }
+
     @Bean
-    public GroupedOpenApi webQuizApiGroup(){
+    public GroupedOpenApi webQuizApiGroup() {
         return GroupedOpenApi.builder()
                 .group("web_quiz")
                 .packagesToScan(packageScan)

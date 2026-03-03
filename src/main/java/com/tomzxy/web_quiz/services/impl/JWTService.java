@@ -72,13 +72,29 @@ public class JWTService {
         }
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
+    public boolean validateTokenSignature(String token) {
         try {
-            final String username = extractUsername(token);
+            extractAllClaims(token);
+            return true;
+        } catch (JwtException e) {
+            return false;
+        }
+    }
+    public boolean isAccessTokenValid(String token, UserDetails userDetails) {
+        try {
+            String username = extractUsername(token);
             return username != null
                     && username.equals(userDetails.getUsername())
                     && !isTokenExpired(token);
-        } catch (JwtException | IllegalArgumentException e) {
+        } catch (JwtException e) {
+            return false;
+        }
+    }
+    public boolean isRefreshToken(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            return "refresh".equals(claims.get("type", String.class));
+        } catch (JwtException e) {
             return false;
         }
     }

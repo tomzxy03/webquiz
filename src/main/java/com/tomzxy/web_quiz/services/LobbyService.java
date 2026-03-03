@@ -5,7 +5,7 @@ import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.lobby.LobbyResDTO;
 
 public interface LobbyService {
-    LobbyResDTO createLobby(LobbyReqDTO lobbyReqDTO);
+    LobbyResDTO createLobby(Long userId, LobbyReqDTO lobbyReqDTO);
 
     PageResDTO<?> getAllLobby(int page, int size);
 
