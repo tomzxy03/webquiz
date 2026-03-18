@@ -1,6 +1,7 @@
 package com.tomzxy.web_quiz.models.Host;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tomzxy.web_quiz.models.BaseEntity;
 import com.tomzxy.web_quiz.models.Folder;
 import com.tomzxy.web_quiz.models.Question;
@@ -27,8 +28,10 @@ import java.util.Set;
 @Builder
 public class QuestionBank extends BaseEntity{
     // Thuộc về Host nào
+    @MapsId
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", nullable = false, unique = true)
+    @JoinColumn(name = "owner_id")
+    @JsonIgnore
     private User owner;
     // Các folders trong bank này
     @OneToMany(mappedBy = "bank", cascade = {CascadeType.MERGE,CascadeType.PERSIST}, orphanRemoval = true)

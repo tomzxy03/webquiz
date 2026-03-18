@@ -1,7 +1,11 @@
 package com.tomzxy.web_quiz.services.impl;
 
+import com.tomzxy.web_quiz.configs.security.AuthorityBuilder;
+import com.tomzxy.web_quiz.configs.security.CustomUserDetails;
 import com.tomzxy.web_quiz.dto.requests.DeviceInfo;
 import com.tomzxy.web_quiz.dto.responses.TokenResDTO;
+import com.tomzxy.web_quiz.enums.AppCode;
+import com.tomzxy.web_quiz.exception.ApiException;
 import com.tomzxy.web_quiz.exception.InvalidRefreshTokenException;
 import com.tomzxy.web_quiz.exception.RefreshTokenExpiredException;
 import com.tomzxy.web_quiz.models.RefreshToken;
@@ -9,6 +13,8 @@ import com.tomzxy.web_quiz.models.User.User;
 import com.tomzxy.web_quiz.repositories.RefreshTokenRepository;
 import com.tomzxy.web_quiz.repositories.UserRepo;
 import com.tomzxy.web_quiz.services.RefreshTokenService;
+
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +34,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+
+import javax.management.RuntimeErrorException;
 
 @Service
 @RequiredArgsConstructor
@@ -89,67 +97,79 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     @Override
-    @Transactional
-    public TokenResDTO rotateRefreshToken(String refreshToken) {
-        // 1. Verify JWT và lấy thông tin
-        if (!jwtService.validateToken(refreshToken) || !jwtService.isRefreshToken(refreshToken)) { // cần method isTokenValid không cần UserDetails? hoặc tạo method riêng
-            throw new InvalidRefreshTokenException("Invalid refresh token signature");
+@Transactional
+public TokenResDTO rotateRefreshToken(String refreshToken) {
+
+    // 1. Verify refresh token
+    try {
+        if (!jwtService.validateToken(refreshToken) || !jwtService.isRefreshToken(refreshToken)) {
+            throw new InvalidRefreshTokenException("Invalid refresh token");
         }
-        String jti = jwtService.extractJti(refreshToken);
-        String username = jwtService.extractUsername(refreshToken);
+    } catch (JwtException e) {
+        throw new ApiException(AppCode.BAD_REQUEST, e.getMessage());
+    }
 
-        // 2. Tìm entity theo jti
-        RefreshToken entity = refreshTokenRepository.findByJti(jti)
-                .orElseThrow(() -> new InvalidRefreshTokenException("Refresh token not found"));
+    // 2. Extract info từ JWT
+    String jti = jwtService.extractJti(refreshToken);
+    // 3. Tìm refresh token trong DB
+    RefreshToken entity = refreshTokenRepository.findByJti(jti)
+            .orElseThrow(() -> new InvalidRefreshTokenException("Refresh token not found"));
 
-        // 3. Kiểm tra revoked và expired
-        if (entity.isRevoked()) {
-            revokeAllUserTokens(entity.getUser());
-            throw new InvalidRefreshTokenException("Refresh token has been revoked");
-        }
-        if (entity.getExpiredAt().isBefore(Instant.now())) {
-            entity.setRevoked(true);
-            refreshTokenRepository.save(entity);
-            throw new RefreshTokenExpiredException("Refresh token expired");
-        }
+    // 4. Check revoked
+    if (entity.isRevoked()) {
+        revokeAllUserTokens(entity.getUser());
+        throw new InvalidRefreshTokenException("Refresh token already revoked");
+    }
 
-        // 4. Cập nhật lastUsedAt
-        entity.setLastUsedAt(Instant.now());
-
-        // 5. Revoke token cũ (rotation)
+    // 5. Check expired
+    if (entity.getExpiredAt().isBefore(Instant.now())) {
         entity.setRevoked(true);
         refreshTokenRepository.save(entity);
-
-        // 6. Tạo token mới (giữ nguyên device info)
-        User user = entity.getUser();
-        DeviceInfo deviceInfo = new DeviceInfo(
-                entity.getDeviceId(),
-                entity.getDeviceName(),
-                entity.getIpAddress(),
-                entity.getUserAgent()
-        );
-
-        // Gọi lại createRefreshToken nhưng không tạo access token mới? createRefreshToken đã tạo cả access và refresh.
-        // Ta chỉ cần tạo refresh token mới và access token mới.
-        String newJti = UUID.randomUUID().toString();
-        String newRefreshTokenString = jwtService.generateRefreshToken((UserDetails) user, newJti);
-        String newAccessToken = jwtService.generateAccessToken((UserDetails) user);
-
-        RefreshToken newEntity = new RefreshToken();
-        newEntity.setJti(newJti);
-        newEntity.setUser(user);
-        newEntity.setIssuedAt(Instant.now());
-        newEntity.setExpiredAt(Instant.now().plus(Duration.ofSeconds(refreshTokenValidity)));
-        newEntity.setRevoked(false);
-        newEntity.setDeviceId(deviceInfo.getDeviceId());
-        newEntity.setDeviceName(deviceInfo.getDeviceName());
-        newEntity.setIpAddress(deviceInfo.getIpAddress());
-        newEntity.setUserAgent(deviceInfo.getUserAgent());
-        newEntity.setLastUsedAt(Instant.now());
-        refreshTokenRepository.save(newEntity);
-
-        return new TokenResDTO(newAccessToken, newRefreshTokenString);
+        throw new RefreshTokenExpiredException("Refresh token expired");
     }
+
+    // 6. Revoke token cũ (rotation)
+    entity.setRevoked(true);
+    entity.setLastUsedAt(Instant.now());
+    refreshTokenRepository.save(entity);
+
+    // 7. Lấy user
+        User user = userRepository
+                .findUserWithAuthorities(entity.getUser().getEmail())
+                .orElseThrow();
+
+        CustomUserDetails userDetails = new CustomUserDetails(user.getId(), user.getEmail(), user.getPassword(), AuthorityBuilder.build(user));
+
+
+    // 8. Tạo token mới
+    String newJti = UUID.randomUUID().toString();
+
+    String newAccessToken =
+            jwtService.generateAccessToken(userDetails);
+
+    String newRefreshToken =
+            jwtService.generateRefreshToken(userDetails, newJti);
+
+    // 9. Lưu refresh token mới
+    RefreshToken newEntity = new RefreshToken();
+    newEntity.setJti(newJti);
+    newEntity.setUser(user);
+    newEntity.setIssuedAt(Instant.now());
+    newEntity.setExpiredAt(Instant.now().plusMillis(refreshTokenValidity));
+    newEntity.setRevoked(false);
+
+    // giữ device info
+    newEntity.setDeviceId(entity.getDeviceId());
+    newEntity.setDeviceName(entity.getDeviceName());
+    newEntity.setIpAddress(entity.getIpAddress());
+    newEntity.setUserAgent(entity.getUserAgent());
+    newEntity.setLastUsedAt(Instant.now());
+
+    refreshTokenRepository.save(newEntity);
+
+    // 10. Return tokens
+    return new TokenResDTO(newAccessToken, newRefreshToken);
+}
 
     @Override
     public void revokeRefreshToken(String refreshToken) {

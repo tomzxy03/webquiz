@@ -18,7 +18,7 @@ public class QuestionSnapshotResDTO {
     private Long id;
     private String questionText;
     private String questionType;
-    private Integer questionPoints;
+    private Long questionPoints;
     private List<AnswersSnapshotResDTO> answerSnapshots;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

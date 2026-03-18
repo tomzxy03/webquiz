@@ -1,16 +1,23 @@
 package com.tomzxy.web_quiz.services;
 
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizInstanceReqDTO;
-import com.tomzxy.web_quiz.dto.requests.quiz.QuizSubmissionReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.QuizInstanceResDTO;
 import com.tomzxy.web_quiz.dto.responses.Quiz.QuizResultDetailResDTO;
+import com.tomzxy.web_quiz.dto.responses.Quiz.QuizStateResDTO;
+import com.tomzxy.web_quiz.dto.requests.quiz.QuizAnswerReqDTO;
 
 public interface QuizInstanceService {
 
+  void saveAnswer(Long instanceId, Long userId, QuizAnswerReqDTO request);
+
   QuizInstanceResDTO createQuizInstance(QuizInstanceReqDTO request);
 
+  QuizInstanceResDTO createQuizInstance(Long quizId);
+
   QuizInstanceResDTO getQuizInstance(Long instanceId, Long userId);
+
+  QuizStateResDTO getQuizState(Long instanceId, Long userId);
 
   PageResDTO<?> getAllQuizInstances(int page, int size);
 
@@ -24,7 +31,7 @@ public interface QuizInstanceService {
 
   boolean canUserStartQuiz(Long quizId, Long userId);
 
-  QuizResultDetailResDTO submitQuiz(QuizSubmissionReqDTO request);
+  QuizResultDetailResDTO submitQuiz(Long instanceId, Long userId);
 
   QuizResultDetailResDTO getQuizResult(Long instanceId, Long userId);
 

@@ -34,8 +34,6 @@ public class RolePermissionInit implements CommandLineRunner {
 
     private static final String ADMIN = PredefinedRole.ADMIN_ROLE;
     private static final String USER = PredefinedRole.USER_ROLE;
-    private static final String CREATOR = PredefinedRole.CREATOR_ROLE;
-
     @Override
     public void run(String... args) {
         log.info("========= START DATABASE INITIALIZATION =========");
@@ -47,7 +45,6 @@ public class RolePermissionInit implements CommandLineRunner {
         log.info("========= DATABASE INITIALIZED SUCCESS =========");
     }
 
-    // ================= PERMISSION =================
 
     private void seedPermissions() {
 
@@ -65,13 +62,11 @@ public class RolePermissionInit implements CommandLineRunner {
         log.info("Permissions seeded.");
     }
 
-    // ================= ROLE =================
 
     private void seedRoles() {
 
         Role adminRole = getOrCreateRole(ADMIN);
         Role userRole = getOrCreateRole(USER);
-        Role creatorRole = getOrCreateRole(CREATOR);
 
         if (rolePermissionObjectRepo.count() == 0) {
 
@@ -96,12 +91,10 @@ public class RolePermissionInit implements CommandLineRunner {
                     "chapter", List.of("VIEW"),
                     "user", List.of("VIEW", "UPDATE"),
                     "group", List.of("VIEW", "CREATE"),
-                    "quiz", List.of("VIEW")));
+                    "quiz", List.of("VIEW"),
+                    "quiz_result", List.of("VIEW"),
+                    "notification", List.of("VIEW")));
 
-            // Creator role
-            roleService.addRolePermissionObject(creatorRole, Map.of(
-                    "quiz", List.of("CREATE"),
-                    "group", List.of("CREATE")));
         }
 
         log.info("Roles & permissions seeded.");
@@ -124,7 +117,7 @@ public class RolePermissionInit implements CommandLineRunner {
             User admin = new User();
             admin.setUserName("admin");
             admin.setEmail("admin@gmail.com");
-            admin.setPassword(passwordEncoder.encode("1111"));
+            admin.setPassword(passwordEncoder.encode("datvip2003"));
             admin.setRoles(Set.of(adminRole));
 
             userRepo.save(admin);
@@ -140,7 +133,7 @@ public class RolePermissionInit implements CommandLineRunner {
             User user = new User();
             user.setUserName("tomzxy03");
             user.setEmail("tomzxy03@gmail.com");
-            user.setPassword(passwordEncoder.encode("1111"));
+            user.setPassword(passwordEncoder.encode("datvip2003"));
             user.setRoles(Set.of(userRole));
 
             userRepo.save(user);

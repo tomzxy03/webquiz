@@ -113,7 +113,6 @@ public class QuizUserResponseServiceImpl implements QuizUserResponseService {
         QuizUserResponse response = QuizUserResponse.builder()
                 .quizInstance(quizInstance)
                 .selectedAnswerId(selectedAnswerId)
-                .selectedAnswerText(userAnswer)
                 .answeredAt(LocalDateTime.now())
                 .isSkipped(false)
                 .build();
@@ -131,7 +130,6 @@ public class QuizUserResponseServiceImpl implements QuizUserResponseService {
                 .orElseThrow(() -> new NotFoundException("User response not found"));
         
         response.setSelectedAnswerId(selectedAnswerId);
-        response.setSelectedAnswerText(userAnswer);
         response.setUpdatedAt(LocalDateTime.now());
         
         response = quizUserResponseRepo.save(response);

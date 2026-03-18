@@ -4,6 +4,8 @@ import com.github.javafaker.Faker;
 import com.tomzxy.web_quiz.containts.PredefinedRole;
 import com.tomzxy.web_quiz.enums.*;
 import com.tomzxy.web_quiz.models.*;
+import com.tomzxy.web_quiz.models.Host.LobbyMember;
+import com.tomzxy.web_quiz.models.Host.LobbyMemberId;
 import com.tomzxy.web_quiz.models.Host.QuestionBank;
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
 import com.tomzxy.web_quiz.models.Quiz.QuizQuestionId;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -132,7 +135,6 @@ public class DataSeeder implements CommandLineRunner {
             question.setBank(bank);
             question.setFolder(folder);
             question.setContentHash(UUID.randomUUID().toString());
-            question.setPoints(faker.random().nextInt(1, 5));
             question = questionRepo.save(question);
 
             seedAnswers(question);
@@ -181,7 +183,7 @@ public class DataSeeder implements CommandLineRunner {
                 link.setId(new QuizQuestionId(quiz.getId(), q.getId()));
                 link.setQuiz(quiz);
                 link.setQuestion(q);
-                link.setPoints(q.getPoints());
+                link.setPoints(faker.number().numberBetween(1L, 10L));
                 quizQuestionLinkRepo.save(link);
             }
         }
@@ -189,29 +191,49 @@ public class DataSeeder implements CommandLineRunner {
 
     private void seedLobbies(List<User> users, int count) {
         List<Quiz> quizzes = quizRepo.findAll();
-        if (quizzes.isEmpty())
-            return;
+        if (quizzes.isEmpty()) return;
 
         for (int i = 0; i < count; i++) {
+
             Quiz quiz = quizzes.get(i % quizzes.size());
+
             Lobby lobby = new Lobby();
             lobby.setLobbyName("Lobby for " + quiz.getTitle());
-            lobby.setHostName(quiz.getHost().getUserName());
+            lobby.setHost(quiz.getHost());
             lobby.setCodeInvite(faker.number().digits(6));
 
-            // Add some members
-            Set<User> members = new HashSet<>();
+            // save lobby trước
+            Lobby savedLobby = lobbyRepo.save(lobby);
+
+            Collections.shuffle(users);
             int numMembers = faker.random().nextInt(3, 10);
-            for (int k = 0; k < numMembers; k++) {
-                members.add(users.get(faker.random().nextInt(users.size())));
-            }
-            lobby.setMembers(members);
 
-            // Link quiz to lobby
-            lobby.getQuizzes().add(quiz);
-            quiz.setLobby(lobby);
+            List<User> selectedUsers = users.stream()
+                    .limit(numMembers)
+                    .toList();
 
-            lobbyRepo.save(lobby);
+            Set<LobbyMember> members = selectedUsers.stream()
+                    .map(user -> {
+
+                        LobbyMemberId id = new LobbyMemberId(
+                                savedLobby.getId(),
+                                user.getId()
+                        );
+
+                        return LobbyMember.builder()
+                                .id(id)
+                                .lobby(savedLobby)
+                                .user(user)
+                                .build();
+                    })
+                    .collect(Collectors.toSet());
+
+            savedLobby.setMembers(members);
+
+            savedLobby.getQuizzes().add(quiz);
+            quiz.setLobby(savedLobby);
+
+            lobbyRepo.save(savedLobby);
             quizRepo.save(quiz);
         }
     }

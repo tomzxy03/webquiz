@@ -19,7 +19,7 @@ import java.util.Map;
 public class UserStatisticsResDTO {
     private Long userId;
     private Integer totalQuizzesTaken;
-    private Integer totalPoints;
+    private Long totalPoints;
     private Double averageScore;
     private Integer totalTimeSpent; // in minutes
     private Map<String, Integer> quizzesBySubject;

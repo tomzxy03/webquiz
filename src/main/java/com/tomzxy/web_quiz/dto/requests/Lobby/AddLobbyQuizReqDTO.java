@@ -7,7 +7,7 @@ import com.tomzxy.web_quiz.models.Quiz.Quiz;
 import jakarta.validation.constraints.NotBlank;  
 
 @Getter
-public class AddQuizReqDTO { // add quiz to group
+public class AddLobbyQuizReqDTO { // add quiz to group
 
     @NotBlank(message = "Group ID is required")
     private Long groupId;

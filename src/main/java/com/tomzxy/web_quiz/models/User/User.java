@@ -1,6 +1,7 @@
 package com.tomzxy.web_quiz.models.User;
 
 import com.tomzxy.web_quiz.models.*;
+import com.tomzxy.web_quiz.models.Host.LobbyMember;
 import com.tomzxy.web_quiz.models.Host.QuestionBank;
 import com.tomzxy.web_quiz.models.NotificationUser.Notification;
 import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;
@@ -59,8 +60,8 @@ public class User extends BaseEntity {
     )
     private Set<Role> roles = new HashSet<>();
 
-    @ManyToMany(mappedBy = "members")
-    private Set<Lobby> lobbies = new HashSet<>();
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<LobbyMember> lobbies = new HashSet<>();
 
     @OneToMany(mappedBy = "host", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Notification> notifications = new HashSet<>();

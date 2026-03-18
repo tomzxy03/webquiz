@@ -1,9 +1,11 @@
 package com.tomzxy.web_quiz.mapstructs;
 
 import com.tomzxy.web_quiz.dto.requests.user.UserReqDto;
+import com.tomzxy.web_quiz.dto.responses.user.UserLobbyResDTO;
 import com.tomzxy.web_quiz.dto.responses.user.UserMemberResDTO;
 import com.tomzxy.web_quiz.dto.responses.user.UserResDTO;
 import com.tomzxy.web_quiz.dto.requests.user.UserProfileReqDTO;
+import com.tomzxy.web_quiz.models.Host.LobbyMember;
 import com.tomzxy.web_quiz.models.Role;
 import com.tomzxy.web_quiz.models.User.User;
 import org.mapstruct.*;
@@ -26,8 +28,10 @@ public interface UserMapper {
 
     List<UserResDTO> toListUserResDTO(List<User> users);
 
-    @Mapping(target = "roleName", source = "roles", qualifiedByName = "mapRoleName")
-    UserMemberResDTO toUserMemberResDTO(User user);
+    @Mapping(target = "roleName", source = "role")
+    @Mapping(target = "id", source = "user.id")
+    @Mapping(target = "userName", source = "user.userName")
+    UserMemberResDTO toUserMemberResDTO(LobbyMember lobbyMember);
 
     Set<UserMemberResDTO> toListUserLobbyResDTO(Set<User> users);
 
@@ -35,13 +39,8 @@ public interface UserMapper {
     @Mapping(target = "password", source = "password")
     void updateUser(@MappingTarget User user, UserReqDto userReqDto);
 
+    UserLobbyResDTO toUserLobbyResDTO(User user);
+
     void updateUserProfile(@MappingTarget User user, UserProfileReqDTO userProfileReqDTO);
 
-    @Named("mapRoleName")
-    default String mapRoleName(Set<Role> roles) {
-        if (roles == null || roles.isEmpty()) {
-            return null;
-        }
-        return roles.iterator().next().getName();
-    }
 }

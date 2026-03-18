@@ -1,13 +1,23 @@
 package com.tomzxy.web_quiz.services;
 
 import com.tomzxy.web_quiz.dto.requests.Lobby.LobbyReqDTO;
+import com.tomzxy.web_quiz.dto.requests.Notification.NotificationReqDTO;
+import com.tomzxy.web_quiz.dto.requests.quiz.QuizReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
+import com.tomzxy.web_quiz.dto.responses.Quiz.QuizResDTO;
+import com.tomzxy.web_quiz.dto.responses.lobby.LobbyNotificationResDTO;
+import com.tomzxy.web_quiz.dto.responses.lobby.LobbyQuizResDTO;
 import com.tomzxy.web_quiz.dto.responses.lobby.LobbyResDTO;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface LobbyService {
-    LobbyResDTO createLobby(Long userId, LobbyReqDTO lobbyReqDTO);
+    LobbyResDTO createLobby(LobbyReqDTO lobbyReqDTO);
 
     PageResDTO<?> getAllLobby(int page, int size);
+
+    PageResDTO<?> getAllLobbyOwned(int page, int size);
+
+    PageResDTO<?> getAllLobbyJoined(int page, int size);
 
     LobbyResDTO getLobby(Long lobbyId);
 
@@ -22,16 +32,30 @@ public interface LobbyService {
 
     void removeMember(Long lobbyId, Long userId);
 
-    // Notifications / Announcements
-    PageResDTO<?> getAllNotifications(Long lobbyId);
+
+    void leaveLobby(Long lobbyId);
+
+    PageResDTO<?> getAllNotifications(Long lobbyId, int page, int size);
+
+    LobbyNotificationResDTO addNotification(Long lobbyId, NotificationReqDTO notificationReqDTO);
+
+    @Transactional
+    LobbyNotificationResDTO updateNotification(Long lobbyId, Long notificationId, NotificationReqDTO notificationReqDTO);
+
+    void deleteNotification(Long lobbyId, Long notificationId);
+
+    LobbyResDTO joinLobby(String code);
 
     // User's groups
     PageResDTO<?> getLobbyByUser(Long userId, int page, int size);
 
     // Quizzes within group
-    PageResDTO<?> getGroupQuizzes(Long lobbyId, int page, int size);
+    PageResDTO<QuizResDTO> getGroupQuizzes(Long lobbyId, int page, int size);
 
-    LobbyResDTO addQuizToGroup(Long lobbyId, Long quizId);
+    LobbyQuizResDTO addQuizToGroup(Long lobbyId, QuizReqDTO quizReqDTO);
+
+    @Transactional
+    LobbyQuizResDTO updateQuizInGroup(Long lobbyId, Long quizId, QuizReqDTO quizReqDTO);
 
     void removeQuizFromGroup(Long lobbyId, Long quizId);
 }

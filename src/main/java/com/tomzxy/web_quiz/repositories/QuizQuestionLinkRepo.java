@@ -7,4 +7,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface QuizQuestionLinkRepo extends JpaRepository<QuizQuestionLink, QuizQuestionId>, JpaSpecificationExecutor<QuizQuestionLink>  {
 
+    void deleteAllByQuizId(Long id);
+
+    void deleteByQuizId(Long quizId);
 }

@@ -24,7 +24,7 @@ public class AttemptDetailResDTO {
     private String score; // Percentage as string
     private Integer totalQuestions;
     private Integer correctAnswers;
-    private Integer points;
+    private Long points;
     private String duration;
     private LocalDateTime completedAt;
     private List<String> badges;

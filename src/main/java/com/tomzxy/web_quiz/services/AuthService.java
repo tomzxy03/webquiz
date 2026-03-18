@@ -15,5 +15,5 @@ public interface AuthService {
 
     AuthResDTO refreshToken(RefreshTokenReqDTO refreshTokenReqDTO);
 
-    UserResDTO getMe();
+    UserResDTO getMe(Long userID);
 }

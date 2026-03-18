@@ -1,5 +1,6 @@
 package com.tomzxy.web_quiz.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tomzxy.web_quiz.models.User.User;
 import com.tomzxy.web_quiz.models.rolepermission.RolePermissionObject;
 import jakarta.persistence.*;
@@ -25,6 +26,7 @@ public class Role extends BaseEntity {
     }
 
     @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
+    @JsonIgnore
     Set<User> user;
 
     @OneToMany(mappedBy = "role", cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.LAZY)

@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 
 @Getter
-public class AddMemberReqDTO { // add list member to lobby
+public class LobbyMemberReqDTO { // add list member to lobby
     @NotBlank(message = "Lobby ID is required")
     private Long lobbyId;
 

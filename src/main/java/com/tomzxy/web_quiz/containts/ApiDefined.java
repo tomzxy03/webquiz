@@ -43,7 +43,7 @@ public abstract class ApiDefined {
     }
 
     public static final class Question {
-        public static final String BASE = API_PREFIX + "/quizzes/{quizId}/questions";
+        public static final String BASE = API_PREFIX + "/questions";
         public static final String ID = "{questionId}";
         public static final String SUBJECT = "/subject_text";
         public static final String ADD_LIST = "/add_list";
@@ -62,16 +62,24 @@ public abstract class ApiDefined {
 
     public static final class Group {
         public static final String BASE = API_PREFIX + "/groups";
+        public static final String OWNED = "/owned";
+        public static final String JOINED = "/joined";
         public static final String ID = "{groupId}";
         public static final String DELETE_MANY = "/delete_many";
         public static final String MEMBER = ID + "/members";
         public static final String MEMBER_ID = ID + "/members/{userId}";
         public static final String MEMBER_ROLE = ID + "/members/{userId}/role";
         public static final String ADD_MEMBER = ID + "/add-member";
+        public static final String LEAVE = ID + "/leave";
         public static final String NOTIFICATIONS = ID + "/announcements";
         public static final String NOTIFICATION = NOTIFICATIONS + "/{announcementId}";
+        public static final String ADD_NOTIFICATION = ID + "/add-announcement";
+        public static final String UPDATE_NOTIFICATION = ID + "/{announcementId}/update";
+        public static final String DELETE_NOTIFICATION = ID + "/{announcementId}/delete";
         public static final String QUIZ = ID + "/quizzes";
-        public static final String JOIN_QUIZ = QUIZ + "/{quizId}";
+        public static final String QUIZ_ID = QUIZ + "/{quizId}";
+        public static final String UPDATE_QUIZ = QUIZ + "/{quizId}/update";
+        public static final String DELETE_QUIZ = QUIZ + "/{quizId}/delete";
         public static final String RESOURCES = ID + "/resources";
         public static final String RESOURCE_ID = RESOURCES + "/{resourceId}";
         public static final String BY_USER = "/user/{userId}";
@@ -88,19 +96,54 @@ public abstract class ApiDefined {
         public static final String BASE = API_PREFIX + "/quizzes";
         public static final String ID = "{quizId}";
         public static final String DELETE_MANY = "/delete_many";
-        public static final String ADD_QUIZ = "{chapterId}";
+        public static final String ADD_QUIZ = "/{chapterId}";
         public static final String QUESTION = ID + "/questions";
+        public static final String ADD_QUESTION = ID + "/add_list";
+        public static final String UPDATE_QUESTION = ID + "/update_list"; 
         public static final String DELETE_QUESTION = ID + "/{questionId}";
         public static final String DELETE_QUESTIONS = ID + DELETE_MANY;
-        public static final String POPULAR = "/popular";
         public static final String LATEST = "/latest";
-        public static final String SEARCH = "/search";
-        public static final String SUBJECT_FILTER = "/subject/{subject}";
+        public static final String FILTER = "/filter";
+        public static final String SUBJECT_FILTER = "/subject/{subjectId}";
         public static final String SUBJECTS_LIST = "/subjects";
         public static final String STATISTICS = ID + "/statistics";
+        public static final String TRENDING = "/trending";
     }
 
-    public static final class Quiz_Result {
+    public static final class QuizInstance {
+        public static final String BASE = API_PREFIX + "/quiz-instances";
+        public static final String ID = "{instanceId}";
+        public static final String DELETE = ID + "/delete";
+        public static final String SUBMIT = ID + "/submit";
+        public static final String RESULT = ID + "/result";
+        public static final String START = "/start";
+        public static final String STATE = ID + "/state";
+        public static final String ANSWERS = ID + "/answer";
+        public static final String CHECK_ELIGIBILITY = "/check-eligibility";
+    }
+
+    public static final class QuizUserResponse {
+        public static final String BASE = API_PREFIX + "/quiz_user_responses";
+        public static final String ID = "{responseId}";
+        public static final String DELETE_MANY = "/delete_many";
+        public static final String SUBMIT = "/submit";
+        public static final String ANSWER = ID + "/answer";
+        public static final String SKIP = ID + "/skip";
+        public static final String USER = "/user/{userId}";
+        public static final String USER_PAGE = USER + "/page";
+        public static final String QUIZ_INSTANCE = "/quiz-instance/{quizInstanceId}";
+        public static final String QUIZ_INSTANCE_USER = QUIZ_INSTANCE + "/user/{userId}";
+        public static final String CORRECT = "/correct";
+        public static final String CORRECT_PAGE = CORRECT + "/page";
+        public static final String TIME_RANGE = "/time-range";
+        public static final String DATE_RANGE = "/date-range";
+        public static final String RECENT = "/recent";
+        public static final String SKIPPED = "/skipped";
+        public static final String ANSWERED = "/answered";
+
+    }
+
+    public static final class QuizResult {
         public static final String BASE = API_PREFIX + "/quizzes_result";
         public static final String ID = "{quiz_resultId}";
         public static final String DELETE_MANY = "/delete_many";

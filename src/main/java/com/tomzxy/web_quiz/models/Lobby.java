@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.tomzxy.web_quiz.models.Host.LobbyMember;
 import com.tomzxy.web_quiz.models.NotificationUser.Notification;
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
 
@@ -30,17 +31,15 @@ public class Lobby extends BaseEntity{
     @Column(name = "lobby_name")
     private String lobbyName;
 
-    @Column(name = "host_name")
-    private String hostName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "host_id")
+    private User host;
 
     @Column(name = "code_invite")
     private String codeInvite;
 
-    @ManyToMany
-    @JoinTable(name = "lobby_user",
-        joinColumns = @JoinColumn(name = "lobby_id"),
-        inverseJoinColumns = @JoinColumn(name = "user_id"))
-    private Set<User> members = new HashSet<>();
+    @OneToMany(mappedBy = "lobby", cascade = CascadeType.ALL)
+    private Set<LobbyMember> members = new HashSet<>();
 
     @OneToMany(mappedBy = "lobby")
     private List<Quiz> quizzes = new ArrayList<>();

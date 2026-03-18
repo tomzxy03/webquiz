@@ -18,7 +18,8 @@ public interface LobbyMapper {
     Lobby toLobby(LobbyReqDTO lobbyReqDTO);
 
 
-
+    @Mapping(source = "host.userName", target = "hostName")
+    @Mapping(target = "totalMembers", ignore = true)
     LobbyResDTO toLobbyResDTO(Lobby lobby);
 
     @Mapping(target = "codeInvite", ignore = true)

@@ -14,7 +14,7 @@ import java.util.List;
 public class QuizInstanceQuestionResDTO {
     private Long id;
     private Integer displayOrder;
-    private Integer points;
+    private Long points;
     private String questionText;
     private String questionType;
     private List<QuizInstanceAnswerResDTO> answers;

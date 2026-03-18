@@ -33,113 +33,113 @@ import java.util.List;
 @Tag(name = "Users", description = "User management APIs")
 @Validated
 public class UserController {
-    private final UserService userService;
+        private final UserService userService;
 
-    @GetMapping("")
-    @Operation(summary = "Get all users", description = "Retrieve all users with pagination")
+        @GetMapping("")
+        @Operation(summary = "Get all users", description = "Retrieve all users with pagination")
     @PreAuthorize("hasAuthority('user_VIEW')")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Users retrieved successfully")
-    })
-    public ResponseEntity<DataResDTO<PageResDTO<?>>> getAllUser(
-            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") @Min(0) int page,
-            @Parameter(description = "Page size (minimum 10)") @RequestParam(defaultValue = "10") @Min(10) int size) {
-        log.info("Get all users");
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(DataResDTO.ok(userService.get_users_pageable(page, size)));
-    }
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Users retrieved successfully")
+        })
+        public ResponseEntity<DataResDTO<PageResDTO<?>>> getAllUser(
+                        @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") @Min(0) int page,
+                        @Parameter(description = "Page size (minimum 10)") @RequestParam(defaultValue = "10") @Min(10) int size) {
+                log.info("Get all users");
+                return ResponseEntity
+                                .status(HttpStatus.OK)
+                                .body(DataResDTO.ok(userService.get_users_pageable(page, size)));
+        }
 
-    @GetMapping(ApiDefined.User.ID)
-    @Operation(summary = "Get user by ID", description = "Retrieve a user by their ID")
+        @GetMapping(ApiDefined.User.ID)
+        @Operation(summary = "Get user by ID", description = "Retrieve a user by their ID")
     @PreAuthorize("hasAuthority('user_VIEW')")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User found successfully"),
-            @ApiResponse(responseCode = "404", description = "User not found")
-    })
-    public ResponseEntity<DataResDTO<UserResDTO>> getUser(
-            @Parameter(description = "User ID") @PathVariable Long userId) {
-        log.info("get user by {}", userId);
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(DataResDTO.ok(userService.get_user(userId)));
-    }
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "User found successfully"),
+                        @ApiResponse(responseCode = "404", description = "User not found")
+        })
+        public ResponseEntity<DataResDTO<UserResDTO>> getUser(
+                        @Parameter(description = "User ID") @PathVariable Long userId) {
+                log.info("get user by {}", userId);
+                return ResponseEntity
+                                .status(HttpStatus.OK)
+                                .body(DataResDTO.ok(userService.get_user(userId)));
+        }
 
-    @PostMapping("")
-    @Operation(summary = "Create user", description = "Create a new user")
+        @PostMapping("")
+        @Operation(summary = "Create user", description = "Create a new user")
     @PreAuthorize("hasAuthority('user_CREATE')")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "User created successfully", content = @Content(schema = @Schema(implementation = DataResDTO.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid request data")
-    })
-    public ResponseEntity<DataResDTO<UserResDTO>> addUser(@Valid @RequestBody UserReqDto userReqDto) {
-        log.info("add user");
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(DataResDTO.create(userService.create_user(userReqDto)));
-    }
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "201", description = "User created successfully", content = @Content(schema = @Schema(implementation = DataResDTO.class))),
+                        @ApiResponse(responseCode = "400", description = "Invalid request data")
+        })
+        public ResponseEntity<DataResDTO<UserResDTO>> addUser(@Valid @RequestBody UserReqDto userReqDto) {
+                log.info("add user");
+                return ResponseEntity
+                                .status(HttpStatus.CREATED)
+                                .body(DataResDTO.create(userService.create_user(userReqDto)));
+        }
 
-    @PutMapping(ApiDefined.User.ID)
-    @Operation(summary = "Update user", description = "Update an existing user")
+        @PutMapping(ApiDefined.User.ID)
+        @Operation(summary = "Update user", description = "Update an existing user")
     @PreAuthorize("hasAuthority('user_UPDATE')")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User updated successfully"),
-            @ApiResponse(responseCode = "404", description = "User not found"),
-            @ApiResponse(responseCode = "400", description = "Invalid request data")
-    })
-    public ResponseEntity<DataResDTO<UserResDTO>> updateUser(
-            @Parameter(description = "User ID") @PathVariable Long userId,
-            @RequestBody @Valid UserReqDto userReqDto) {
-        log.info("Update user with id {}", userId);
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(DataResDTO.update(userService.update_user(userId, userReqDto)));
-    }
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "User updated successfully"),
+                        @ApiResponse(responseCode = "404", description = "User not found"),
+                        @ApiResponse(responseCode = "400", description = "Invalid request data")
+        })
+        public ResponseEntity<DataResDTO<UserResDTO>> updateUser(
+                        @Parameter(description = "User ID") @PathVariable Long userId,
+                        @RequestBody @Valid UserReqDto userReqDto) {
+                log.info("Update user with id {}", userId);
+                return ResponseEntity
+                                .status(HttpStatus.OK)
+                                .body(DataResDTO.update(userService.update_user(userId, userReqDto)));
+        }
 
-    @PutMapping(ApiDefined.Auth.UPDATE_INFO)
-    @Operation(summary = "Update user profile", description = "Update the current user's profile information")
+        @PutMapping(ApiDefined.Auth.UPDATE_INFO)
+        @Operation(summary = "Update user profile", description = "Update the current user's profile information")
     @PreAuthorize("hasAuthority('user_UPDATE')")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid request data")
-    })
-    public ResponseEntity<DataResDTO<UserResDTO>> updateProfile(@PathVariable Long userId,
-            @RequestBody @Valid UserProfileReqDTO userProfileReqDTO) {
-        log.info("Update user profile");
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(DataResDTO.update(userService.update_profile(userId, userProfileReqDTO)));
-    }
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
+                        @ApiResponse(responseCode = "400", description = "Invalid request data")
+        })
+        public ResponseEntity<DataResDTO<UserResDTO>> updateProfile(@PathVariable Long userId,
+                        @RequestBody @Valid UserProfileReqDTO userProfileReqDTO) {
+                log.info("Update user profile");
+                return ResponseEntity
+                                .status(HttpStatus.OK)
+                                .body(DataResDTO.update(userService.update_profile(userId, userProfileReqDTO)));
+        }
 
-    @DeleteMapping(ApiDefined.User.ID)
-    @Operation(summary = "Delete user", description = "Delete a user by their ID")
+        @DeleteMapping(ApiDefined.User.ID)
+        @Operation(summary = "Delete user", description = "Delete a user by their ID")
     @PreAuthorize("hasAuthority('user_DELETE')")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User deleted successfully"),
-            @ApiResponse(responseCode = "404", description = "User not found")
-    })
-    public ResponseEntity<DataResDTO<Object>> deleteUser(
-            @Parameter(description = "User ID") @PathVariable Long userId) {
-        log.info("Delete user with id {}", userId);
-        userService.delete_user(userId);
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(DataResDTO.delete());
-    }
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "User deleted successfully"),
+                        @ApiResponse(responseCode = "404", description = "User not found")
+        })
+        public ResponseEntity<DataResDTO<Object>> deleteUser(
+                        @Parameter(description = "User ID") @PathVariable Long userId) {
+                log.info("Delete user with id {}", userId);
+                userService.delete_user(userId);
+                return ResponseEntity
+                                .status(HttpStatus.OK)
+                                .body(DataResDTO.delete());
+        }
 
-    @DeleteMapping(ApiDefined.User.DELETE_MANY)
-    @Operation(summary = "Delete list user", description = "Delete the users by their ID")
+        @DeleteMapping(ApiDefined.User.DELETE_MANY)
+        @Operation(summary = "Delete list user", description = "Delete the users by their ID")
     @PreAuthorize("hasAuthority('user_DELETE')")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User deleted successfully"),
-            @ApiResponse(responseCode = "404", description = "User not found")
-    })
-    public ResponseEntity<DataResDTO<Object>> deleteUsers(@RequestBody List<Long> userId) {
-        log.info("Delete list user");
-        userService.delete_user_list(userId);
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(DataResDTO.delete());
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "User deleted successfully"),
+                        @ApiResponse(responseCode = "404", description = "User not found")
+        })
+        public ResponseEntity<DataResDTO<Object>> deleteUsers(@RequestBody List<Long> userId) {
+                log.info("Delete list user");
+                userService.delete_user_list(userId);
+                return ResponseEntity
+                                .status(HttpStatus.OK)
+                                .body(DataResDTO.delete());
 
-    }
+        }
 }

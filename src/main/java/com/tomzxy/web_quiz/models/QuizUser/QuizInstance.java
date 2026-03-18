@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.tomzxy.web_quiz.enums.QuizInstanceStatus;
@@ -24,11 +25,13 @@ import org.hibernate.type.SqlTypes;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "quiz_instances", indexes = {
-    @Index(name = "idx_quiz_instance_quiz", columnList = "quiz_id"),
-    @Index(name = "idx_quiz_instance_user", columnList = "user_id"),
-    @Index(name = "idx_quiz_instance_status", columnList = "status"),
-    @Index(name = "idx_quiz_instance_started", columnList = "started_at")
+@Table(name = "quiz_instances", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_quiz_user_inprogress", columnNames = { "quiz_id", "user_id", "status" })
+}, indexes = {
+        @Index(name = "idx_quiz_instance_quiz", columnList = "quiz_id"),
+        @Index(name = "idx_quiz_instance_user", columnList = "user_id"),
+        @Index(name = "idx_quiz_user_status", columnList = "quiz_id,user_id,status"),
+        @Index(name = "idx_quiz_instance_started", columnList = "started_at")
 })
 
 public class QuizInstance extends BaseEntity {
@@ -48,31 +51,25 @@ public class QuizInstance extends BaseEntity {
     private LocalDateTime endedAt;
 
     @Column(name = "total_points", nullable = false)
-    private Integer totalPoints = 0;
+    private Long totalPoints = 0L;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "question_snapshot", columnDefinition = "jsonb")
+    @Column(name = "snapshot", columnDefinition = "jsonb")
     private QuizQuestionSnapshot snapshot;
 
     @Column(name = "earned_points", nullable = false)
-    private Integer earnedPoints = 0;
+    private Long earnedPoints = 0L;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private QuizInstanceStatus status = QuizInstanceStatus.IN_PROGRESS;
 
-    @OneToMany(mappedBy = "quizInstance", cascade = {CascadeType.MERGE,CascadeType.PERSIST}, orphanRemoval = false)
-    private Set<QuizUserResponse> userResponses = new HashSet<>();
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "answers_snapshot", columnDefinition = "jsonb")
+    private Map<String, Object> answersSnapshot; // questionId -> userAnswer for audit
 
-//    @JdbcTypeCode(SqlTypes.JSON)
-//    @Builder.Default
-//    @Column(name = "question_order", columnDefinition = "jsonb", nullable = false)
-//    private List<String> questionOrder = new ArrayList<>();
-//
-//    @JdbcTypeCode(SqlTypes.JSON)
-//    @Builder.Default
-//    @Column(name = "answer_order", columnDefinition = "jsonb", nullable = false)
-//    private List<String> answerOrder = new ArrayList<>();
+    @OneToMany(mappedBy = "quizInstance", cascade = { CascadeType.MERGE, CascadeType.PERSIST }, orphanRemoval = false)
+    private Set<QuizUserResponse> userResponses = new HashSet<>();
 
     // Business Logic Methods
 
@@ -86,8 +83,7 @@ public class QuizInstance extends BaseEntity {
     }
 
     public boolean isSubmitted() {
-        this.setEndedAt(LocalDateTime.now());
-        return this.status == QuizInstanceStatus.SUBMITTED ;
+        return this.status == QuizInstanceStatus.SUBMITTED;
     }
 
     public boolean isTimedOut() {
@@ -95,15 +91,16 @@ public class QuizInstance extends BaseEntity {
     }
 
     public Long getElapsedTimeMinutes() {
-        if (endedAt == null) return null;
+        if (endedAt == null)
+            return null;
         return java.time.Duration.between(startedAt, endedAt).toMinutes();
     }
 
     public double getScorePercentage() {
-        if (totalPoints == 0) return 0.0;
+        if (totalPoints == 0)
+            return 0.0;
         return (double) earnedPoints / totalPoints * 100;
     }
-
 
     public void addUserResponse(QuizUserResponse response) {
         if (response != null) {
@@ -124,4 +121,4 @@ public class QuizInstance extends BaseEntity {
                 ", earnedPoints=" + earnedPoints +
                 '}';
     }
-} 
+}

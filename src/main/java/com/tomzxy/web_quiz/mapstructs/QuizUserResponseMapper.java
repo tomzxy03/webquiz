@@ -7,7 +7,7 @@ import org.mapstruct.*;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring", uses = {QuestionSnapshotMapper.class})
+@Mapper(componentModel = "spring", uses = { QuestionSnapshotMapper.class })
 public interface QuizUserResponseMapper {
 
     @Mapping(target = "quizInstanceId", source = "quizInstance.id")
@@ -16,6 +16,11 @@ public interface QuizUserResponseMapper {
     @Mapping(target = "isAnsweredCorrectly", expression = "java(quizUserResponse.isAnsweredCorrectly())")
     @Mapping(target = "isAnsweredIncorrectly", expression = "java(quizUserResponse.isAnsweredIncorrectly())")
     @Mapping(target = "status", expression = "java(quizUserResponse.getStatus().name())")
+    @Mapping(target = "selectedAnswerText", ignore = true)
+    @Mapping(target = "isCorrect", ignore = true)
+    @Mapping(target = "isSkipped", ignore = true)
+    @Mapping(target = "questionSnapshots", ignore = true)
+    @Mapping(target = "isActive", ignore = true)
     QuizUserResponseResDTO toQuizUserResponseResDTO(QuizUserResponse quizUserResponse);
 
     @Mapping(target = "quizInstance", ignore = true)
@@ -26,7 +31,8 @@ public interface QuizUserResponseMapper {
     @Mapping(target = "quizInstance", ignore = true)
     @Mapping(target = "questionSnapshotKey", ignore = true)
     @Mapping(target = "questionId", ignore = true)
-    void updateQuizUserResponseFromDto(QuizUserResponseReqDTO quizUserResponseReqDTO, @MappingTarget QuizUserResponse quizUserResponse);
+    void updateQuizUserResponseFromDto(QuizUserResponseReqDTO quizUserResponseReqDTO,
+            @MappingTarget QuizUserResponse quizUserResponse);
 
     List<QuizUserResponseResDTO> toQuizUserResponseResDTOList(List<QuizUserResponse> quizUserResponses);
 }

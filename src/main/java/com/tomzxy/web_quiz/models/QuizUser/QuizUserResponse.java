@@ -6,6 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 import com.tomzxy.web_quiz.enums.ResponseStatus;
 import com.tomzxy.web_quiz.models.BaseEntity;
@@ -18,14 +19,13 @@ import org.hibernate.type.SqlTypes;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(
-        name = "quiz_user_responses",
-        indexes = {
-                @Index(name = "idx_quiz_user_response_instance", columnList = "quiz_instance_id"),
-                @Index(name = "idx_quiz_user_response_instance_correct", columnList = "quiz_instance_id, is_correct"),
-                @Index(name = "idx_quiz_user_response_instance_answered", columnList = "quiz_instance_id, answered_at")
-        }
-)
+@Table(name = "quiz_user_responses", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_instance_question", columnNames = { "quiz_instance_id", "question_id" })
+}, indexes = {
+        @Index(name = "idx_quiz_user_response_instance", columnList = "quiz_instance_id"),
+        @Index(name = "idx_quiz_user_response_instance_correct", columnList = "quiz_instance_id, is_correct"),
+        @Index(name = "idx_quiz_user_response_instance_answered", columnList = "quiz_instance_id, answered_at")
+})
 public class QuizUserResponse extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -39,10 +39,12 @@ public class QuizUserResponse extends BaseEntity {
     private String questionSnapshotKey;
 
     @Column(name = "selected_answer_id")
-    private Long selectedAnswerId; // ID của đáp án user chọn
+    private Long selectedAnswerId; // ID của đáp án user chọn (single choice backward compat)
 
-    @Column(name = "selected_answer_text", columnDefinition = "TEXT")
-    private String selectedAnswerText; // Snapshot text của đáp án user chọn
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "selected_answer_ids", columnDefinition = "jsonb")
+    @Builder.Default
+    private List<Long> selectedAnswerIds = new ArrayList<>(); // All selected answer IDs (multi-choice)
 
     @Builder.Default
     @Column(name = "is_correct", nullable = false)
@@ -50,7 +52,7 @@ public class QuizUserResponse extends BaseEntity {
 
     @Builder.Default
     @Column(name = "points_earned", nullable = false)
-    private Integer pointsEarned = 0;
+    private Long pointsEarned = 0L;
 
     @Column(name = "response_time_seconds")
     private Integer responseTimeSeconds; // Thời gian trả lời (giây)
@@ -61,7 +63,6 @@ public class QuizUserResponse extends BaseEntity {
     @Builder.Default
     @Column(name = "is_skipped", nullable = false)
     private boolean isSkipped = false;
-
 
     public ResponseStatus getStatus() {
         if (isSkipped) {
@@ -75,7 +76,7 @@ public class QuizUserResponse extends BaseEntity {
 
     /** True if user selected an answer (by id or text). */
     public boolean isAnswered() {
-        return !isSkipped && (selectedAnswerId != null || (selectedAnswerText != null && !selectedAnswerText.isBlank()));
+        return !isSkipped && (selectedAnswerId != null || (selectedAnswerIds != null && !selectedAnswerIds.isEmpty()));
     }
 
     /** True if answered and correct. */
@@ -90,7 +91,7 @@ public class QuizUserResponse extends BaseEntity {
 
     /** True if skipped or no answer selected. */
     public boolean isNotAnswered() {
-        return isSkipped || (selectedAnswerId == null && (selectedAnswerText == null || selectedAnswerText.isBlank()));
+        return isSkipped || (selectedAnswerId == null && (selectedAnswerIds == null || selectedAnswerIds.isEmpty()));
     }
 
     @Override
@@ -104,4 +105,4 @@ public class QuizUserResponse extends BaseEntity {
                 ", status=" + getStatus() +
                 '}';
     }
-} 
+}

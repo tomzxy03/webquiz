@@ -13,16 +13,12 @@ import java.util.Set;
 @Setter
 public class QuestionReqDTO {
     @NotBlank(message = "Question name is required")
-    @Size(min = 10, max = 1000, message = "Question name must be between 10 and 1000 characters")
+    @Size(min = 1, max = 1000, message = "Question name must be between 10 and 1000 characters")
     private String questionName;
 
     @NotNull(message = "Question type is required")
     @EnumValidate(name = "questionType", regex = "TEXT|IMAGE")
     private QuestionAndAnswerType questionType;
-
-    @NotNull(message = "Question level is required")
-    @EnumValidate(name = "level", regex = "EASY|MEDIUM|HARD")
-    private Level level;
 
     @NotEmpty(message = "Answers are required")
     private Set<AnswerReqDTO> answers;

@@ -18,8 +18,8 @@ public class QuestionResultResDTO {
     private Integer displayOrder;
     private String questionText;
     private String questionType;
-    private Integer points;
-    private Integer earnedPoints;
+    private Long points;
+    private Long earnedPoints;
     private String userAnswer;
     private String correctAnswer;
     private boolean isCorrect;

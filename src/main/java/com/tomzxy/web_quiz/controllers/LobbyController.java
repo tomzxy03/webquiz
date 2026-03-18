@@ -2,8 +2,13 @@ package com.tomzxy.web_quiz.controllers;
 
 import com.tomzxy.web_quiz.containts.ApiDefined;
 import com.tomzxy.web_quiz.dto.requests.Lobby.LobbyReqDTO;
+import com.tomzxy.web_quiz.dto.requests.Notification.NotificationReqDTO;
+import com.tomzxy.web_quiz.dto.requests.quiz.QuizReqDTO;
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
+import com.tomzxy.web_quiz.dto.responses.Quiz.QuizResDTO;
+import com.tomzxy.web_quiz.dto.responses.lobby.LobbyNotificationResDTO;
+import com.tomzxy.web_quiz.dto.responses.lobby.LobbyQuizResDTO;
 import com.tomzxy.web_quiz.dto.responses.lobby.LobbyResDTO;
 import com.tomzxy.web_quiz.services.LobbyService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +16,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +45,27 @@ public class LobbyController {
                 return ResponseEntity.status(HttpStatus.OK)
                                 .body(DataResDTO.ok(lobbyService.getAllLobby(page, size)));
         }
+        @GetMapping(ApiDefined.Group.OWNED)
+        @Operation(summary = "Get all groups owned", description = "Retrieve all groups with pagination")
+        @PreAuthorize("hasAuthority('group_VIEW')")
+        public ResponseEntity<DataResDTO<PageResDTO<?>>> getAllGroupsOwned(
+            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
+            log.info("Get all groups owned - page: {}, size: {}", page, size);
+            return ResponseEntity.status(HttpStatus.OK)
+                .body(DataResDTO.ok(lobbyService.getAllLobbyOwned(page, size)));
+        }
+
+        @GetMapping(ApiDefined.Group.JOINED)
+        @Operation(summary = "Get all groups joined", description = "Retrieve all groups with pagination")
+        @PreAuthorize("hasAuthority('group_VIEW')")
+        public ResponseEntity<DataResDTO<PageResDTO<?>>> getAllGroupsJoined(
+            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
+            log.info("Get all groups joined - page: {}, size: {}", page, size);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(DataResDTO.ok(lobbyService.getAllLobbyJoined(page, size)));
+        }
 
         @GetMapping(ApiDefined.Group.ID)
         @Operation(summary = "Get group by ID")
@@ -50,31 +77,20 @@ public class LobbyController {
                                 .body(DataResDTO.ok(lobbyService.getLobby(groupId)));
         }
 
-        @GetMapping(ApiDefined.Group.BY_USER)
-        @Operation(summary = "Get groups by user", description = "Get all groups that a user belongs to")
-        @PreAuthorize("hasAuthority('group_VIEW')")
-        public ResponseEntity<DataResDTO<PageResDTO<?>>> getGroupsByUser(
-                        @PathVariable Long userId,
-                        @RequestParam(defaultValue = "0") int page,
-                        @RequestParam(defaultValue = "10") int size) {
-                log.info("Get groups for user: {}", userId);
-                return ResponseEntity.status(HttpStatus.OK)
-                                .body(DataResDTO.ok(lobbyService.getLobbyByUser(userId, page, size)));
-        }
 
         @PostMapping
         @Operation(summary = "Create group")
         @PreAuthorize("hasAuthority('group_CREATE')")
         public ResponseEntity<DataResDTO<LobbyResDTO>> createGroup(
-                        @Valid @RequestBody LobbyReqDTO lobbyReqDTO, @PathVariable Long userId) {
+                        @Valid @RequestBody LobbyReqDTO lobbyReqDTO) {
                 log.info("Create group: {}", lobbyReqDTO.getLobbyName());
                 return ResponseEntity.status(HttpStatus.CREATED)
-                                .body(DataResDTO.create(lobbyService.createLobby(userId, lobbyReqDTO)));
+                                .body(DataResDTO.create(lobbyService.createLobby(lobbyReqDTO)));
         }
 
         @PutMapping(ApiDefined.Group.ID)
         @Operation(summary = "Update group")
-        @PreAuthorize("hasAuthority('group_UPDATE')")
+        @PreAuthorize("@lobbySecurity.isHost(#groupId, authentication)")
         public ResponseEntity<DataResDTO<LobbyResDTO>> updateGroup(
                         @PathVariable Long groupId,
                         @Valid @RequestBody LobbyReqDTO lobbyReqDTO) {
@@ -85,7 +101,7 @@ public class LobbyController {
 
         @DeleteMapping(ApiDefined.Group.ID)
         @Operation(summary = "Delete group")
-        @PreAuthorize("hasAuthority('group_DELETE')")
+        @PreAuthorize("@lobbySecurity.isHost(#groupId, authentication)")
         public ResponseEntity<DataResDTO<Void>> deleteGroup(
                         @PathVariable Long groupId) {
                 log.info("Delete group: {}", groupId);
@@ -107,21 +123,10 @@ public class LobbyController {
                 return ResponseEntity.status(HttpStatus.OK)
                                 .body(DataResDTO.ok(lobbyService.getAllMembers(groupId, page, size)));
         }
-
-        @PostMapping(ApiDefined.Group.MEMBER)
-        @Operation(summary = "Add member to group")
-        @PreAuthorize("hasAuthority('group_UPDATE')")
-        public ResponseEntity<DataResDTO<LobbyResDTO>> addMember(
-                        @PathVariable Long groupId,
-                        @RequestParam Long userId) {
-                log.info("Add member {} to group {}", userId, groupId);
-                return ResponseEntity.status(HttpStatus.OK)
-                                .body(DataResDTO.ok(lobbyService.addMember(groupId, userId)));
-        }
-
+        // delete member
         @DeleteMapping(ApiDefined.Group.MEMBER_ID)
         @Operation(summary = "Remove member from group")
-        @PreAuthorize("hasAuthority('group_UPDATE')")
+        @PreAuthorize("@lobbySecurity.isHost(#groupId, authentication)")
         public ResponseEntity<DataResDTO<Void>> removeMember(
                         @PathVariable Long groupId,
                         @PathVariable Long userId) {
@@ -130,6 +135,19 @@ public class LobbyController {
                 return ResponseEntity.status(HttpStatus.OK)
                                 .body(DataResDTO.delete());
         }
+        // leave
+        @DeleteMapping(ApiDefined.Group.LEAVE)
+        @Operation(summary = "Leave group")
+        @PreAuthorize("hasAuthority('group_VIEW')")
+        public ResponseEntity<DataResDTO<Void>> leaveGroup(
+                        @PathVariable Long groupId
+                        ) {
+                log.info("Leave group {}", groupId);
+                lobbyService.leaveLobby(groupId);
+                return ResponseEntity.status(HttpStatus.OK)
+                                .body(DataResDTO.delete());
+        }
+
 
         // ======== Announcements ========
 
@@ -142,7 +160,43 @@ public class LobbyController {
                         @RequestParam(defaultValue = "10") int size) {
                 log.info("Get announcements for group: {}", groupId);
                 return ResponseEntity.status(HttpStatus.OK)
-                                .body(DataResDTO.ok(lobbyService.getAllNotifications(groupId)));
+                                .body(DataResDTO.ok(lobbyService.getAllNotifications(groupId, page,size)));
+        }
+
+        // add announcements
+        @GetMapping(ApiDefined.Group.ADD_NOTIFICATION)
+        @Operation(summary = "Add group announcements")
+        @PreAuthorize("@lobbySecurity.isHost(#groupId, authentication)")
+        public ResponseEntity<DataResDTO<LobbyNotificationResDTO>> addAnnouncements(
+                @PathVariable Long groupId,
+                @RequestBody NotificationReqDTO notificationReqDTO) {
+            log.info("Add announcements for group: {}", groupId);
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(DataResDTO.ok(lobbyService.addNotification(groupId, notificationReqDTO)));
+        }
+        // update announcements
+        @PutMapping(ApiDefined.Group.UPDATE_NOTIFICATION)
+        @Operation(summary = "Update group announcements")
+        @PreAuthorize("@lobbySecurity.isHost(#groupId, authentication)")
+        public ResponseEntity<DataResDTO<LobbyNotificationResDTO>> updateAnnouncements(
+                @PathVariable Long groupId,
+                @PathVariable Long notificationId,
+                @RequestBody @Valid NotificationReqDTO notificationReqDTO) {
+            log.info("Update announcements for group: {}", groupId);
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(DataResDTO.ok(lobbyService.updateNotification(groupId, notificationId, notificationReqDTO)));
+        }
+        // delete announcements
+        @DeleteMapping(ApiDefined.Group.DELETE_NOTIFICATION)
+        @Operation(summary = "Delete group announcements")
+        @PreAuthorize("@lobbySecurity.isHost(#groupId, authentication)")
+        public ResponseEntity<DataResDTO<Void>> deleteAnnouncements(
+                @PathVariable Long groupId,
+                @PathVariable Long notificationId) {
+            log.info("Delete announcements for group: {}", groupId);
+            lobbyService.deleteNotification(groupId, notificationId);
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(DataResDTO.delete());
         }
 
         // ======== Group Quizzes ========
@@ -150,7 +204,7 @@ public class LobbyController {
         @GetMapping(ApiDefined.Group.QUIZ)
         @Operation(summary = "Get quizzes in group")
         @PreAuthorize("hasAuthority('group_VIEW')")
-        public ResponseEntity<DataResDTO<PageResDTO<?>>> getGroupQuizzes(
+        public ResponseEntity<DataResDTO<PageResDTO<QuizResDTO>>> getGroupQuizzes(
                         @PathVariable Long groupId,
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(defaultValue = "10") int size) {
@@ -161,18 +215,30 @@ public class LobbyController {
 
         @PostMapping(ApiDefined.Group.QUIZ)
         @Operation(summary = "Add quiz to group")
-        @PreAuthorize("hasAuthority('group_UPDATE')")
-        public ResponseEntity<DataResDTO<LobbyResDTO>> addQuizToGroup(
-                        @PathVariable Long groupId,
-                        @RequestParam Long quizId) {
-                log.info("Add quiz {} to group {}", quizId, groupId);
+        @PreAuthorize("@lobbySecurity.isHost(#groupId, authentication) OR @lobbySecurity.isMember(#groupId, authentication)")
+        public ResponseEntity<DataResDTO<LobbyQuizResDTO>> addQuizToGroup(
+                @PathVariable Long groupId,
+                @RequestBody @Valid QuizReqDTO quizReqDTO) {
+                log.info("Add quiz {} to group {}", quizReqDTO.getTitle(), groupId);
                 return ResponseEntity.status(HttpStatus.OK)
-                                .body(DataResDTO.ok(lobbyService.addQuizToGroup(groupId, quizId)));
+                                .body(DataResDTO.ok(lobbyService.addQuizToGroup(groupId, quizReqDTO)));
         }
-
-        @DeleteMapping(ApiDefined.Group.JOIN_QUIZ)
+        // update quiz
+        @PutMapping(ApiDefined.Group.UPDATE_QUIZ)
+        @Operation(summary = "Update quiz in group")
+        @PreAuthorize("@lobbySecurity.isHost(#groupId, authentication)")
+        public ResponseEntity<DataResDTO<LobbyQuizResDTO>> updateQuiz(
+                @PathVariable Long groupId,
+                @PathVariable Long quizId,
+                @RequestBody @Valid QuizReqDTO quizReqDTO
+        ){
+                log.info("Update quiz to group");
+                return ResponseEntity.status(HttpStatus.OK)
+                        .body(DataResDTO.ok(lobbyService.updateQuizInGroup(groupId, quizId, quizReqDTO)));
+        }
+        @DeleteMapping(ApiDefined.Group.DELETE_QUIZ)
         @Operation(summary = "Remove quiz from group")
-        @PreAuthorize("hasAuthority('group_UPDATE')")
+        @PreAuthorize("@lobbySecurity.isHost(#groupId, authentication)")
         public ResponseEntity<DataResDTO<Void>> removeQuizFromGroup(
                         @PathVariable Long groupId,
                         @PathVariable Long quizId) {

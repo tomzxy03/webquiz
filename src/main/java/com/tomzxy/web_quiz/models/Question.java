@@ -37,7 +37,7 @@ public class Question extends BaseEntity {
     private QuestionAndAnswerType questionType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "level", nullable = false, length = 20)
+    @Column(name = "level", nullable = true, length = 20)
     private Level level;
 
     // Thuộc về Question Bank nào (REQUIRED)
@@ -52,9 +52,6 @@ public class Question extends BaseEntity {
 
     @Column(name = "content_hash", nullable = false, unique = true, length = 64)
     private String contentHash; // to distinguish, comparing between question and question
-
-    @Column(name = "points", nullable = false)
-    private Integer points = 1;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Answer> answers = new HashSet<>();

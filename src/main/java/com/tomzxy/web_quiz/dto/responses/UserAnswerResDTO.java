@@ -24,5 +24,5 @@ public class UserAnswerResDTO {
     private List<Long> selectedOptionIds;
     private String answerText;
     private Boolean isCorrect;
-    private Integer pointsEarned;
+    private Long pointsEarned;
 }

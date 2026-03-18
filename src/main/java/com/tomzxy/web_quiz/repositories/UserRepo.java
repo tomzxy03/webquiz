@@ -36,8 +36,21 @@ public interface UserRepo extends JpaRepository<User, Long>, JpaSpecificationExe
             "roles.rolePermissionObjects.permission"
     })
     Optional<User> findByUserName(String userName);
-
+    @EntityGraph(attributePaths = {
+            "roles",
+            "roles.rolePermissionObjects",
+            "roles.rolePermissionObjects.permission"
+    })
     Optional<User> findByEmail(String email);
+    @Query("""
+        SELECT DISTINCT u
+        FROM User u
+        LEFT JOIN FETCH u.roles r
+        LEFT JOIN FETCH r.rolePermissionObjects rpo
+        LEFT JOIN FETCH rpo.permission
+        WHERE u.email = :email
+    """)
+    Optional<User> findUserWithAuthorities(@Param("email") String email);
 
     Optional<User> findByUserNameAndIsActiveTrue(String userName);
 

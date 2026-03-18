@@ -36,7 +36,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/quizory
       SPRING_DATASOURCE_USERNAME: tomzxy
       SPRING_DATASOURCE_PASSWORD: root
-      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_HOST: quiz-redis
       SPRING_REDIS_PORT: 6379
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
 

@@ -1,5 +1,6 @@
 package com.tomzxy.web_quiz.dto.responses;
 
+import com.tomzxy.web_quiz.models.Quiz.QuestionLayout;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,7 +14,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuizInstanceResDTO {
-    
     private Long id;
     private Long quizId;
     private String quizTitle;
@@ -24,6 +24,7 @@ public class QuizInstanceResDTO {
     private boolean shuffleEnabled;
     private Integer totalPoints;
     private String status;
+    private QuestionLayout questionLayout;
     private List<QuizInstanceQuestionResDTO> questions;
-    private long remainingTimeSeconds;
+    private Long remainingTimeSeconds;
 } 

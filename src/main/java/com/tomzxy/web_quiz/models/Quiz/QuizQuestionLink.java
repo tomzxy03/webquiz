@@ -25,6 +25,6 @@ public class QuizQuestionLink {
     private Question question;
 
     @Column(name = "points", nullable = false)
-    private Integer points = 1;
+    private Long points = 1L;
 
 }

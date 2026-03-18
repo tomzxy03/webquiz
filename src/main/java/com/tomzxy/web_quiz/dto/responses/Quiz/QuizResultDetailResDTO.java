@@ -26,7 +26,7 @@ public class QuizResultDetailResDTO {
     private String status;
     private Double scorePercentage;
     private Long totalTimeSpentMinutes;
-    private Integer totalPoints;
-    private Integer earnedPoints;
+    private Long totalPoints;
+    private Long earnedPoints;
     private List<QuestionResultResDTO> questionResults;
 }

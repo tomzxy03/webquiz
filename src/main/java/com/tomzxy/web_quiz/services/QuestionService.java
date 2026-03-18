@@ -1,6 +1,7 @@
 package com.tomzxy.web_quiz.services;
 
 import com.tomzxy.web_quiz.dto.requests.QuestionReqDTO;
+import com.tomzxy.web_quiz.dto.requests.quiz.QuizQuestionReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.question.QuestionResDTO;
 
@@ -11,7 +12,8 @@ public interface QuestionService {
 
     void create_Question(QuestionReqDTO questionReqDTO);
 
-    void create_Questions(List<QuestionReqDTO> questionReqDTO);
+    void create_Questions(Long quizId, List<QuestionReqDTO> questionReqDTO);
+
 
     QuestionResDTO update_Question(Long question_id, QuestionReqDTO questionReqDTO);
 

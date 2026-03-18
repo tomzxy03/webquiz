@@ -8,7 +8,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
 
-@Mapper(componentModel = "spring", uses = {QuizMapper.class, QuestionMapper.class, AnswerMapper.class})
+@Mapper(componentModel = "spring", uses = { QuizMapper.class, QuestionMapper.class, AnswerMapper.class })
 public interface QuizInstanceMapper {
     QuizInstanceMapper INSTANCE = Mappers.getMapper(QuizInstanceMapper.class);
 
@@ -20,8 +20,9 @@ public interface QuizInstanceMapper {
     @Mapping(target = "status", source = "status", qualifiedByName = "statusToString")
     @Mapping(target = "questions", ignore = true) // Will be handled manually in service
     @Mapping(target = "remainingTimeSeconds", ignore = true) // Will be calculated in service
+    @Mapping(target = "timeLimitMinutes", ignore = true)
+    @Mapping(target = "shuffleEnabled", ignore = true)
     QuizInstanceResDTO toQuizInstanceResDTO(QuizInstance quizInstance);
-
 
     // Helper method to convert status enum to string
     @Named("statusToString")
@@ -29,10 +30,9 @@ public interface QuizInstanceMapper {
         return status != null ? status.name() : null;
     }
 
-
     // Helper method to convert question type enum to string
     @Named("questionTypeToString")
     default String questionTypeToString(com.tomzxy.web_quiz.enums.QuestionAndAnswerType questionType) {
         return questionType != null ? questionType.name() : null;
     }
-} 
+}

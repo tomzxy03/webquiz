@@ -11,6 +11,7 @@ import com.tomzxy.web_quiz.dto.responses.user.UserResDTO;
 import com.tomzxy.web_quiz.enums.AppCode;
 import com.tomzxy.web_quiz.exception.ExistedException;
 import com.tomzxy.web_quiz.exception.NotFoundException;
+import com.tomzxy.web_quiz.exception.UnAuthorizedException;
 import com.tomzxy.web_quiz.mapstructs.AuthMapper;
 import com.tomzxy.web_quiz.mapstructs.UserMapper;
 import com.tomzxy.web_quiz.models.Role;
@@ -71,13 +72,9 @@ public class AuthServiceImpl implements AuthService {
                         loginReqDTO.getPassword()
                 )
         );
-
-        // Set authentication in security context (optional)
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
         // Retrieve the authenticated user from the principal (assumes CustomUserDetails)
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        User user = userDetails.getUser();
+        User user = userRepo.findById(userDetails.id()).orElseThrow(() -> new NotFoundException("User not found"));
 
         // Extract device information from request
         DeviceInfo deviceInfo = extractDeviceInfo();
@@ -154,12 +151,10 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public UserResDTO getMe() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
+    public UserResDTO getMe(Long userId) {
 
-        User user = userRepo.findByEmail(username)
-                .orElseThrow(() -> new NotFoundException("User not found: " + username));
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
         return userMapper.toUserResDTO(user);
     }

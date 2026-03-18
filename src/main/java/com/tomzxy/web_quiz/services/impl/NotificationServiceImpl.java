@@ -9,6 +9,7 @@ import com.tomzxy.web_quiz.exception.ApiException;
 import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.mapstructs.Notification.NotificationMapper;
 import com.tomzxy.web_quiz.mapstructs.Notification.NotificationUserMapper;
+import com.tomzxy.web_quiz.models.Host.LobbyMember;
 import com.tomzxy.web_quiz.models.Lobby;
 import com.tomzxy.web_quiz.models.NotificationUser.Notification;
 import com.tomzxy.web_quiz.models.NotificationUser.NotificationUserId;
@@ -97,10 +98,22 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     private void linkToLobbyUsers(Lobby lobby, Notification notification) {
-        List<User> users = lobby.getMembers().stream().toList();
-        List<UserNotification> links = users.stream()
-                .map(user -> new UserNotification(new NotificationUserId(user.getId(), notification.getId()), user, notification, false, null))
+
+        List<User> users = lobby.getMembers()
+                .stream()
+                .map(LobbyMember::getUser)
                 .toList();
+
+        List<UserNotification> links = users.stream()
+                .map(user -> new UserNotification(
+                        new NotificationUserId(user.getId(), notification.getId()),
+                        user,
+                        notification,
+                        false,
+                        null
+                ))
+                .toList();
+
         notificationUserRepo.saveAll(links);
     }
 

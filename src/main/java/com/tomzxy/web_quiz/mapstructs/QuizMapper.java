@@ -26,7 +26,9 @@ public interface QuizMapper {
     @Mapping(target = "hostName", source = "host.userName")
     @Mapping(target = "lobbyName", source = "lobby.lobbyName")
     @Mapping(source = "visibility", target = "quizVisibility")
+    @Mapping(target = "maxAttempt", expression = "java(entity.getMaxAttempt() != null ? entity.getMaxAttempt() : 1)")
     @Mapping(target = "totalQuestion", expression = "java(entity.getTotalQuestions() != null ? entity.getTotalQuestions() : 0)")
+    @Mapping(target = "timeLimitMinutes", expression = "java(entity.getTimeLimitMinutes() != null ? entity.getTimeLimitMinutes() : 0)")
     QuizResDTO toDto(Quiz entity);
 
 

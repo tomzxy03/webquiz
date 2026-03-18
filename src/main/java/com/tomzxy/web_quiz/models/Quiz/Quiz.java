@@ -57,7 +57,7 @@ public class Quiz extends BaseEntity {
     private User host;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lobby_id")
+    @JoinColumn(name = "lobby_id", nullable = true)
     private Lobby lobby;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -67,6 +67,10 @@ public class Quiz extends BaseEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "config", columnDefinition = "jsonb")
     private QuizConfig config;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "question_layout", columnDefinition = "jsonb")
+    private QuestionLayout questionLayout;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "visibility")
@@ -79,7 +83,7 @@ public class Quiz extends BaseEntity {
     private Set<QuizQuestionLink> quizQuestionLinks = new HashSet<>();
 
     @Column(name = "max_attempt")
-    private int maxAttempt;
+    private Integer maxAttempt;
 
     @Transient
     public Integer getTotalQuestions() {

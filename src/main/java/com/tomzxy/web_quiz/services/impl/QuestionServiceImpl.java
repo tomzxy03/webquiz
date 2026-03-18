@@ -9,11 +9,14 @@ import com.tomzxy.web_quiz.dto.responses.question.QuestionResDTO;
 import com.tomzxy.web_quiz.enums.AppCode;
 import com.tomzxy.web_quiz.exception.ApiException;
 import com.tomzxy.web_quiz.exception.ExistedException;
+import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.mapstructs.AnswerMapper;
 import com.tomzxy.web_quiz.mapstructs.QuestionMapper;
 import com.tomzxy.web_quiz.models.Answer;
 import com.tomzxy.web_quiz.models.Question;
+import com.tomzxy.web_quiz.models.Quiz.Quiz;
 import com.tomzxy.web_quiz.repositories.QuestionRepo;
+import com.tomzxy.web_quiz.repositories.QuizRepo;
 import com.tomzxy.web_quiz.services.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.services.QuestionService;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +41,9 @@ public class QuestionServiceImpl implements QuestionService {
     private final ConvertToPageResDTO convertToPageResDTO;
     private final QuestionMapper questionMapper;
     private final AnswerMapper answerMapper;
+    private final QuizRepo quizRepo;
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+            .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
 
     @Override
     public PageResDTO<?> get_Questions_pageable(int page, int size) {
@@ -68,8 +74,8 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     @Transactional
-    public void create_Questions(List<QuestionReqDTO> dtos) {
-
+    public void create_Questions(Long quizId, List<QuestionReqDTO> dtos) {
+        Quiz quiz = quizRepo.findById(quizId).orElseThrow(()-> new NotFoundException("Quiz not found"));
         List<Question> questions = questionMapper.toListQuestion(dtos);
 
         // Generate content hash
@@ -123,34 +129,38 @@ public class QuestionServiceImpl implements QuestionService {
     public Question findQuestion(Long question_id){
         return questionRepo.findById(question_id).orElseThrow(()->new ApiException(AppCode.NOT_AVAILABLE, "Question not found!"));
     }
-    public String generateContentHash(Question question){
-        try{
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-            // Sort answer
-            List<Map<String, Object>> sortedAnswers = question.getAnswers()
-                    .stream().sorted(Comparator.comparing(Answer::getAnswerName))
-                    .map(a -> Map.<String, Object>of(
-                            "content", normalize(a.getAnswerName()),
-                            "correct", a.isAnswerCorrect()
-                    ))
-                    .toList();
+
+
+    public String generateContentHash(Question question) {
+        try {
+
+            List<Map<String, Object>> sortedAnswers =
+                    question.getAnswers()
+                            .stream()
+                            .sorted(Comparator.comparing(a -> normalize(a.getAnswerName())))
+                            .map(a -> {
+                                Map<String, Object> map = new TreeMap<>();
+                                map.put("content", normalize(a.getAnswerName()));
+                                map.put("correct", a.isAnswerCorrect());
+                                return map;
+                            })
+                            .toList();
 
             Map<String, Object> payload = new TreeMap<>();
             payload.put("questionName", normalize(question.getQuestionName()));
             payload.put("questionType", question.getQuestionType().name());
             payload.put("answers", sortedAnswers);
 
-            String json = objectMapper.writeValueAsString(payload);
+            String json = OBJECT_MAPPER.writeValueAsString(payload);
 
             return DigestUtils.sha256Hex(json);
 
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new RuntimeException("Failed to hash content of question", e);
         }
     }
     public String normalize(String input){
         if(input == null) return "";
-        return input.trim().replaceAll("\\s+", " ");
+        return input.trim().toLowerCase().replaceAll("\\s+", " ");
     }
 }

@@ -1,12 +1,17 @@
 package com.tomzxy.web_quiz.dto.requests.quiz;
 
+import com.tomzxy.web_quiz.dto.requests.QuestionReqDTO;
 import com.tomzxy.web_quiz.enums.QuizVisibility;
+import com.tomzxy.web_quiz.models.Question;
+import com.tomzxy.web_quiz.models.Quiz.QuestionLayout;
+import com.tomzxy.web_quiz.models.Quiz.QuizConfig;
 import com.tomzxy.web_quiz.validation.EnumValidate;
 
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -17,33 +22,25 @@ public class QuizReqDTO {
 
     private String description;
 
-    @Min(value = 1, message = "Total questions must be at least 1")
-    @Max(value = 100, message = "Total questions cannot exceed 100")
-    private Integer totalQuestions = 0;
-
     @EnumValidate(name = "visibility", regex = "PUBLIC|PRIVATE|CLASS_ONLY")
     private QuizVisibility visibility;
 
-    @Min(value = 1, message = "Time limit must be at least 1 minute")
-    @Max(value = 180, message = "Time limit cannot exceed 3 hours")
     private Integer timeLimitMinutes;
 
+    @Min(1)
+    private Integer maxAttempt;
 
-    @Min(value = 1, message = "Max attempts must be at least 1")
-    private Integer maxAttempts = 1;
+    private LocalDateTime startAt;
 
-    private boolean isPublic = false;
+    private LocalDateTime endAt;
 
-    private LocalDateTime startDate;
+    private QuizConfig quizConfig;
 
-    @NotNull(message = "Host ID is required")
-    private Long hostId;
+    private QuestionLayout questionLayout;
 
-    private Long lobbyId; // nullable
 
     @NotNull(message = "Subject ID is required")
     private Long subjectId;
 
-    @NotEmpty(message = "Questions are required")
-    private Set<Long> questionIds;
+
 } 

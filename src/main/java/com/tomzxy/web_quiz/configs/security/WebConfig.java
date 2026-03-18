@@ -1,8 +1,11 @@
 package com.tomzxy.web_quiz.configs.security;
 
+import com.tomzxy.web_quiz.containts.ApiDefined;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -25,22 +28,58 @@ import java.util.List;
 @RequiredArgsConstructor
 public class WebConfig {
     private final JWTFilter jwtFilter;
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
         http
-                .cors(cors -> {
-                })
+                .cors(cors -> {})
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
                 .authorizeHttpRequests(auth -> auth
+
+                        // Swagger
                         .requestMatchers(
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html")
-                        .permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .anyRequest().authenticated())
+                                "/swagger-ui.html"
+                        ).permitAll()
+
+                        // Auth APIs
+                        .requestMatchers(
+                                "/api/auth/login",
+                                "/api/auth/signup",
+                                "/api/auth/refresh",
+                                "/api/auth/logout"
+                        ).permitAll()
+
+                        // Public quiz APIs
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/quizzes/**",
+                                "/api/subjects/**"
+                        ).permitAll()
+
+                        // Admin APIs
+                        .requestMatchers("/api/admin/**")
+                        .hasRole("ADMIN")
+
+                        // Creator APIs - Allow authenticated users, let @PreAuthorize handle permissions
+                        .requestMatchers(HttpMethod.POST, "/api/quizzes/**")
+                        .authenticated()
+
+                        .requestMatchers(HttpMethod.PUT, "/api/quizzes/**")
+                        .authenticated()
+
+                        .requestMatchers(HttpMethod.DELETE, "/api/quizzes/**")
+                        .authenticated()
+
+                        // Other APIs
+                        .anyRequest().authenticated()
+                )
+
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -52,7 +91,7 @@ public class WebConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowCredentials(true);
-        configuration.setAllowedOrigins(List.of("http://localhost:8081"));
+        configuration.setAllowedOrigins(List.of("http://localhost:8081", "http://localhost:8082", "http://localhost:8083"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
 

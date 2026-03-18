@@ -11,14 +11,17 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @Setter
 @NoArgsConstructor
+@ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class QuizResDTO {
     private Long id;
     private String title;
     private String description;
-    private int totalQuestion;
+    private Integer totalQuestion;
     private QuizVisibility quizVisibility;
     private QuizStatus status;
     private String hostName;
     private String lobbyName;
+    private Integer timeLimitMinutes;
+    private Integer maxAttempt;
 } 

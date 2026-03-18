@@ -97,20 +97,20 @@ public class AttemptServiceImpl implements AttemptService {
                 .endedAt(request.getCompletedAt())
                 .status(QuizInstanceStatus.SUBMITTED)
                 .totalPoints(calculateTotalPoints(quiz))
-                .earnedPoints(0)
+                .earnedPoints(0L)
                 .build();
         
         instance = quizInstanceRepo.save(instance);
         
         // Process answers
-        int earnedPoints = 0;
+        Long earnedPoints = 0L;
         int correctAnswers = 0;
         for (AnswerSubmissionDTO answerSubmission : request.getAnswers()) {
             Question question = questionRepo.findById(answerSubmission.getQuestionId())
                     .orElseThrow(() -> new NotFoundException("Question not found: " + answerSubmission.getQuestionId()));
             
             boolean isCorrect = checkAnswer(question, answerSubmission);
-            Integer points = getQuestionPoints(quiz, question);
+            Long points = getQuestionPoints(quiz, question);
             
             if (isCorrect) {
                 earnedPoints += points;
@@ -122,7 +122,6 @@ public class AttemptServiceImpl implements AttemptService {
                     .questionId(question.getId())
                     .selectedAnswerId(answerSubmission.getSelectedOptionIds() != null && !answerSubmission.getSelectedOptionIds().isEmpty() 
                             ? answerSubmission.getSelectedOptionIds().get(0) : null)
-                    .selectedAnswerText(answerSubmission.getAnswerText())
                     .isCorrect(isCorrect)
                     .pointsEarned(isCorrect ? points : 0)
                     .answeredAt(LocalDateTime.now())
@@ -151,8 +150,8 @@ public class AttemptServiceImpl implements AttemptService {
         List<QuizInstance> instances = quizInstanceRepo.findByUserIdAndStatus(userId, QuizInstanceStatus.SUBMITTED);
         
         int totalQuizzesTaken = instances.size();
-        int totalPoints = instances.stream()
-                .mapToInt(i -> i.getEarnedPoints() != null ? i.getEarnedPoints() : 0)
+        Long totalPoints = instances.stream()
+                .mapToLong(i -> i.getEarnedPoints() != null ? i.getEarnedPoints() : 0L)
                 .sum();
         double averageScore = instances.stream()
                 .mapToDouble(QuizInstance::getScorePercentage)
@@ -234,7 +233,6 @@ public class AttemptServiceImpl implements AttemptService {
                     .questionId(question.getId())
                     .selectedOptionIds(response != null && response.getSelectedAnswerId() != null 
                             ? Collections.singletonList(response.getSelectedAnswerId()) : Collections.emptyList())
-                    .answerText(response != null ? response.getSelectedAnswerText() : null)
                     .isCorrect(response != null && response.isCorrect())
                     .pointsEarned(response != null ? response.getPointsEarned() : 0)
                     .build());
@@ -276,17 +274,17 @@ public class AttemptServiceImpl implements AttemptService {
         return false;
     }
 
-    private Integer getQuestionPoints(Quiz quiz, Question question) {
+    private Long getQuestionPoints(Quiz quiz, Question question) {
         return quiz.getQuizQuestionLinks().stream()
                 .filter(link -> link.getQuestion().getId().equals(question.getId()))
                 .map(QuizQuestionLink::getPoints)
                 .findFirst()
-                .orElse(1);
+                .orElse(1L); // Default to 1 point if not found
     }
 
-    private Integer calculateTotalPoints(Quiz quiz) {
+    private Long calculateTotalPoints(Quiz quiz) {
         return quiz.getQuizQuestionLinks().stream()
-                .mapToInt(QuizQuestionLink::getPoints)
+                .mapToLong(QuizQuestionLink::getPoints)
                 .sum();
     }
 

@@ -13,5 +13,6 @@ public class LobbyResDTO {
     private Long id;
     private String lobbyName;
     private String hostName;
+    private Long totalMembers;
     
 }

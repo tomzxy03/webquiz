@@ -5,12 +5,14 @@ import com.tomzxy.web_quiz.enums.QuizVisibility;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -19,7 +21,7 @@ public interface QuizRepo extends JpaRepository<Quiz, Long>, JpaSpecificationExe
     // Basic CRUD with pagination
     @Query("SELECT q FROM Quiz q WHERE q.isActive = true")
     Page<Quiz> findAllActive(Pageable pageable);
-    
+
     // Find by host
     @Query("SELECT q FROM Quiz q WHERE q.host.id = :hostId AND q.isActive = true")
     Page<Quiz> findByHostId(@Param("hostId") Long hostId, Pageable pageable);
@@ -27,7 +29,16 @@ public interface QuizRepo extends JpaRepository<Quiz, Long>, JpaSpecificationExe
     // Find by group
     @Query("SELECT q FROM Quiz q WHERE q.lobby.id = :lobbyId AND q.isActive = true")
     Page<Quiz> findByLobbyId(@Param("lobbyId") Long lobbyId, Pageable pageable);
-    
+    // Find popular quiz
+    @Query("""
+            SELECT q FROM Quiz q
+            JOIN QuizInstance a ON a.quiz.id = q.id
+            WHERE a.startedAt >= :from
+            GROUP BY q
+            ORDER BY COUNT(a.id) DESC
+    """)
+    Page<Quiz> findPopularSince(LocalDateTime from, Pageable pageable);
+
     // Find by quiz type
     @Query("SELECT q FROM Quiz q WHERE q.visibility = :quizVisibility AND q.isActive = true")
     Page<Quiz> findByQuizVisibility(@Param("quizVisibility") QuizVisibility quizVisibility, Pageable pageable);
@@ -81,4 +92,14 @@ public interface QuizRepo extends JpaRepository<Quiz, Long>, JpaSpecificationExe
     // Find quizzes with questions count
     @Query("SELECT q FROM Quiz q WHERE SIZE(q.quizQuestionLinks) = :questionCount AND q.isActive = true")
     Page<Quiz> findByQuestionsCount(@Param("questionCount") int questionCount, Pageable pageable);
+
+    @Query("""
+SELECT COUNT(q) > 0
+FROM Quiz q
+JOIN LobbyMember lm ON lm.lobby.id = q.lobby.id
+WHERE q.id = :quizId
+AND lm.user.id = :userId
+AND lm.role = com.tomzxy.web_quiz.enums.LobbyRole.HOST
+""")
+boolean isQuizHost(Long quizId, Long userId);
 } 

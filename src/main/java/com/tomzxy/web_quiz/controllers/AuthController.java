@@ -1,5 +1,6 @@
 package com.tomzxy.web_quiz.controllers;
 
+import com.tomzxy.web_quiz.configs.security.CustomUserDetails;
 import com.tomzxy.web_quiz.containts.ApiDefined;
 import com.tomzxy.web_quiz.dto.requests.auth.LoginReqDTO;
 import com.tomzxy.web_quiz.dto.requests.auth.RefreshTokenReqDTO;
@@ -15,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -45,7 +46,6 @@ public class AuthController {
 
     @PostMapping(ApiDefined.Auth.LOGOUT)
     @Operation(summary = "User logout", description = "Revoke refresh token")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<DataResDTO<Boolean>> logout(
             @Valid @RequestBody RefreshTokenReqDTO refreshTokenReqDTO) {
 
@@ -58,16 +58,19 @@ public class AuthController {
     @Operation(summary = "Refresh token", description = "Exchange refresh token for new access token")
     public ResponseEntity<DataResDTO<AuthResDTO>> refreshToken(
             @Valid @RequestBody RefreshTokenReqDTO refreshTokenReqDTO) {
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(DataResDTO.ok(authService.refreshToken(refreshTokenReqDTO)));
+        log.info("User refresh token attempt: {}", refreshTokenReqDTO.getRefreshToken());
+        try{
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(DataResDTO.ok(authService.refreshToken(refreshTokenReqDTO)));
+        }catch (Exception e){
+            log.error("Refresh token error", e); // log full stacktrace
+            throw e;
+        }
     }
 
     @GetMapping(ApiDefined.Auth.ME)
     @Operation(summary = "Get current user", description = "Get the currently authenticated user's information")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<DataResDTO<UserResDTO>> getMe() {
-
-        return ResponseEntity.ok(
-                DataResDTO.ok(authService.getMe()));
+    public UserResDTO getMe(@AuthenticationPrincipal CustomUserDetails user) {
+        return authService.getMe(user.id());
     }
 }
