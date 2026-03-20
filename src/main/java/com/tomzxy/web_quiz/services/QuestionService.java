@@ -4,6 +4,7 @@ import com.tomzxy.web_quiz.dto.requests.QuestionReqDTO;
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizQuestionReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.question.QuestionResDTO;
+import com.tomzxy.web_quiz.models.Question;
 
 import java.util.List;
 
@@ -20,4 +21,8 @@ public interface QuestionService {
     QuestionResDTO get_Question(Long question_id);
 
     void delete_Question(Long question_id);
+
+    Question create_Questions(QuestionReqDTO questionReqDTO);
+
+    List<Question> getQuestionByFolderId(Long folderId);
 }

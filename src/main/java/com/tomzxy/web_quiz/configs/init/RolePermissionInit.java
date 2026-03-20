@@ -2,10 +2,13 @@ package com.tomzxy.web_quiz.configs.init;
 
 import com.tomzxy.web_quiz.models.Permission;
 import com.tomzxy.web_quiz.models.Role;
+import com.tomzxy.web_quiz.models.Host.QuestionBank;
 import com.tomzxy.web_quiz.models.User.User;
 import com.tomzxy.web_quiz.models.rolepermission.RolePermissionObject;
 import com.tomzxy.web_quiz.containts.PredefinedRole;
+
 import com.tomzxy.web_quiz.repositories.PermissionRepo;
+import com.tomzxy.web_quiz.repositories.QuestionBankRepo;
 import com.tomzxy.web_quiz.repositories.RolePermissionObjectRepo;
 import com.tomzxy.web_quiz.repositories.RoleRepo;
 import com.tomzxy.web_quiz.repositories.UserRepo;
@@ -31,6 +34,7 @@ public class RolePermissionInit implements CommandLineRunner {
     private final UserRepo userRepo;
     private final BCryptPasswordEncoder passwordEncoder;
     private final RoleService roleService;
+    private final QuestionBankRepo questionBankRepo;
 
     private static final String ADMIN = PredefinedRole.ADMIN_ROLE;
     private static final String USER = PredefinedRole.USER_ROLE;
@@ -75,7 +79,7 @@ public class RolePermissionInit implements CommandLineRunner {
             String[] adminObjects = {
                     "subject", "chapter", "user", "notification",
                     "group", "quiz", "question", "answer",
-                    "quiz_result", "answer_user", "role", "permission"
+                    "quiz_result", "answer_user", "role", "permission", "question_bank", "question_folder"
             };
 
             for (String object : adminObjects) {
@@ -94,7 +98,6 @@ public class RolePermissionInit implements CommandLineRunner {
                     "quiz", List.of("VIEW"),
                     "quiz_result", List.of("VIEW"),
                     "notification", List.of("VIEW")));
-
         }
 
         log.info("Roles & permissions seeded.");
@@ -119,8 +122,9 @@ public class RolePermissionInit implements CommandLineRunner {
             admin.setEmail("admin@gmail.com");
             admin.setPassword(passwordEncoder.encode("datvip2003"));
             admin.setRoles(Set.of(adminRole));
-
+            
             userRepo.save(admin);
+
 
             log.info("Admin user created.");
         }
@@ -137,6 +141,7 @@ public class RolePermissionInit implements CommandLineRunner {
             user.setRoles(Set.of(userRole));
 
             userRepo.save(user);
+
 
             log.info("Basic user created.");
         }

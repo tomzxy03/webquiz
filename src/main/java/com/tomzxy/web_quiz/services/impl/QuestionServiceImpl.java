@@ -68,10 +68,38 @@ public class QuestionServiceImpl implements QuestionService {
         answers.forEach(Answer::activate);
         question.addAnswers(answers); // save the answers to the question
         question.setContentHash(generateContentHash(question));
+        // check if the content hash is already existed in the database
+        String questionHash = questionRepo.findAllByContentHashIn(List.of(question.getContentHash())).stream().findFirst().orElse(null);
+        if(questionHash != null){
+            throw new ExistedException(AppCode.DATA_EXISTED, "Question content duplicated");
+        }
         question.activate();
         questionRepo.save(question); // save the question to the database
     }
+    @Override
+    public Question create_Questions(QuestionReqDTO questionReqDTO) {
+        boolean flag = questionRepo.existsByQuestionName(questionReqDTO.getQuestionName());// check if the question name is already existed
+        log.info("create question and answer {} {}", questionReqDTO.getQuestionName(), questionReqDTO.getAnswers());
 
+        if(flag){
+            throw new ExistedException(AppCode.DATA_EXISTED, "Question has been existed");
+        }
+        Question question = questionMapper.toQuestion(questionReqDTO); // convert the question request dto to question
+
+        Set<Answer> answers = answerMapper.toSetAnswer(questionReqDTO.getAnswers());// convert the answer request dto to answer
+        answers.forEach(Answer::activate);
+        question.addAnswers(answers); // save the answers to the question
+        question.setContentHash(generateContentHash(question));
+        question.activate();
+        // check if the content hash is already existed in the database
+        String questionHash = questionRepo.findAllByContentHashIn(List.of(question.getContentHash())).stream().findFirst().orElse(null);
+        if(questionHash != null){
+            return question;
+        }
+        
+        questionRepo.save(question); // save the question to the database
+        return question;
+    }
     @Override
     @Transactional
     public void create_Questions(Long quizId, List<QuestionReqDTO> dtos) {
@@ -128,6 +156,10 @@ public class QuestionServiceImpl implements QuestionService {
     }
     public Question findQuestion(Long question_id){
         return questionRepo.findById(question_id).orElseThrow(()->new ApiException(AppCode.NOT_AVAILABLE, "Question not found!"));
+    }
+    @Override
+    public List<Question> getQuestionByFolderId(Long folderId) {
+        return questionRepo.findByFolderId(folderId);
     }
 
 

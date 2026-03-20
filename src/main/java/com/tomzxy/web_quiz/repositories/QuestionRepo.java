@@ -131,4 +131,26 @@ public interface QuestionRepo extends JpaRepository<Question, Long>, JpaSpecific
     // Find questions by ID list
     @Query("SELECT q FROM Question q WHERE q.id IN :ids AND q.isActive = true")
     List<Question> findByIds(@Param("ids") List<Long> ids);
+    
+    // Find questions by bank ID
+    @Query("SELECT q FROM Question q WHERE q.bank.id = :bankId AND q.isActive = true")
+    Page<Question> findByBankId(@Param("bankId") Long bankId, Pageable pageable);
+    
+    // Find questions by bank ID without pagination
+    @Query("SELECT q FROM Question q WHERE q.bank.id = :bankId AND q.isActive = true")
+    List<Question> findByBankId(@Param("bankId") Long bankId);
+    
+    // OPTIMIZATION: Find questions with eager-loaded answers to avoid N+1
+    @Query("SELECT DISTINCT q FROM Question q " +
+           "LEFT JOIN FETCH q.answers " +
+           "WHERE q.bank.id = :bankId AND q.isActive = true")
+    List<Question> findByBankIdWithAnswers(@Param("bankId") Long bankId);
+    
+    // Check question ownership in single query
+    @Query("SELECT COUNT(q) > 0 FROM Question q " +
+           "WHERE q.id = :questionId AND q.bank.owner.id = :userId")
+    boolean existsByIdAndOwnerId(@Param("questionId") Long questionId, 
+                                 @Param("userId") Long userId);
+
+    List<Question> findByFolderId(Long folderId);
 }

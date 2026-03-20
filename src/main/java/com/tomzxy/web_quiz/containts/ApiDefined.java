@@ -165,4 +165,37 @@ public abstract class ApiDefined {
         public static final String BASE = API_PREFIX + "/files";
         public static final String UPLOAD = "/upload";
     }
+
+    public static final class QuestionBank {
+        public static final String ROOT = API_PREFIX + "/question-banks";
+        public static final String MY_BANK = "/my-bank";
+        public static final String LIST = "";
+        public static final String BY_OWNER_ID = "/{ownerId}";
+        public static final String CREATE = "";
+        public static final String UPDATE = "";
+        public static final String DELETE = "";
+    }
+
+    public static final class Folder {
+        public static final String ROOT = API_PREFIX + "/folders";
+        public static final String LIST = "";
+        public static final String CREATE = "";
+        public static final String BY_ID = "/{folderId}";
+        public static final String ROOT_FOLDERS = "/root";
+        public static final String SUBFOLDERS = "/{parentFolderId}/subfolders";
+        public static final String TREE = "/tree";
+        public static final String MOVE = "/{folderId}/move";
+    }
+
+    public static final class QuestionFolder {
+        public static final String ROOT = API_PREFIX + "/questions-folder";
+        public static final String LIST = "";
+        public static final String CREATE = "";
+        public static final String BY_ID = "/{questionId}";
+        public static final String BY_FOLDER = "/folder/{folderId}";
+        public static final String ROOT_LEVEL = "/root";
+        public static final String TREE = "/tree";
+        public static final String MOVE_TO_FOLDER = "/{questionId}/move";
+        public static final String MOVE_TO_ROOT = "/{questionId}/move-root";
+    }
 }

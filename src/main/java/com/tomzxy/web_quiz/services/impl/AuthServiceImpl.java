@@ -15,7 +15,9 @@ import com.tomzxy.web_quiz.exception.UnAuthorizedException;
 import com.tomzxy.web_quiz.mapstructs.AuthMapper;
 import com.tomzxy.web_quiz.mapstructs.UserMapper;
 import com.tomzxy.web_quiz.models.Role;
+import com.tomzxy.web_quiz.models.Host.QuestionBank;
 import com.tomzxy.web_quiz.models.User.User;
+import com.tomzxy.web_quiz.repositories.QuestionBankRepo;
 import com.tomzxy.web_quiz.repositories.RoleRepo;
 import com.tomzxy.web_quiz.repositories.UserRepo;
 import com.tomzxy.web_quiz.services.AuthService;
@@ -24,6 +26,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +56,7 @@ public class AuthServiceImpl implements AuthService {
     private final JWTService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final RoleRepo roleRepo;
+    private final QuestionBankRepo questionBankRepo;
 
     @Value("${jwt.access-expiration}")
     private long accessExpirationMs;              
@@ -65,6 +70,8 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResDTO login(LoginReqDTO loginReqDTO) {
+        log.info("User login attempt: {}", loginReqDTO.getEmail());
+        
         // Authenticate user
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -72,9 +79,13 @@ public class AuthServiceImpl implements AuthService {
                         loginReqDTO.getPassword()
                 )
         );
+        
         // Retrieve the authenticated user from the principal (assumes CustomUserDetails)
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        User user = userRepo.findById(userDetails.id()).orElseThrow(() -> new NotFoundException("User not found"));
+        User user = userRepo.findById(userDetails.id())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        log.info("User login successful: {} (ID: {})", loginReqDTO.getEmail(), user.getId());
 
         // Extract device information from request
         DeviceInfo deviceInfo = extractDeviceInfo();
@@ -93,8 +104,11 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResDTO signup(SignupReqDTO signupReqDTO) {
+        log.info("User signup attempt: {}", signupReqDTO.getEmail());
+        
         // Check if user already exists
         if (userRepo.existsByEmail(signupReqDTO.getEmail())) {
+            log.warn("Signup failed: Email already registered - {}", signupReqDTO.getEmail());
             throw new ExistedException(AppCode.EMAIL_ALREADY_REGISTERED,
                     "User already exists with email: " + signupReqDTO.getEmail());
         }
@@ -102,11 +116,19 @@ public class AuthServiceImpl implements AuthService {
         // Map and encode password
         User user = authMapper.toUser(signupReqDTO);
         user.setPassword(passwordEncoder.encode(signupReqDTO.getPassword()));
-        Role role = roleRepo.findByName("USER").orElseThrow(() -> new NotFoundException("Role not found: USER"));
+        
+        // Assign USER role
+        Role role = roleRepo.findByName("USER")
+                .orElseThrow(() -> new NotFoundException("Role not found: USER"));
         user.setRoles(Set.of(role));
 
         // Save user
         user = userRepo.save(user);
+        log.info("User created successfully: {} (ID: {})", signupReqDTO.getEmail(), user.getId());
+
+        // Auto-create QuestionBank for new user
+        createQuestionBankForUser(user);
+        log.info("QuestionBank created automatically for user: {} (ID: {})", user.getEmail(), user.getId());
 
         // Extract device information
         DeviceInfo deviceInfo = extractDeviceInfo();
@@ -157,6 +179,34 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         return userMapper.toUserResDTO(user);
+    }
+
+    /**
+     * Auto-create QuestionBank for new user during signup
+     * Each user has exactly one QuestionBank
+     */
+    private void createQuestionBankForUser(User user) {
+        try {
+            // Check if user already has a QuestionBank
+            if (questionBankRepo.existsByOwnerId(user.getId())) {
+                log.warn("QuestionBank already exists for user: {}", user.getId());
+                return;
+            }
+
+            // Create new QuestionBank
+            QuestionBank questionBank = QuestionBank.builder()
+                    .owner(user)
+                    .folders(new ArrayList<>())
+                    .questions(new HashSet<>())
+                    .build();
+
+            questionBankRepo.save(questionBank);
+            log.info("QuestionBank created for user: {} (email: {}) with bank ID: {}", 
+                    user.getId(), user.getEmail(), questionBank.getId());
+        } catch (Exception e) {
+            log.error("Error creating QuestionBank for user: {}", user.getId(), e);
+            throw new RuntimeException("Failed to create QuestionBank for user", e);
+        }
     }
 
     /**

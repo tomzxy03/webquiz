@@ -23,14 +23,6 @@ public class QuestionResDTO {
 
     private QuestionAndAnswerType questionType;
 
-    private Level level;
-
-    private Long bankId;
-
-    private Long folderId;        // nullable
-
-    private String folderName;    // nullable
-
     private List<AnswerResDTO> answers;
 }
 

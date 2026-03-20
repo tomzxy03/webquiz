@@ -65,8 +65,7 @@ CREATE UNIQUE INDEX uk_active_attempt_per_user ON public.quiz_instances(user_id,
 -- Quiz user response unique constraint
 ALTER TABLE ONLY public.quiz_user_responses ADD CONSTRAINT uk_instance_question UNIQUE (quiz_instance_id, question_id);
 
--- Quiz instance in-progress constraint
-ALTER TABLE ONLY public.quiz_instances ADD CONSTRAINT uk_quiz_user_inprogress UNIQUE (quiz_id, user_id, status);
+        -- Quiz instance in-progress constraint
 
 -- Refresh token JTI uniqueness
 ALTER TABLE ONLY public.refresh_tokens ADD CONSTRAINT idx_jti UNIQUE (jti);

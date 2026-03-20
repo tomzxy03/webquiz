@@ -1,13 +1,14 @@
 # Web Quiz Application
 
-This is a Spring Boot application designed for managing quizzes. It provides a robust backend for creating, taking, and managing quizzes.
+This is a Spring Boot application designed for managing quizzes. It provides a backend for creating, taking, and managing quizzes.
 
 ## Technologies Used
 
 *   **Spring Boot**: Framework for building the application.
 *   **Java 21**: The programming language used.
 *   **Maven**: Dependency management and build automation tool.
-*   **PostgreSQL**: For connecting to PostgreSQL databases.
+*   **PostgreSQL**: Primary database.
+*   **Redis**: Cache/session store.
 *   **Lombok**: To reduce boilerplate code (e.g., getters, setters, constructors).
 *   **MapStruct**: For generating type-safe bean mappers.
 *   **Springdoc OpenAPI (Swagger UI)**: For API documentation and testing.
@@ -19,28 +20,29 @@ This is a Spring Boot application designed for managing quizzes. It provides a r
 
 *   Java Development Kit (JDK) 21
 *   Apache Maven
+*   PostgreSQL and Redis (or use Docker Compose below)
 
 ### Steps
 
 1.  **Clone the repository:**
     ```bash
     git clone <repository-url>
-    cd web_quiz
+    cd webquiz
     ```
 2.  **Build the project using Maven:**
     ```bash
     mvn clean install
     ```
 3.  **Configure your database:**
-    This application uses Spring Data JPA and can connect to either MySQL or PostgreSQL. You will need to configure your database connection properties in `src/main/resources/application.properties` (or `application.yml`).
+    This application uses Spring Data JPA with PostgreSQL. Configure the environment variables used by `src/main/resources/application.yml`:
 
-    Example for PostgreSQL:
-    ```properties
-    spring.datasource.url=jdbc:postgresql://localhost:5432/webquizdb
-    spring.datasource.username=your_username
-    spring.datasource.password=your_password
-    spring.jpa.hibernate.ddl-auto=update
-    spring.jpa.show-sql=true
+    ```bash
+    export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/quizory
+    export SPRING_DATASOURCE_USERNAME=your_username
+    export SPRING_DATASOURCE_PASSWORD=your_password
+    export SPRING_REDIS_HOST=localhost
+    export SPRING_REDIS_PORT=6379
+    export JWT_SECRET=your_secret
     ```
 
 4.  **Run the application:**
@@ -48,6 +50,19 @@ This is a Spring Boot application designed for managing quizzes. It provides a r
     mvn spring-boot:run
     ```
     The application will start on port 8080 by default.
+
+## Run with Docker Compose
+
+If you prefer Docker, this repo includes a `docker-compose.yml` that starts PostgreSQL, Redis, and the API:
+
+```bash
+export JWT_SECRET=your_secret
+docker compose up --build
+```
+
+## Database Migrations
+
+Flyway is enabled and migrations live under `src/main/resources/db/migration`.
 
 ## API Documentation
 

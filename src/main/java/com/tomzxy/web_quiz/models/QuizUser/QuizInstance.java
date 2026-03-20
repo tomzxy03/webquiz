@@ -25,9 +25,7 @@ import org.hibernate.type.SqlTypes;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "quiz_instances", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_quiz_user_inprogress", columnNames = { "quiz_id", "user_id", "status" })
-}, indexes = {
+@Table(name = "quiz_instances",indexes = {
         @Index(name = "idx_quiz_instance_quiz", columnList = "quiz_id"),
         @Index(name = "idx_quiz_instance_user", columnList = "user_id"),
         @Index(name = "idx_quiz_user_status", columnList = "quiz_id,user_id,status"),

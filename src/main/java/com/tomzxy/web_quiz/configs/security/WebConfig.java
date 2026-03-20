@@ -75,6 +75,7 @@ public class WebConfig {
 
                         .requestMatchers(HttpMethod.DELETE, "/api/quizzes/**")
                         .authenticated()
+                        
 
                         // Other APIs
                         .anyRequest().authenticated()
