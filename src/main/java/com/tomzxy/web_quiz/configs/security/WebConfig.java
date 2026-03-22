@@ -93,7 +93,7 @@ public class WebConfig {
 
                 configuration.setAllowCredentials(true);
                 configuration.setAllowedOrigins(
-                                List.of("http://localhost:8081", "http://localhost:8082", "http://localhost:8083"));
+                                List.of("http://localhost:8081", "http://localhost:8082", "http://localhost:8083", "https://quizory-nine.vercel.app/"));
                 configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                 configuration.setAllowedHeaders(List.of("*"));
 
