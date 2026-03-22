@@ -1,7 +1,7 @@
 package com.tomzxy.web_quiz.dto.responses.answer;
 
 
-import com.tomzxy.web_quiz.enums.QuestionAndAnswerType;
+import com.tomzxy.web_quiz.enums.ContentType;
 import lombok.*;
 
 @Builder
@@ -16,7 +16,7 @@ public class AnswerResDTO {
 
     private String answerText;
 
-    private QuestionAndAnswerType answerType;
+    private ContentType answerType;
 
     private Integer orderIndex; // dùng cho shuffle / snapshot
 }

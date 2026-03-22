@@ -25,4 +25,6 @@ public interface QuestionService {
     Question create_Questions(QuestionReqDTO questionReqDTO);
 
     List<Question> getQuestionByFolderId(Long folderId);
+
+    String generateContentHash(Question question);
 }

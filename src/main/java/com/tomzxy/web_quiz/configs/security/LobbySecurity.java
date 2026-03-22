@@ -47,7 +47,7 @@ public class LobbySecurity {
     public boolean isQuizHost(Long quizId, Authentication authentication) {
     // 1. Kiểm tra xác thực
     if (authentication == null || authentication instanceof AnonymousAuthenticationToken) {
-        throw new AccessDeniedException("User chưa đăng nhập");
+        return false;
     }
 
     String email = authentication.getName(); 

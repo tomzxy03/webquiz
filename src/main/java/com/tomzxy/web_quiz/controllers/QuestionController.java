@@ -6,6 +6,7 @@ import com.tomzxy.web_quiz.dto.requests.QuestionReqDTO;
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizQuestionReqDTO;
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
+import com.tomzxy.web_quiz.dto.responses.question.QuestionFileResDTO;
 import com.tomzxy.web_quiz.dto.responses.question.QuestionResDTO;
 import com.tomzxy.web_quiz.services.QuestionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,9 +23,12 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import com.tomzxy.web_quiz.services.ExcelImportService;
 
 @RestController
 @Slf4j
@@ -34,6 +38,7 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 public class QuestionController {
         private final QuestionService questionService;
+        private final ExcelImportService excelImportService;
 
         @GetMapping()
         @Operation(summary = "Get all questions", description = "Retrieve all questions with pagination")
@@ -91,10 +96,26 @@ public class QuestionController {
                         @PathVariable Long quizId,
                         @Valid @RequestBody List<QuestionReqDTO> questionReqDTOList) {
                 log.info("add Question List");
-                questionService.create_Questions(quizId,questionReqDTOList);
+                questionService.create_Questions(quizId, questionReqDTOList);
                 return ResponseEntity
                                 .status(HttpStatus.CREATED)
                                 .body(DataResDTO.create());
+        }
+
+        @PostMapping(value = ApiDefined.Question.IMPORT, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        @Operation(summary = "Import questions from Excel", description = "Parse an Excel file and return a list of parsed questions for preview")
+        @PreAuthorize("hasAuthority('question_CREATE')")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Questions imported successfully"),
+                        @ApiResponse(responseCode = "400", description = "Invalid request data or file format")
+        })
+        public ResponseEntity<DataResDTO<List<QuestionFileResDTO>>> importQuestions(
+                        @Parameter(description = "Excel file to import") @RequestParam("file") MultipartFile file) {
+                log.info("Importing questions from excel");
+                List<QuestionFileResDTO> parsedQuestions = excelImportService.importQuestionsFromExcel(file);
+                return ResponseEntity
+                                .status(HttpStatus.OK)
+                                .body(DataResDTO.ok(parsedQuestions));
         }
 
         @PutMapping(ApiDefined.Question.ID)

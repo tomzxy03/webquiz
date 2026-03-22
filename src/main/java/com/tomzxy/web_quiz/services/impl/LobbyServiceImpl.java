@@ -4,10 +4,13 @@ import com.tomzxy.web_quiz.dto.requests.Lobby.LobbyReqDTO;
 import com.tomzxy.web_quiz.dto.requests.Notification.NotificationReqDTO;
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
+import com.tomzxy.web_quiz.dto.responses.Notification.NotificationResDTO;
 import com.tomzxy.web_quiz.dto.responses.Quiz.QuizResDTO;
+import com.tomzxy.web_quiz.dto.responses.lobby.LobbyCodeInviteResDTO;
 import com.tomzxy.web_quiz.dto.responses.lobby.LobbyNotificationResDTO;
 import com.tomzxy.web_quiz.dto.responses.lobby.LobbyQuizResDTO;
 import com.tomzxy.web_quiz.dto.responses.lobby.LobbyResDTO;
+import com.tomzxy.web_quiz.dto.responses.question.QuestionResDTO;
 import com.tomzxy.web_quiz.dto.responses.user.UserMemberResDTO;
 import com.tomzxy.web_quiz.enums.AppCode;
 import com.tomzxy.web_quiz.enums.LobbyRole;
@@ -27,8 +30,8 @@ import com.tomzxy.web_quiz.models.Quiz.Quiz;
 import com.tomzxy.web_quiz.models.Subject;
 import com.tomzxy.web_quiz.models.User.User;
 import com.tomzxy.web_quiz.repositories.*;
-import com.tomzxy.web_quiz.services.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.services.LobbyService;
+import com.tomzxy.web_quiz.services.common.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +40,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -218,7 +222,6 @@ public class LobbyServiceImpl implements LobbyService {
         Lobby lobby = getLobbyById(lobbyId);
         checkOwned(lobby);
         lobbyMemberRepo.deleteByIdLobbyIdAndIdUserId(lobbyId, userId);
-        lobbyRepo.save(lobby);
     }
     @Override
     public void leaveLobby(Long lobbyId) {
@@ -238,17 +241,36 @@ public class LobbyServiceImpl implements LobbyService {
     //===========Notification==============//
     @Transactional(readOnly = true)
     @Override
-    public PageResDTO<?> getAllNotifications(Long lobbyId, int page, int size) {
-        PageRequest pageable = PageRequest.of(page,size);
-        Lobby lobby = getLobbyById(lobbyId);
+    public PageResDTO<NotificationResDTO> getAllNotifications(Long lobbyId, int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size);
+
         Page<Notification> pageData =
                 notificationRepo.findByLobbyIdAndIsActiveTrue(lobbyId, pageable);
-        return PageResDTO.<Notification>builder()
-                .page(page)
-                .size(size)
-                .total(pageData.getTotalElements())
-                .items(pageData.getContent())
-                .build();
+
+        List<NotificationResDTO> items = pageData.getContent()
+            .stream()
+            .map(this::mapToDTO)
+            .toList();
+
+    return PageResDTO.<NotificationResDTO>builder()
+            .page(page)
+            .size(size)
+            .total(pageData.getTotalElements())
+            .items(items)
+            .build();
+        
+    }
+  
+    private NotificationResDTO mapToDTO(Notification n) {
+    return NotificationResDTO.builder()
+            .id(n.getId())
+            .title(n.getTitle())
+            .content(n.getContent())
+            .type(n.getType().name())
+            .lobbyName(n.getLobby().getLobbyName())
+            .hostName(n.getHost().getUserName())
+            .createdAt(n.getCreatedAt())
+            .build();
     }
     @Override
     @Transactional
@@ -291,10 +313,10 @@ public class LobbyServiceImpl implements LobbyService {
         notificationRepo.save(notification);
     }
     @Override
-    public LobbyResDTO joinLobby(String code) {
+    @Transactional
+    public LobbyResDTO joinLobby(Long lobbyId) {
 
-        Lobby lobby = lobbyRepo.findByJoinCode(code)
-                .orElseThrow(() -> new NotFoundException("Lobby not found"));
+        Lobby lobby = getLobbyById(lobbyId);
 
         Long userId = SecurityUtils.getCurrentUserId();
 
@@ -307,10 +329,14 @@ public class LobbyServiceImpl implements LobbyService {
             throw new UnAuthorizedException("User not authenticated");
         }
         User user = userRepo.findById(userId).orElseThrow();
+        LobbyMemberId lobbyMemberId = new LobbyMemberId();
+        lobbyMemberId.setLobbyId(lobby.getId());
+        lobbyMemberId.setUserId(user.getId());
 
         LobbyMember member = new LobbyMember();
-        member.setLobby(lobby);
+        member.setId(lobbyMemberId);
         member.setUser(user);
+        member.setLobby(lobby);
         member.setRole(LobbyRole.MEMBER);
         member.setJoinedAt(LocalDateTime.now());
 
@@ -461,5 +487,27 @@ public class LobbyServiceImpl implements LobbyService {
         }
         log.info("===================================user: {}", user);
         return user;
+    }
+
+    @Override
+    public LobbyResDTO findLobbyByCode(String code) {
+        Lobby lobby = lobbyRepo.findByCodeInvite(code).orElseThrow(() -> new NotFoundException("Lobby not found: " + code));
+        LobbyResDTO res = lobbyMapper.toLobbyResDTO(lobby);
+        return res;
+    }
+
+    @Override
+    public LobbyCodeInviteResDTO reloadCodeInvite(Long lobbyId) {
+        Lobby lobby = getLobbyById(lobbyId);
+        checkOwned(lobby);
+        lobby.setCodeInvite(generateInviteCode());
+        lobby = lobbyRepo.save(lobby);
+        return new LobbyCodeInviteResDTO(lobby.getId(), lobby.getCodeInvite());
+    }
+
+    @Override
+    public LobbyCodeInviteResDTO getCodeInvite(Long lobbyId) {
+        Lobby lobby = getLobbyById(lobbyId);
+        return new LobbyCodeInviteResDTO(lobby.getId(), lobby.getCodeInvite());
     }
 }

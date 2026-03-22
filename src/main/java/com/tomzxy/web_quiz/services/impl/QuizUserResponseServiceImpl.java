@@ -18,8 +18,8 @@ import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;
 import com.tomzxy.web_quiz.models.QuizUser.QuizUserResponse;
 import com.tomzxy.web_quiz.repositories.QuizInstanceRepo;
 import com.tomzxy.web_quiz.repositories.QuizUserResponseRepo;
-import com.tomzxy.web_quiz.services.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.services.QuizUserResponseService;
+import com.tomzxy.web_quiz.services.common.ConvertToPageResDTO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,6 +1,6 @@
 package com.tomzxy.web_quiz.repositories;
 
-import com.tomzxy.web_quiz.enums.QuestionAndAnswerType;
+import com.tomzxy.web_quiz.enums.ContentType;
 import com.tomzxy.web_quiz.models.Answer;
 import lombok.NonNull;
 import org.springframework.data.domain.Page;
@@ -33,12 +33,12 @@ public interface AnswerRepo extends JpaRepository<Answer, Long>, JpaSpecificatio
     Page<Answer> searchByAnswerName(@Param("searchTerm") String searchTerm, Pageable pageable);
     
     // Filter by answer type
-    @Query("SELECT a FROM Answer a WHERE a.answerType = :answerType AND a.isActive = true")
-    Page<Answer> findByAnswerType(@Param("answerType") QuestionAndAnswerType answerType, Pageable pageable);
+    @Query("SELECT a FROM Answer a WHERE a.type = :answerType AND a.isActive = true")
+    Page<Answer> findByAnswerType(@Param("answerType") ContentType answerType, Pageable pageable);
     
     // Filter by multiple answer types
-    @Query("SELECT a FROM Answer a WHERE a.answerType IN :answerTypes AND a.isActive = true")
-    Page<Answer> findByAnswerTypes(@Param("answerTypes") Set<QuestionAndAnswerType> answerTypes, Pageable pageable);
+    @Query("SELECT a FROM Answer a WHERE a.type IN :answerTypes AND a.isActive = true")
+    Page<Answer> findByAnswerTypes(@Param("answerTypes") Set<ContentType> answerTypes, Pageable pageable);
     
     // Filter by correctness
     @Query("SELECT a FROM Answer a WHERE a.answerCorrect = :answerCorrect AND a.isActive = true")
@@ -61,8 +61,8 @@ public interface AnswerRepo extends JpaRepository<Answer, Long>, JpaSpecificatio
     Page<Answer> findByQuestionIds(@Param("questionIds") Set<Long> questionIds, Pageable pageable);
 
     // Find answers by answer type and correctness
-    @Query("SELECT a FROM Answer a WHERE a.answerType = :answerType AND a.answerCorrect = :answerCorrect AND a.isActive = true")
-    Page<Answer> findByAnswerTypeAndAnswerCorrect(@Param("answerType") QuestionAndAnswerType answerType,
+    @Query("SELECT a FROM Answer a WHERE a.type = :answerType AND a.answerCorrect = :answerCorrect AND a.isActive = true")
+    Page<Answer> findByAnswerTypeAndAnswerCorrect(@Param("answerType") ContentType answerType,
                                              @Param("answerCorrect") boolean answerCorrect, Pageable pageable);
 
     // Find answers by question and correctness
@@ -71,8 +71,8 @@ public interface AnswerRepo extends JpaRepository<Answer, Long>, JpaSpecificatio
                                              @Param("answerCorrect") boolean answerCorrect, Pageable pageable);
 
     // Count answers by type
-    @Query("SELECT COUNT(a) FROM Answer a WHERE a.answerType = :answerType AND a.isActive = true")
-    long countByAnswerType(@Param("answerType") QuestionAndAnswerType answerType);
+    @Query("SELECT COUNT(a) FROM Answer a WHERE a.type = :answerType AND a.isActive = true")
+    long countByAnswerType(@Param("answerType") ContentType answerType);
 
     // Count answers by correctness
     @Query("SELECT COUNT(a) FROM Answer a WHERE a.answerCorrect = :answerCorrect AND a.isActive = true")
@@ -97,8 +97,8 @@ public interface AnswerRepo extends JpaRepository<Answer, Long>, JpaSpecificatio
                                            @Param("questionId") Long questionId);
     
     // Find all answer types used
-    @Query("SELECT DISTINCT a.answerType FROM Answer a WHERE a.isActive = true")
-    List<QuestionAndAnswerType> findAllAnswerTypes();
+    @Query("SELECT DISTINCT a.type FROM Answer a WHERE a.isActive = true")
+    List<ContentType> findAllAnswerTypes();
     
     // Find answers by ID list
     @Query("SELECT a FROM Answer a WHERE a.id IN :ids AND a.isActive = true")

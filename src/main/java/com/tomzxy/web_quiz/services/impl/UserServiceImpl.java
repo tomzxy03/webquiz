@@ -9,8 +9,9 @@ import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.mapstructs.UserMapper;
 import com.tomzxy.web_quiz.models.User.User;
 import com.tomzxy.web_quiz.repositories.UserRepo;
-import com.tomzxy.web_quiz.services.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.services.UserService;
+import com.tomzxy.web_quiz.services.common.ConvertToPageResDTO;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

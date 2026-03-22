@@ -28,8 +28,9 @@ import com.tomzxy.web_quiz.models.Answer;
 import com.tomzxy.web_quiz.models.Question;
 import com.tomzxy.web_quiz.models.Subject;
 import com.tomzxy.web_quiz.repositories.*;
-import com.tomzxy.web_quiz.services.ConvertToPageResDTO;
+import com.tomzxy.web_quiz.services.QuestionService;
 import com.tomzxy.web_quiz.services.QuizService;
+import com.tomzxy.web_quiz.services.common.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.mapstructs.QuizInstanceMapper;
 import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;
 import com.tomzxy.web_quiz.utils.SecurityUtils;
@@ -45,6 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -67,8 +69,7 @@ public class QuizServiceImpl implements QuizService {
     private final AnswerMapper answerMapper;
     private final QuizInstanceMapper quizInstanceMapper;
     private final ConvertToPageResDTO convertToPageResDTO;
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-            .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+    private final QuestionService questionService;
 
     @Override
     @Transactional(readOnly = true)
@@ -200,121 +201,117 @@ public class QuizServiceImpl implements QuizService {
 
         quiz = quizRepo.save(quiz);
 
-
-
         return quizMapper.toDto(quiz);
     }
+
     @Override
     @Transactional
     public void create_Questions(Long quizId, List<QuizQuestionReqDTO> dtos) {
 
-    Quiz quiz = quizRepo.findById(quizId)
-            .orElseThrow(() -> new NotFoundException("Quiz not found"));
+        Quiz quiz = quizRepo.findById(quizId)
+                .orElseThrow(() -> new NotFoundException("Quiz not found"));
 
-    List<Question> newQuestions = new ArrayList<>();
-    List<Question> resolvedQuestions = new ArrayList<>();
-    List<Long> resolvedPoints = new ArrayList<>();
+        List<Question> newQuestions = new ArrayList<>();
+        List<Question> resolvedQuestions = new ArrayList<>();
+        List<Long> resolvedPoints = new ArrayList<>();
 
-    // preload existing question
-    List<Long> questionIds = dtos.stream()
-            .map(QuizQuestionReqDTO::getQuestionId)
-            .filter(Objects::nonNull)
-            .toList();
-
-    Map<Long, Question> questionMap = questionRepo.findAllById(questionIds)
-            .stream()
-            .collect(Collectors.toMap(Question::getId, q -> q));
-
-    for (QuizQuestionReqDTO dto : dtos) {
-
-        Question question;
-
-        // CASE 1: dùng question có sẵn
-        if (dto.getQuestionId() != null) {
-
-            question = questionMap.get(dto.getQuestionId());
-
-            if (question == null) {
-                throw new NotFoundException("Question not found: " + dto.getQuestionId());
-            }
-
-        }
-        // CASE 2: tạo question mới
-        else if (dto.getQuestionReqDTO() != null) {
-
-            question = questionMapper.toQuestion(dto.getQuestionReqDTO());
-
-            if (dto.getQuestionReqDTO().getAnswers() != null) {
-                Set<Answer> answers = dto.getQuestionReqDTO().getAnswers().stream()
-                    .map(answerMapper::toAnswer) 
-                    .collect(Collectors.toSet());
-
-                question.addAnswers(answers);
-            }
-
-            String hash = generateContentHash(question);
-            question.setContentHash(hash);
-            newQuestions.add(question);
-
-        } else {
-            throw new ApiException(AppCode.INTERNAL_ERROR, "Invalid question input");
-        }
-
-        resolvedQuestions.add(question);
-        resolvedPoints.add(dto.getPoints());
-    }
-
-    // Check duplicate contentHash trong DB
-    if (!newQuestions.isEmpty()) {
-
-        List<String> hashes = newQuestions.stream()
-                .map(Question::getContentHash)
+        // preload existing question
+        List<Long> questionIds = dtos.stream()
+                .map(QuizQuestionReqDTO::getQuestionId)
+                .filter(Objects::nonNull)
                 .toList();
 
-        // check duplicate trong request
-        Set<String> uniqueHashes = new HashSet<>(hashes);
-        if (uniqueHashes.size() != hashes.size()) {
-            throw new ExistedException(
-                    AppCode.DATA_EXISTED,
-                    "Duplicate question in request"
-            );
+        Map<Long, Question> questionMap = questionRepo.findAllById(questionIds)
+                .stream()
+                .collect(Collectors.toMap(Question::getId, q -> q));
+
+        for (QuizQuestionReqDTO dto : dtos) {
+
+            Question question;
+
+            // CASE 1: dùng question có sẵn
+            if (dto.getQuestionId() != null) {
+
+                question = questionMap.get(dto.getQuestionId());
+
+                if (question == null) {
+                    throw new NotFoundException("Question not found: " + dto.getQuestionId());
+                }
+
+            }
+            // CASE 2: tạo question mới
+            else if (dto.getQuestionReqDTO() != null) {
+
+                question = questionMapper.toQuestion(dto.getQuestionReqDTO());
+
+                if (dto.getQuestionReqDTO().getAnswers() != null) {
+                    Set<Answer> answers = dto.getQuestionReqDTO().getAnswers().stream()
+                            .map(answerMapper::toAnswer)
+                            .collect(Collectors.toSet());
+
+                    question.addAnswers(answers);
+                }
+
+                String hash = questionService.generateContentHash(question);
+                question.setContentHash(hash);
+                newQuestions.add(question);
+
+            } else {
+                throw new ApiException(AppCode.INTERNAL_ERROR, "Invalid question input");
+            }
+
+            resolvedQuestions.add(question);
+            resolvedPoints.add(dto.getPoints());
         }
 
-        List<String> existedHashes = questionRepo.findAllByContentHashIn(hashes);
+        // Check duplicate contentHash trong DB
+        if (!newQuestions.isEmpty()) {
 
-        if (!existedHashes.isEmpty()) {
-            throw new ExistedException(
-                    AppCode.DATA_EXISTED,
-                    "Question content duplicated"
-            );
+            List<String> hashes = newQuestions.stream()
+                    .map(Question::getContentHash)
+                    .toList();
+
+            // check duplicate trong request
+            Set<String> uniqueHashes = new HashSet<>(hashes);
+            if (uniqueHashes.size() != hashes.size()) {
+                throw new ExistedException(
+                        AppCode.DATA_EXISTED,
+                        "Duplicate question in request");
+            }
+
+            List<String> existedHashes = questionRepo.findAllByContentHashIn(hashes);
+
+            if (!existedHashes.isEmpty()) {
+                throw new ExistedException(
+                        AppCode.DATA_EXISTED,
+                        "Question content duplicated");
+            }
+
+            questionRepo.saveAll(newQuestions);
+            quiz.setStatus(QuizStatus.OPENED);
+            quizRepo.save(quiz);
         }
 
-        questionRepo.saveAll(newQuestions);
-        quiz.setStatus(QuizStatus.OPENED);
-        quizRepo.save(quiz);
+        List<QuizQuestionLink> links = new ArrayList<>();
+
+        for (int i = 0; i < resolvedQuestions.size(); i++) {
+
+            Question question = resolvedQuestions.get(i);
+            Long points = resolvedPoints.get(i);
+            QuizQuestionId linkId = new QuizQuestionId(
+                    quiz.getId(),
+                    question.getId());
+            QuizQuestionLink link = new QuizQuestionLink();
+            link.setId(linkId);
+            link.setQuiz(quiz);
+            link.setQuestion(question);
+            link.setPoints(points != null ? points : 1L);
+
+            links.add(link);
+        }
+
+        quizQuestionLinkRepo.saveAll(links);
     }
-
-    List<QuizQuestionLink> links = new ArrayList<>();
-
-    for (int i = 0; i < resolvedQuestions.size(); i++) {
-
-        Question question = resolvedQuestions.get(i);
-        Long points = resolvedPoints.get(i);
-        QuizQuestionId linkId = new QuizQuestionId(
-                quiz.getId(),
-                question.getId()
-        );
-        QuizQuestionLink link = new QuizQuestionLink();
-        link.setId(linkId);
-        link.setQuiz(quiz);
-        link.setQuestion(question);
-        link.setPoints(points != null ? points : 1L);
-
-        links.add(link);
-    }
-
-    quizQuestionLinkRepo.saveAll(links);
-}
 
     @Override
     @Transactional
@@ -322,36 +319,35 @@ public class QuizServiceImpl implements QuizService {
         Quiz quiz = quizRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Quiz not found: " + id));
 
-    Long userId = SecurityUtils.getCurrentUserId();
-    if (userId == null) {
-        throw new ApiException(AppCode.UNAUTHORIZED, "User not authenticated");
-    }
+        Long userId = SecurityUtils.getCurrentUserId();
+        if (userId == null) {
+            throw new ApiException(AppCode.UNAUTHORIZED, "User not authenticated");
+        }
 
-    if (!quiz.getHost().getId().equals(userId)) {
-        throw new ApiException(AppCode.FORBIDDEN, "User is not authorized to update this quiz");
-    }
+        if (!quiz.getHost().getId().equals(userId)) {
+            throw new ApiException(AppCode.FORBIDDEN, "User is not authorized to update this quiz");
+        }
 
-    Subject subject = subjectRepo.findById(dto.getSubjectId())
-            .orElseThrow(() -> new NotFoundException("Subject not found: " + dto.getSubjectId()));
+        Subject subject = subjectRepo.findById(dto.getSubjectId())
+                .orElseThrow(() -> new NotFoundException("Subject not found: " + dto.getSubjectId()));
 
-    // update basic info
-    quiz.setTitle(dto.getTitle());
-    quiz.setDescription(dto.getDescription());
-    quiz.setTimeLimitMinutes(dto.getTimeLimitMinutes());
-    quiz.setVisibility(dto.getVisibility());
-    quiz.setMaxAttempt(dto.getMaxAttempt() != null ? dto.getMaxAttempt() : 1);
-    quiz.setSubject(subject);
+        // update basic info
+        quiz.setTitle(dto.getTitle());
+        quiz.setDescription(dto.getDescription());
+        quiz.setTimeLimitMinutes(dto.getTimeLimitMinutes());
+        quiz.setVisibility(dto.getVisibility());
+        quiz.setMaxAttempt(dto.getMaxAttempt() != null ? dto.getMaxAttempt() : 1);
+        quiz.setSubject(subject);
 
-    if (dto.getStartAt() != null) {
-        quiz.setStartDate(dto.getStartAt());
-    }
+        if (dto.getStartAt() != null) {
+            quiz.setStartDate(dto.getStartAt());
+        }
 
         if (dto.getEndAt() != null) {
             quiz.setEndDate(dto.getEndAt());
         }
 
         quizRepo.save(quiz);
-
 
         return quizMapper.toDto(quiz);
     }
@@ -361,7 +357,7 @@ public class QuizServiceImpl implements QuizService {
     public void update_Questions(Long quizId, List<QuizQuestionReqDTO> questionReqDTO) {
         Quiz quiz = quizRepo.findById(quizId)
                 .orElseThrow(() -> new NotFoundException("Quiz not found: " + quizId));
-        if(questionReqDTO == null || questionReqDTO.isEmpty()){
+        if (questionReqDTO == null || questionReqDTO.isEmpty()) {
             throw new ApiException(AppCode.BAD_REQUEST, "Question list cannot be empty");
         }
 
@@ -385,12 +381,12 @@ public class QuizServiceImpl implements QuizService {
      * Create QuizQuestionLink entries for each question ID in the set.
      */
 
-    public long getAttemptCount(Long quizId, Long userId){
+    public long getAttemptCount(Long quizId, Long userId) {
         return quizInstanceRepo.countByQuizIdAndUserIdAndStatusIn(
                 quizId, userId,
-                List.of( QuizInstanceStatus.TIMED_OUT, QuizInstanceStatus.SUBMITTED)
-        );
+                List.of(QuizInstanceStatus.TIMED_OUT, QuizInstanceStatus.SUBMITTED));
     }
+
     private void createQuestionLinks(Quiz quiz, List<QuizQuestionReqDTO> questions) {
 
         List<QuizQuestionLink> links = new ArrayList<>();
@@ -398,13 +394,11 @@ public class QuizServiceImpl implements QuizService {
         for (QuizQuestionReqDTO req : questions) {
 
             Question question = questionRepo.findById(req.getQuestionId())
-                    .orElseThrow(() ->
-                            new NotFoundException("Question not found: " + req.getQuestionId()));
+                    .orElseThrow(() -> new NotFoundException("Question not found: " + req.getQuestionId()));
 
             QuizQuestionId linkId = new QuizQuestionId(
                     quiz.getId(),
-                    question.getId()
-            );
+                    question.getId());
 
             QuizQuestionLink link = QuizQuestionLink.builder()
                     .id(linkId)
@@ -418,37 +412,7 @@ public class QuizServiceImpl implements QuizService {
 
         quizQuestionLinkRepo.saveAll(links);
     }
-    public String generateContentHash(Question question) {
-        try {
 
-            List<Map<String, Object>> sortedAnswers =
-                    question.getAnswers()
-                            .stream()
-                            .sorted(Comparator.comparing(a -> normalize(a.getAnswerName())))
-                            .map(a -> {
-                                Map<String, Object> map = new TreeMap<>();
-                                map.put("content", normalize(a.getAnswerName()));
-                                map.put("correct", a.isAnswerCorrect());
-                                return map;
-                            })
-                            .toList();
-
-            Map<String, Object> payload = new TreeMap<>();
-            payload.put("questionName", normalize(question.getQuestionName()));
-            payload.put("questionType", question.getQuestionType().name());
-            payload.put("answers", sortedAnswers);
-
-            String json = OBJECT_MAPPER.writeValueAsString(payload);
-
-            return DigestUtils.sha256Hex(json);
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to hash content of question", e);
-        }
-    }
-    public String normalize(String input){
-        if(input == null) return "";
-        return input.trim().toLowerCase().replaceAll("\\s+", " ");
-    }
+    
 
 }

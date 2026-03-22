@@ -38,6 +38,7 @@ public class RolePermissionInit implements CommandLineRunner {
 
     private static final String ADMIN = PredefinedRole.ADMIN_ROLE;
     private static final String USER = PredefinedRole.USER_ROLE;
+
     @Override
     public void run(String... args) {
         log.info("========= START DATABASE INITIALIZATION =========");
@@ -48,7 +49,6 @@ public class RolePermissionInit implements CommandLineRunner {
 
         log.info("========= DATABASE INITIALIZED SUCCESS =========");
     }
-
 
     private void seedPermissions() {
 
@@ -65,7 +65,6 @@ public class RolePermissionInit implements CommandLineRunner {
 
         log.info("Permissions seeded.");
     }
-
 
     private void seedRoles() {
 
@@ -120,11 +119,15 @@ public class RolePermissionInit implements CommandLineRunner {
             User admin = new User();
             admin.setUserName("admin");
             admin.setEmail("admin@gmail.com");
+            admin.setEmailVerified(true);
             admin.setPassword(passwordEncoder.encode("datvip2003"));
             admin.setRoles(Set.of(adminRole));
-            
-            userRepo.save(admin);
 
+            admin = userRepo.save(admin);
+
+            QuestionBank bank = new QuestionBank();
+            bank.setOwner(admin);
+            questionBankRepo.save(bank);
 
             log.info("Admin user created.");
         }
@@ -141,7 +144,6 @@ public class RolePermissionInit implements CommandLineRunner {
             user.setRoles(Set.of(userRole));
 
             userRepo.save(user);
-
 
             log.info("Basic user created.");
         }

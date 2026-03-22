@@ -14,10 +14,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuestionSnapshotResDTO {
-    
+
     private Long id;
     private String questionText;
-    private String questionType;
+    private String type;
+    private String answerType;
     private Long questionPoints;
     private List<AnswersSnapshotResDTO> answerSnapshots;
     private LocalDateTime createdAt;

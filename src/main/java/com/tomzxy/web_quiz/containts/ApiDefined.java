@@ -51,6 +51,7 @@ public abstract class ApiDefined {
         public static final String ADD_ANSWER = ID + "/add-answer";
         public static final String TEXT = "/question_text";
         public static final String CHAPTER = "/chapter_text";
+        public static final String IMPORT = "/import";
         public static final String LEVEL = "/level";
     }
 
@@ -62,9 +63,9 @@ public abstract class ApiDefined {
 
     public static final class Group {
         public static final String BASE = API_PREFIX + "/groups";
+        public static final String ID = "{groupId}";
         public static final String OWNED = "/owned";
         public static final String JOINED = "/joined";
-        public static final String ID = "{groupId}";
         public static final String DELETE_MANY = "/delete_many";
         public static final String MEMBER = ID + "/members";
         public static final String MEMBER_ID = ID + "/members/{userId}";
@@ -83,6 +84,11 @@ public abstract class ApiDefined {
         public static final String RESOURCES = ID + "/resources";
         public static final String RESOURCE_ID = RESOURCES + "/{resourceId}";
         public static final String BY_USER = "/user/{userId}";
+        public static final String RELOAD_CODE_INVITE = ID + "/reload-code-invite";
+        public static final String FIND_LOBBY_BY_CODE = "/find-lobby-by-code/{codeInvite}";
+        public static final String GET_CODE_INVITE = ID + "/get-code-invite";
+        public static final String JOIN = "/join";
+        public static final String IMPORT = ID + "/questions/import";
     }
 
     public static final class Notification {
@@ -99,7 +105,7 @@ public abstract class ApiDefined {
         public static final String ADD_QUIZ = "/{chapterId}";
         public static final String QUESTION = ID + "/questions";
         public static final String ADD_QUESTION = ID + "/add_list";
-        public static final String UPDATE_QUESTION = ID + "/update_list"; 
+        public static final String UPDATE_QUESTION = ID + "/update_list";
         public static final String DELETE_QUESTION = ID + "/{questionId}";
         public static final String DELETE_QUESTIONS = ID + DELETE_MANY;
         public static final String LATEST = "/latest";
@@ -152,6 +158,7 @@ public abstract class ApiDefined {
     public static final class Dashboard {
         public static final String BASE = API_PREFIX + "/dashboard";
         public static final String BY_USER = "/{userId}";
+        public static final String SUMMARY = "/summary";
     }
 
     public static final class Statistics {
@@ -197,5 +204,26 @@ public abstract class ApiDefined {
         public static final String TREE = "/tree";
         public static final String MOVE_TO_FOLDER = "/{questionId}/move";
         public static final String MOVE_TO_ROOT = "/{questionId}/move-root";
+    }
+
+    public static final class Admin {
+        public static final String BASE = API_PREFIX + "/tomzxyadmin";
+
+        public static final String USERS = "/users";
+        public static final String USER_ID = USERS + "/{userId}";
+        public static final String GROUPS = "/groups";
+        public static final String GROUP_ID = GROUPS + "/{groupId}";
+        public static final String QUIZZES = "/quizzes";
+        public static final String QUIZ_ID = QUIZZES + "/{quizId}";
+        public static final String RESULTS = "/results";
+        public static final String RESULT_ID = RESULTS + "/{resultId}";
+        public static final String SUBJECTS = "/subjects";
+        public static final String SUBJECT_ID = SUBJECTS + "/{subjectId}";
+        public static final String ROLES = "/roles";
+        public static final String ROLE_ID = ROLES + "/{roleId}";
+        public static final String NOTIFICATIONS = "/notifications";
+        public static final String NOTIFICATION_ID = NOTIFICATIONS + "/{notificationId}";
+        public static final String QUESTION_BANKS = "/question-banks";
+        public static final String QUESTION_BANK_ID = QUESTION_BANKS + "/{questionBankId}";
     }
 }

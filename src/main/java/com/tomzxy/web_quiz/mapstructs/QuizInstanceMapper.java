@@ -32,7 +32,7 @@ public interface QuizInstanceMapper {
 
     // Helper method to convert question type enum to string
     @Named("questionTypeToString")
-    default String questionTypeToString(com.tomzxy.web_quiz.enums.QuestionAndAnswerType questionType) {
+    default String questionTypeToString(com.tomzxy.web_quiz.enums.ContentType questionType) {
         return questionType != null ? questionType.name() : null;
     }
 }

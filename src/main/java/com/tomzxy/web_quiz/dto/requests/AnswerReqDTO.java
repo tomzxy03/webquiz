@@ -1,6 +1,7 @@
 package com.tomzxy.web_quiz.dto.requests;
 
-import com.tomzxy.web_quiz.enums.QuestionAndAnswerType;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.tomzxy.web_quiz.enums.ContentType;
 import com.tomzxy.web_quiz.validation.EnumValidate;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
@@ -14,8 +15,9 @@ public class AnswerReqDTO {
     private String answerName;
 
     @NotNull(message = "Answer type is required")
-    @EnumValidate(name = "answerType", regex = "TEXT|IMAGE")
-    private QuestionAndAnswerType answerType;
+    @EnumValidate(name = "answerType", regex = "TEXT|IMAGE|AUDIO|VIDEO")
+    @JsonAlias("answerType")
+    private ContentType type;
 
-    private boolean answerCorrect ;
+    private boolean answerCorrect;
 }

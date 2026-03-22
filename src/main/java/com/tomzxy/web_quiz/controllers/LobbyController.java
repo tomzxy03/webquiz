@@ -7,9 +7,13 @@ import com.tomzxy.web_quiz.dto.requests.quiz.QuizReqDTO;
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.Quiz.QuizResDTO;
+import com.tomzxy.web_quiz.dto.responses.lobby.LobbyCodeInviteResDTO;
 import com.tomzxy.web_quiz.dto.responses.lobby.LobbyNotificationResDTO;
 import com.tomzxy.web_quiz.dto.responses.lobby.LobbyQuizResDTO;
 import com.tomzxy.web_quiz.dto.responses.lobby.LobbyResDTO;
+import com.tomzxy.web_quiz.dto.responses.question.QuestionFileResDTO;
+import com.tomzxy.web_quiz.dto.responses.question.QuestionResDTO;
+import com.tomzxy.web_quiz.services.ExcelImportService;
 import com.tomzxy.web_quiz.services.LobbyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,10 +22,15 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @Slf4j
@@ -31,6 +40,7 @@ import org.springframework.web.bind.annotation.*;
 public class LobbyController {
 
         private final LobbyService lobbyService;
+        private final ExcelImportService excelService;
 
         // ======== Group CRUD ========
 
@@ -147,6 +157,17 @@ public class LobbyController {
                 return ResponseEntity.status(HttpStatus.OK)
                                 .body(DataResDTO.delete());
         }
+        // join lobby
+        @PostMapping(ApiDefined.Group.JOIN)
+        @Operation(summary = "Join group")
+        @PreAuthorize("hasAuthority('group_VIEW')")
+        public ResponseEntity<DataResDTO<LobbyResDTO>> joinGroup(
+                        @RequestBody Map<String, Long> lobbyId) {
+                log.info("Join group {}", lobbyId.get("lobbyId"));
+                return ResponseEntity.status(HttpStatus.OK)
+                                .body(DataResDTO.ok(lobbyService.joinLobby(lobbyId.get("lobbyId"))));
+        }
+        
 
 
         // ======== Announcements ========
@@ -164,7 +185,7 @@ public class LobbyController {
         }
 
         // add announcements
-        @GetMapping(ApiDefined.Group.ADD_NOTIFICATION)
+        @PostMapping(ApiDefined.Group.ADD_NOTIFICATION)
         @Operation(summary = "Add group announcements")
         @PreAuthorize("@lobbySecurity.isHost(#groupId, authentication)")
         public ResponseEntity<DataResDTO<LobbyNotificationResDTO>> addAnnouncements(
@@ -246,5 +267,47 @@ public class LobbyController {
                 lobbyService.removeQuizFromGroup(groupId, quizId);
                 return ResponseEntity.status(HttpStatus.OK)
                                 .body(DataResDTO.delete());
+        }
+        @PostMapping(ApiDefined.Group.IMPORT)
+        @Operation(summary = "Import quiz from excel")
+        @PreAuthorize("@lobbySecurity.isHost(#groupId, authentication)")
+        public ResponseEntity<DataResDTO<List<QuestionFileResDTO>>> importQuizFromExcel(
+                        @PathVariable Long groupId,
+                        @RequestParam("file") MultipartFile file) {
+                log.info("Import quiz from excel for group {}", groupId);
+                return ResponseEntity.status(HttpStatus.OK)
+                                .body(DataResDTO.ok(excelService.importQuestionsFromExcel(file)));
+        }
+
+        // reload code invite
+        @PostMapping(ApiDefined.Group.RELOAD_CODE_INVITE)
+        @Operation(summary = "Reload code invite")
+        @PreAuthorize("@lobbySecurity.isHost(#groupId, authentication)")
+        public ResponseEntity<DataResDTO<LobbyCodeInviteResDTO>> reloadCodeInvite(
+                @PathVariable Long groupId) {
+                log.info("Reload code invite for group {}", groupId);
+                return ResponseEntity.status(HttpStatus.OK)
+                                .body(DataResDTO.ok(lobbyService.reloadCodeInvite(groupId)));
+        }
+
+        // find lobby by code invite
+        @GetMapping(ApiDefined.Group.FIND_LOBBY_BY_CODE)
+        @Operation(summary = "Find lobby by code invite")
+        public ResponseEntity<DataResDTO<LobbyResDTO>> findLobbyByCode(
+                @PathVariable String codeInvite) {
+                log.info("Find lobby by code invite {}", codeInvite);
+                return ResponseEntity.status(HttpStatus.OK)
+                                .body(DataResDTO.ok(lobbyService.findLobbyByCode(codeInvite)));
+        }
+
+        // get code invite
+        @GetMapping(ApiDefined.Group.GET_CODE_INVITE)
+        @Operation(summary = "Get code invite")
+        @PreAuthorize("@lobbySecurity.isHost(#groupId, authentication) or @lobbySecurity.isMember(#groupId, authentication)")
+        public ResponseEntity<DataResDTO<LobbyCodeInviteResDTO>> getCodeInvite(
+                @PathVariable Long groupId) {
+                log.info("Get code invite for group {}", groupId);
+                return ResponseEntity.status(HttpStatus.OK)
+                                .body(DataResDTO.ok(lobbyService.getCodeInvite(groupId)));
         }
 }

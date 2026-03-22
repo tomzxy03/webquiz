@@ -16,6 +16,7 @@ public class QuizInstanceQuestionResDTO {
     private Integer displayOrder;
     private Long points;
     private String questionText;
-    private String questionType;
+    private String type;
+    private String answerType;
     private List<QuizInstanceAnswerResDTO> answers;
-} 
+}

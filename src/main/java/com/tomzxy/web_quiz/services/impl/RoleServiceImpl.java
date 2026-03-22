@@ -10,9 +10,10 @@ import com.tomzxy.web_quiz.models.rolepermission.RolePermissionObject;
 import com.tomzxy.web_quiz.repositories.PermissionRepo;
 import com.tomzxy.web_quiz.repositories.RolePermissionObjectRepo;
 import com.tomzxy.web_quiz.repositories.RoleRepo;
-import com.tomzxy.web_quiz.services.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.models.Role;
 import com.tomzxy.web_quiz.services.RoleService;
+import com.tomzxy.web_quiz.services.common.ConvertToPageResDTO;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

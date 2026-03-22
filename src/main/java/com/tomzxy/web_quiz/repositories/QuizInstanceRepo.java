@@ -70,4 +70,19 @@ public interface QuizInstanceRepo extends JpaRepository<QuizInstance, Long> {
         Page<QuizInstance> findByQuiz_LobbyIdAndStatusIn(Long lobbyId, List<QuizInstanceStatus> statuses,
                         Pageable pageable);
 
+        // Dashboard: count completed (SUBMITTED + TIMED_OUT)
+        @Query("SELECT COUNT(qi) FROM QuizInstance qi WHERE qi.user.id = :userId AND qi.status IN :statuses")
+        long countByUserIdAndStatusIn(@Param("userId") Long userId,
+                        @Param("statuses") List<QuizInstanceStatus> statuses);
+
+        // Dashboard: in-progress instances with quiz details (fetch join — no N+1)
+        @Query("SELECT qi FROM QuizInstance qi JOIN FETCH qi.quiz q WHERE qi.user.id = :userId AND qi.status = :status ORDER BY qi.startedAt DESC")
+        List<QuizInstance> findInProgressWithQuizByUserId(@Param("userId") Long userId,
+                        @Param("status") QuizInstanceStatus status);
+
+        // Dashboard: recent completed instances with quiz details (fetch join)
+        @Query("SELECT qi FROM QuizInstance qi JOIN FETCH qi.quiz q WHERE qi.user.id = :userId AND qi.status IN :statuses ORDER BY qi.updatedAt DESC")
+        List<QuizInstance> findRecentByUserIdAndStatusIn(@Param("userId") Long userId,
+                        @Param("statuses") List<QuizInstanceStatus> statuses, Pageable pageable);
+
 }

@@ -1,6 +1,7 @@
 package com.tomzxy.web_quiz.mapstructs;
 
 import com.tomzxy.web_quiz.dto.requests.QuestionReqDTO;
+import com.tomzxy.web_quiz.dto.responses.question.QuestionFileResDTO;
 import com.tomzxy.web_quiz.dto.responses.question.QuestionResDTO;
 import com.tomzxy.web_quiz.models.Question;
 import org.mapstruct.*;
@@ -28,5 +29,7 @@ public interface QuestionMapper {
 
     @Mapping(target = "answers", ignore = true)
     void updateQuestion(@MappingTarget Question question, QuestionReqDTO questionReqDTO);
+
+    QuestionFileResDTO toQuestionFileResDTO(Question question);
 
 }

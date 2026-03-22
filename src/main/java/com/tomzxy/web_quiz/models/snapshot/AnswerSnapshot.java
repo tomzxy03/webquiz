@@ -1,6 +1,6 @@
 package com.tomzxy.web_quiz.models.snapshot;
 
-import com.tomzxy.web_quiz.enums.QuestionAndAnswerType;
+import com.tomzxy.web_quiz.enums.ContentType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,7 +13,7 @@ public class AnswerSnapshot {
     private Integer orderIndex;
     private String content;
     @Enumerated(EnumType.STRING)
-    private QuestionAndAnswerType type;
+    private ContentType type;
 
 }
 

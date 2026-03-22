@@ -24,8 +24,8 @@ import com.tomzxy.web_quiz.models.snapshot.AnswerSnapshot;
 import com.tomzxy.web_quiz.models.snapshot.QuestionSnapshot;
 import com.tomzxy.web_quiz.models.snapshot.QuizQuestionSnapshot;
 import com.tomzxy.web_quiz.repositories.*;
-import com.tomzxy.web_quiz.services.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.services.QuizInstanceService;
+import com.tomzxy.web_quiz.services.common.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.mapstructs.QuizInstanceMapper;
 import com.tomzxy.web_quiz.utils.SecurityUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -75,6 +75,7 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
 
     // ============ Lua script for atomic submit ============
     private static final String GET_ANSWERS_LUA_SCRIPT = "return redis.call('HGETALL', KEYS[1])";
+
     // ============ Helper: Redis key builders ============
     private String answersKey(Long instanceId) {
         return ANSWERS_KEY_PREFIX + instanceId + ANSWERS_KEY_SUFFIX;
@@ -166,8 +167,8 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         res.setQuestions(mapSnapshotToQuestionDTOs(snapshot));
         res.setQuestionLayout(quiz.getQuestionLayout() != null ? quiz.getQuestionLayout() : null);
         res.setTimeLimitMinutes(quiz.getTimeLimitMinutes());
-        if(quiz.getTimeLimitMinutes() != null) {
-            res.setRemainingTimeSeconds( quiz.getTimeLimitMinutes() * 60L);
+        if (quiz.getTimeLimitMinutes() != null) {
+            res.setRemainingTimeSeconds(quiz.getTimeLimitMinutes() * 60L);
         }
         return res;
     }
@@ -203,7 +204,8 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
             QuestionSnapshot qs = new QuestionSnapshot();
             qs.setKey(question.getId().toString());
             qs.setContent(question.getQuestionName());
-            qs.setType(question.getQuestionType());
+            qs.setType(question.getType());
+            qs.setAnswerType(question.getAnswerType());
             qs.setOrderIndex(i + 1);
             qs.setPoints(link.getPoints());
             totalPoints += link.getPoints();
@@ -226,7 +228,7 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
                 as.setOriginalAnswerId(a.getId());
                 as.setContent(a.getAnswerName());
                 as.setOrderIndex(j + 1);
-                as.setType(a.getAnswerType());
+                as.setType(a.getType());
                 answerSnapshots.add(as);
 
                 if (a.isAnswerCorrect()) {
@@ -242,37 +244,41 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         snapshot.setTotalPoints(totalPoints);
         return snapshot;
     }
+
     /**
-    * Chuyển đổi từ Snapshot (Dữ liệu gốc trong DB) sang Question DTOs (Dữ liệu trả về Client)
-    */
+     * Chuyển đổi từ Snapshot (Dữ liệu gốc trong DB) sang Question DTOs (Dữ liệu trả
+     * về Client)
+     */
     private List<QuizInstanceQuestionResDTO> mapSnapshotToQuestionDTOs(QuizQuestionSnapshot snapshot) {
-        if (snapshot == null || snapshot.getQuestions() == null) return new ArrayList<>();
+        if (snapshot == null || snapshot.getQuestions() == null)
+            return new ArrayList<>();
 
         List<QuizInstanceQuestionResDTO> questionDTOs = new ArrayList<>();
         List<QuestionSnapshot> questions = snapshot.getQuestions();
 
         for (int i = 0; i < questions.size(); i++) {
             QuestionSnapshot qs = questions.get(i);
-        
+
             QuizInstanceQuestionResDTO qDTO = new QuizInstanceQuestionResDTO();
             qDTO.setId(Long.parseLong(qs.getKey())); // ID của câu hỏi
             qDTO.setDisplayOrder(i + 1);
             qDTO.setPoints(qs.getPoints());
             qDTO.setQuestionText(qs.getContent());
-            qDTO.setQuestionType(qs.getType().name());
+            qDTO.setType(qs.getType().name());
+            qDTO.setAnswerType(qs.getAnswerType() != null ? qs.getAnswerType().name() : null);
 
             List<QuizInstanceAnswerResDTO> answerDTOs = new ArrayList<>();
             for (int j = 0; j < qs.getAnswers().size(); j++) {
                 AnswerSnapshot as = qs.getAnswers().get(j);
                 QuizInstanceAnswerResDTO aDTO = new QuizInstanceAnswerResDTO();
-            
-                // QUAN TRỌNG: ID của câu trả lời ở đây phải là INDEX (j) 
+
+                // QUAN TRỌNG: ID của câu trả lời ở đây phải là INDEX (j)
                 // vì logic tính điểm của bạn đang lưu correct_answer là 0-based index
-                aDTO.setId((long) j); 
+                aDTO.setId((long) j);
                 aDTO.setDisplayOrder(j + 1);
                 aDTO.setAnswerText(as.getContent());
                 aDTO.setOptionLabel(String.valueOf((char) ('A' + j))); // A, B, C, D...
-            
+
                 answerDTOs.add(aDTO);
             }
             qDTO.setAnswers(answerDTOs);
@@ -281,18 +287,19 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         return questionDTOs;
     }
 
-/**
- * Tính toán số giây còn lại dựa trên thời điểm bắt đầu
- */
-private Long calculateRemainingTime(QuizInstance instance) {
-    if (instance.getQuiz().getTimeLimitMinutes() == null) return null;
-    
-    long limitSeconds = instance.getQuiz().getTimeLimitMinutes() * 60L;
-    long elapsedSeconds = java.time.Duration.between(instance.getStartedAt(), LocalDateTime.now()).getSeconds();
-    long remaining = limitSeconds - elapsedSeconds;
-    
-    return Math.max(0, remaining);
-}
+    /**
+     * Tính toán số giây còn lại dựa trên thời điểm bắt đầu
+     */
+    private Long calculateRemainingTime(QuizInstance instance) {
+        if (instance.getQuiz().getTimeLimitMinutes() == null)
+            return null;
+
+        long limitSeconds = instance.getQuiz().getTimeLimitMinutes() * 60L;
+        long elapsedSeconds = java.time.Duration.between(instance.getStartedAt(), LocalDateTime.now()).getSeconds();
+        long remaining = limitSeconds - elapsedSeconds;
+
+        return Math.max(0, remaining);
+    }
 
     @Override
     public QuizInstanceResDTO createQuizInstance(QuizInstanceReqDTO request) {
@@ -336,7 +343,7 @@ private Long calculateRemainingTime(QuizInstance instance) {
         String questionKey = request.getQuestionId().toString();
         Map<String, QuestionSnapshot> questionMap = snapshot.getQuestions().stream()
                 .collect(Collectors.toMap(QuestionSnapshot::getKey, q -> q));
-        
+
         QuestionSnapshot questionSnapshot = questionMap.get(request.getQuestionId().toString());
         if (questionSnapshot == null) {
             throw new ApiException(AppCode.BAD_REQUEST, "Question not found in snapshot");
@@ -353,7 +360,8 @@ private Long calculateRemainingTime(QuizInstance instance) {
         }
 
         // 6. For SINGLE_CHOICE, only 1 answer allowed
-        if ("SINGLE_CHOICE".equals(questionSnapshot.getType() != null ? questionSnapshot.getType().name() : "")
+        if (questionSnapshot.getAnswerType() != null
+                && "SINGLE_CHOICE".equals(questionSnapshot.getAnswerType().name())
                 && answerIndices.size() > 1) {
             throw new ApiException(AppCode.BAD_REQUEST, "Single choice question allows only 1 answer");
         }
@@ -402,12 +410,12 @@ private Long calculateRemainingTime(QuizInstance instance) {
         long remainingSeconds = 0;
         if (snapshot.getDuration() != null) {
             long startEpoch = instance.getStartedAt()
-        .atZone(ZoneId.systemDefault())
-        .toEpochSecond();
+                    .atZone(ZoneId.systemDefault())
+                    .toEpochSecond();
 
-        long endEpoch = startEpoch + snapshot.getDuration() * 60L;
+            long endEpoch = startEpoch + snapshot.getDuration() * 60L;
 
-        remainingSeconds = Math.max(0, endEpoch - Instant.now().getEpochSecond());
+            remainingSeconds = Math.max(0, endEpoch - Instant.now().getEpochSecond());
         }
 
         // 4. Get saved answers from Redis
@@ -441,6 +449,7 @@ private Long calculateRemainingTime(QuizInstance instance) {
                             .questionId(qs.getKey())
                             .content(qs.getContent())
                             .type(qs.getType() != null ? qs.getType().name() : null)
+                            .answerType(qs.getAnswerType() != null ? qs.getAnswerType().name() : null)
                             .orderIndex(qs.getOrderIndex())
                             .points(qs.getPoints())
                             .answers(answerDtos)
@@ -495,7 +504,7 @@ private Long calculateRemainingTime(QuizInstance instance) {
     private QuizResultDetailResDTO processSubmission(QuizInstance instance, QuizInstanceStatus finalStatus) {
         Long instanceId = instance.getId();
 
-        //  Atomic read & delete from Redis using Lua script
+        // Atomic read & delete from Redis using Lua script
         Map<Object, Object> redisAnswers = stringRedisTemplate.opsForHash().entries(answersKey(instanceId));
         Map<String, AnswerRecord> answerMap = new HashMap<>();
 
@@ -537,19 +546,22 @@ private Long calculateRemainingTime(QuizInstance instance) {
                     }
                 }
             }
-        
+
             QuizUserResponse response = existingResponses.getOrDefault(questionId, new QuizUserResponse());
             response.setQuizInstance(instance);
             response.setQuestionId(questionId);
             response.setSelectedAnswerIds(selectedAnswerIds);
             response.setCorrect(isCorrect);
             response.setPointsEarned(isCorrect ? qs.getPoints() : 0);
-            response.setAnsweredAt(userRecord != null ? LocalDateTime.ofInstant(userRecord.getAnsweredAt(), ZoneId.systemDefault()) : LocalDateTime.now());
+            response.setAnsweredAt(
+                    userRecord != null ? LocalDateTime.ofInstant(userRecord.getAnsweredAt(), ZoneId.systemDefault())
+                            : LocalDateTime.now());
             response.setSkipped(userAnswer == null || userAnswer.isEmpty());
-        
+
             responsesToSave.add(response);
 
-            if (isCorrect) earnedPoints += qs.getPoints();
+            if (isCorrect)
+                earnedPoints += qs.getPoints();
         }
 
         // Batch save all responses (#11)
@@ -564,6 +576,7 @@ private Long calculateRemainingTime(QuizInstance instance) {
         applicationEvent.publishEvent(new QuizSubmissionEvent(instanceId));
         return mapResultBasedOnConfig(instance, finalStatus);
     }
+
     private QuizResultDetailResDTO mapResultBasedOnConfig(QuizInstance instance, QuizInstanceStatus status) {
         boolean showResult = instance.getQuiz().getConfig() != null
                 && Boolean.TRUE.equals(instance.getQuiz().getConfig().getShowScoreImmediately());
@@ -573,6 +586,7 @@ private Long calculateRemainingTime(QuizInstance instance) {
         }
         return QuizResultDetailResDTO.builder().quizInstanceId(instance.getId()).status(status.name()).build();
     }
+
     // ============ 3.5 Timeout Handler ============
     @Override
     @Transactional
@@ -624,6 +638,7 @@ private Long calculateRemainingTime(QuizInstance instance) {
             }
         } while (instanceIds != null && !instanceIds.isEmpty());
     }
+
     // Listener xử lý xóa cache sau khi commit thành công
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleCleanupAfterCommit(QuizSubmissionEvent event) {
@@ -641,13 +656,15 @@ private Long calculateRemainingTime(QuizInstance instance) {
     public void handleAutosave() {
         // Chỉ lấy các instance đang làm bài
         List<QuizInstance> activeInstances = quizInstanceRepo.findByStatus(QuizInstanceStatus.IN_PROGRESS);
-        
+
         for (QuizInstance instance : activeInstances) {
             Map<Object, Object> redisAnswers = stringRedisTemplate.opsForHash().entries(answersKey(instance.getId()));
-            if (redisAnswers.isEmpty()) continue;
+            if (redisAnswers.isEmpty())
+                continue;
 
             // Lấy các response hiện có trong DB để so sánh
-            Map<Long, QuizUserResponse> existingDBResponses = quizUserResponseRepo.findByQuizInstanceId(instance.getId())
+            Map<Long, QuizUserResponse> existingDBResponses = quizUserResponseRepo
+                    .findByQuizInstanceId(instance.getId())
                     .stream().collect(Collectors.toMap(QuizUserResponse::getQuestionId, r -> r));
 
             List<QuizUserResponse> updates = new ArrayList<>();
@@ -655,7 +672,7 @@ private Long calculateRemainingTime(QuizInstance instance) {
             for (Map.Entry<Object, Object> entry : redisAnswers.entrySet()) {
                 Long qId = Long.parseLong((String) entry.getKey());
                 AnswerRecord record = parseRecord((String) entry.getValue());
-                
+
                 QuizUserResponse existing = existingDBResponses.get(qId);
                 LocalDateTime redisAnsweredAt = LocalDateTime.ofInstant(record.getAnsweredAt(), ZoneId.systemDefault());
 
@@ -666,7 +683,8 @@ private Long calculateRemainingTime(QuizInstance instance) {
                     response.setQuestionId(qId);
                     response.setAnsweredAt(redisAnsweredAt);
                     response.setSkipped(record.getAnswer().isEmpty());
-                    // Lưu ý: Autosave không cần tính điểm ngay để tiết kiệm CPU, việc tính điểm để lúc Submit
+                    // Lưu ý: Autosave không cần tính điểm ngay để tiết kiệm CPU, việc tính điểm để
+                    // lúc Submit
                     updates.add(response);
                 }
             }
@@ -687,7 +705,9 @@ private Long calculateRemainingTime(QuizInstance instance) {
             return new AnswerRecord();
         }
     }
-    @lombok.AllArgsConstructor @lombok.Getter
+
+    @lombok.AllArgsConstructor
+    @lombok.Getter
     public static class QuizSubmissionEvent {
         private Long instanceId;
     }
@@ -893,7 +913,7 @@ private Long calculateRemainingTime(QuizInstance instance) {
                 .userName(instance.getUser() != null ? instance.getUser().getUserName() : null)
                 .status(instance.getStatus() != null ? instance.getStatus().name() : null)
                 .scorePercentage(instance.getScorePercentage())
-                .totalTimeSpentMinutes(instance.getElapsedTimeMinutes())
+                .totalTimeSpentMinutes(instance.getElapsedTimeSeconds())
                 .totalPoints(instance.getTotalPoints())
                 .earnedPoints(instance.getEarnedPoints())
                 .questionResults(questionResults)
@@ -936,7 +956,8 @@ private Long calculateRemainingTime(QuizInstance instance) {
                 .questionInstanceId(question.getId())
                 .displayOrder(displayOrder)
                 .questionText(question.getQuestionName())
-                .questionType(question.getQuestionType().name())
+                .type(question.getType().name())
+                .answerType(question.getAnswerType() != null ? question.getAnswerType().name() : null)
                 .points(points)
                 .earnedPoints(userResponse != null ? userResponse.getPointsEarned() : 0L)
                 .correctAnswer(correctAnswer != null ? correctAnswer.getAnswerName() : null)

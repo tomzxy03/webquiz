@@ -159,8 +159,8 @@ public class AttemptServiceImpl implements AttemptService {
                 .orElse(0.0);
         int totalTimeSpent = instances.stream()
                 .mapToInt(i -> {
-                    Long minutes = i.getElapsedTimeMinutes();
-                    return minutes != null ? minutes.intValue() : 0;
+                    Long seconds = i.getElapsedTimeSeconds();
+                    return seconds != null ? seconds.intValue() : 0;
                 })
                 .sum();
         

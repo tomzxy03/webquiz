@@ -1,4 +1,4 @@
-package com.tomzxy.web_quiz.services;
+package com.tomzxy.web_quiz.services.common;
 
 
 import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;

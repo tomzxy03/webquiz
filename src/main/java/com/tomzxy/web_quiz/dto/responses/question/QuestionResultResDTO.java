@@ -13,11 +13,12 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuestionResultResDTO {
-    
+
     private Long questionInstanceId;
     private Integer displayOrder;
     private String questionText;
-    private String questionType;
+    private String type;
+    private String answerType;
     private Long points;
     private Long earnedPoints;
     private String userAnswer;
@@ -26,4 +27,4 @@ public class QuestionResultResDTO {
     private boolean isSkipped;
     private String status;
     private List<AnswerResultResDTO> allAnswers;
-} 
+}

@@ -1,6 +1,6 @@
 package com.tomzxy.web_quiz.models;
 
-import com.tomzxy.web_quiz.enums.QuestionAndAnswerType;
+import com.tomzxy.web_quiz.enums.ContentType;
 import jakarta.persistence.*;
 
 import lombok.*;
@@ -24,7 +24,7 @@ public class Answer extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "answer_type", nullable = false, length = 20)
-    private QuestionAndAnswerType answerType;
+    private ContentType type;
 
     @Column(name = "answer_correct", nullable = false)
     private boolean answerCorrect;
@@ -36,11 +36,11 @@ public class Answer extends BaseEntity {
 
     // Business Logic Methods
     public boolean isTextAnswer() {
-        return answerType == QuestionAndAnswerType.TEXT;
+        return type == ContentType.TEXT;
     }
 
     public boolean isImageAnswer() {
-        return answerType == QuestionAndAnswerType.IMAGE;
+        return type == ContentType.IMAGE;
     }
 
     // to update correct answer

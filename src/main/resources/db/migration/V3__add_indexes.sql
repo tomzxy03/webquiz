@@ -70,5 +70,3 @@ ALTER TABLE ONLY public.quiz_user_responses ADD CONSTRAINT uk_instance_question 
 -- Refresh token JTI uniqueness
 ALTER TABLE ONLY public.refresh_tokens ADD CONSTRAINT idx_jti UNIQUE (jti);
 
--- Question content hash uniqueness
-ALTER TABLE ONLY public.questions ADD CONSTRAINT uk22uvhsu2cnsb404orqsl6gqdh UNIQUE (content_hash);

@@ -17,7 +17,7 @@ import java.util.List;
 
 @Repository
 public interface QuizRepo extends JpaRepository<Quiz, Long>, JpaSpecificationExecutor<Quiz> {
-    
+
     // Basic CRUD with pagination
     @Query("SELECT q FROM Quiz q WHERE q.isActive = true")
     Page<Quiz> findAllActive(Pageable pageable);
@@ -25,81 +25,95 @@ public interface QuizRepo extends JpaRepository<Quiz, Long>, JpaSpecificationExe
     // Find by host
     @Query("SELECT q FROM Quiz q WHERE q.host.id = :hostId AND q.isActive = true")
     Page<Quiz> findByHostId(@Param("hostId") Long hostId, Pageable pageable);
-    
+
     // Find by group
     @Query("SELECT q FROM Quiz q WHERE q.lobby.id = :lobbyId AND q.isActive = true")
     Page<Quiz> findByLobbyId(@Param("lobbyId") Long lobbyId, Pageable pageable);
+
     // Find popular quiz
     @Query("""
-            SELECT q FROM Quiz q
-            JOIN QuizInstance a ON a.quiz.id = q.id
-            WHERE a.startedAt >= :from
-            GROUP BY q
-            ORDER BY COUNT(a.id) DESC
-    """)
+                    SELECT q FROM Quiz q
+                    JOIN QuizInstance a ON a.quiz.id = q.id
+                    WHERE a.startedAt >= :from
+                    GROUP BY q
+                    ORDER BY COUNT(a.id) DESC
+            """)
     Page<Quiz> findPopularSince(LocalDateTime from, Pageable pageable);
 
     // Find by quiz type
     @Query("SELECT q FROM Quiz q WHERE q.visibility = :quizVisibility AND q.isActive = true")
     Page<Quiz> findByQuizVisibility(@Param("quizVisibility") QuizVisibility quizVisibility, Pageable pageable);
-    
+
     // Search by title or description
     @Query("SELECT q FROM Quiz q WHERE (LOWER(q.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
-           "OR LOWER(q.description) LIKE LOWER(CONCAT('%', :searchTerm, '%'))) AND q.isActive = true")
+            "OR LOWER(q.description) LIKE LOWER(CONCAT('%', :searchTerm, '%'))) AND q.isActive = true")
     Page<Quiz> searchByTitleOrDescription(@Param("searchTerm") String searchTerm, Pageable pageable);
-    
+
     // Find by host and group
     @Query("SELECT q FROM Quiz q WHERE q.host.id = :hostId AND q.lobby.id = :lobbyId AND q.isActive = true")
     Page<Quiz> findByHostIdAndLobbyId(@Param("hostId") Long hostId, @Param("lobbyId") Long lobbyId, Pageable pageable);
-    
-//    // Find quizzes with results count
-//    @Query("SELECT q FROM Quiz q WHERE SIZE(q.instances) > 0 AND q.isActive = true")
-//    Page<Quiz> findQuizzesWithResults(Pageable pageable);
-    
-//    // Find quizzes without results
-//    @Query("SELECT q FROM Quiz q WHERE SIZE(q.instances) = 0 AND q.isActive = true")
-//    Page<Quiz> findQuizzesWithoutResults(Pageable pageable);
-    
+
+    // // Find quizzes with results count
+    // @Query("SELECT q FROM Quiz q WHERE SIZE(q.instances) > 0 AND q.isActive =
+    // true")
+    // Page<Quiz> findQuizzesWithResults(Pageable pageable);
+
+    // // Find quizzes without results
+    // @Query("SELECT q FROM Quiz q WHERE SIZE(q.instances) = 0 AND q.isActive =
+    // true")
+    // Page<Quiz> findQuizzesWithoutResults(Pageable pageable);
+
     // Find by subject
     @Query("SELECT q FROM Quiz q WHERE q.subject.id = :subjectId AND q.isActive = true")
     Page<Quiz> findBySubjectId(@Param("subjectId") Long subjectId, Pageable pageable);
-    
+
     // Count quizzes by host
     @Query("SELECT COUNT(q) FROM Quiz q WHERE q.host.id = :hostId AND q.isActive = true")
     long countByHostId(@Param("hostId") Long hostId);
-    
+
     // Count quizzes by group
     @Query("SELECT COUNT(q) FROM Quiz q WHERE q.lobby.id = :lobbyId AND q.isActive = true")
     long countByLobbyId(@Param("lobbyId") Long lobbyId);
-    
+
     // Find recent quizzes
     @Query("SELECT q FROM Quiz q WHERE q.isActive = true ORDER BY q.createdAt DESC")
     Page<Quiz> findRecentQuizzes(Pageable pageable);
-    
+
     // Find popular quizzes (with most results)
     @Query("SELECT q FROM Quiz q WHERE q.isActive = true ORDER BY SIZE(q.instances) DESC")
     Page<Quiz> findPopularQuizzes(Pageable pageable);
-    
+
     // Check if quiz exists by title and host
     @Query("SELECT CASE WHEN COUNT(q) > 0 THEN true ELSE false END FROM Quiz q " +
-           "WHERE q.title = :title AND q.host.id = :hostId AND q.isActive = true")
+            "WHERE q.title = :title AND q.host.id = :hostId AND q.isActive = true")
     boolean existsByTitleAndHostId(@Param("title") String title, @Param("hostId") Long hostId);
-    
+
     // Find all quiz types used by a host
     @Query("SELECT DISTINCT q.visibility FROM Quiz q WHERE q.host.id = :hostId AND q.isActive = true")
     List<QuizVisibility> findQuizVisibilitiesByHostId(@Param("hostId") Long hostId);
-    
+
     // Find quizzes with questions count
     @Query("SELECT q FROM Quiz q WHERE SIZE(q.quizQuestionLinks) = :questionCount AND q.isActive = true")
     Page<Quiz> findByQuestionsCount(@Param("questionCount") int questionCount, Pageable pageable);
 
     @Query("""
-SELECT COUNT(q) > 0
-FROM Quiz q
-JOIN LobbyMember lm ON lm.lobby.id = q.lobby.id
-WHERE q.id = :quizId
-AND lm.user.id = :userId
-AND lm.role = com.tomzxy.web_quiz.enums.LobbyRole.HOST
-""")
-boolean isQuizHost(Long quizId, Long userId);
-} 
+            SELECT COUNT(q) > 0
+            FROM Quiz q
+            JOIN LobbyMember lm ON lm.lobby.id = q.lobby.id
+            WHERE q.id = :quizId
+            AND lm.user.id = :userId
+            AND lm.role = com.tomzxy.web_quiz.enums.LobbyRole.HOST
+            """)
+    boolean isQuizHost(Long quizId, Long userId);
+
+    // Dashboard: draft quizzes for the user (with subject eager)
+    @Query("SELECT q FROM Quiz q JOIN FETCH q.subject s LEFT JOIN FETCH q.quizQuestionLinks WHERE q.host.id = :hostId AND q.status = :status AND q.isActive = true ORDER BY q.updatedAt DESC")
+    List<Quiz> findDraftsByHostId(@Param("hostId") Long hostId,
+            @Param("status") com.tomzxy.web_quiz.enums.QuizStatus status, Pageable pageable);
+
+    // Dashboard: upcoming quizzes in user's groups
+    @Query("SELECT q FROM Quiz q JOIN FETCH q.subject s WHERE q.lobby.id IN :lobbyIds AND q.status = :status AND q.isActive = true AND q.endDate > :now ORDER BY q.startDate ASC")
+    List<Quiz> findUpcomingByLobbyIds(@Param("lobbyIds") List<Long> lobbyIds,
+            @Param("status") com.tomzxy.web_quiz.enums.QuizStatus status, @Param("now") LocalDateTime now,
+            Pageable pageable);
+}

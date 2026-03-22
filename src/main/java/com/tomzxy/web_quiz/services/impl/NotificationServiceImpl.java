@@ -19,8 +19,9 @@ import com.tomzxy.web_quiz.repositories.LobbyRepo;
 import com.tomzxy.web_quiz.repositories.NotificationRepo;
 import com.tomzxy.web_quiz.repositories.NotificationUserRepo;
 import com.tomzxy.web_quiz.repositories.UserRepo;
-import com.tomzxy.web_quiz.services.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.services.NotificationService;
+import com.tomzxy.web_quiz.services.common.ConvertToPageResDTO;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

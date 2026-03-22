@@ -8,13 +8,14 @@ import org.mapstruct.factory.Mappers;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring", uses = {AnswersSnapshotMapper.class})
+@Mapper(componentModel = "spring", uses = { AnswersSnapshotMapper.class })
 public interface QuestionSnapshotMapper {
     QuestionSnapshotMapper INSTANCE = Mappers.getMapper(QuestionSnapshotMapper.class);
 
     @Mapping(target = "answerSnapshots", source = "answers")
     @Mapping(target = "questionText", source = "content")
-    @Mapping(target = "questionType", source = "type")
+    @Mapping(target = "type", source = "type")
+    @Mapping(target = "answerType", source = "answerType")
     @Mapping(target = "questionPoints", source = "points")
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)

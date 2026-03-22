@@ -41,6 +41,7 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
 
       JWT_SECRET: ${JWT_SECRET}
+      GROQ_KEY: ${GROQ_KEY}
 
     volumes:
       - ./logs:/app/logs

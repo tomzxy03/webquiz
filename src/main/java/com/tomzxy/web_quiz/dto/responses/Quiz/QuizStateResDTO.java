@@ -30,6 +30,7 @@ public class QuizStateResDTO {
         private String questionId; // question key in snapshot
         private String content;
         private String type;
+        private String answerType;
         private Integer orderIndex;
         private Long points;
         private List<QuizStateAnswerDTO> answers;

@@ -27,90 +27,91 @@ import java.util.List;
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class WebConfig {
-    private final JWTFilter jwtFilter;
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        private final JWTFilter jwtFilter;
 
-        http
-                .cors(cors -> {})
-                .csrf(AbstractHttpConfigurer::disable)
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                http
+                                .cors(cors -> {
+                                })
+                                .csrf(AbstractHttpConfigurer::disable)
 
-                .authorizeHttpRequests(auth -> auth
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                        // Swagger
-                        .requestMatchers(
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html"
-                        ).permitAll()
+                                .authorizeHttpRequests(auth -> auth
 
-                        // Auth APIs
-                        .requestMatchers(
-                                "/api/auth/login",
-                                "/api/auth/signup",
-                                "/api/auth/refresh",
-                                "/api/auth/logout"
-                        ).permitAll()
+                                                // Swagger
+                                                .requestMatchers(
+                                                                "/v3/api-docs/**",
+                                                                "/swagger-ui/**",
+                                                                "/swagger-ui.html")
+                                                .permitAll()
 
-                        // Public quiz APIs
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/quizzes/**",
-                                "/api/subjects/**"
-                        ).permitAll()
+                                                // Auth APIs
+                                                .requestMatchers(
+                                                                "/api/auth/login",
+                                                                "/api/auth/signup",
+                                                                "/api/auth/refresh",
+                                                                "/api/auth/logout")
+                                                .permitAll()
 
-                        // Admin APIs
-                        .requestMatchers("/api/admin/**")
-                        .hasRole("ADMIN")
+                                                // Public quiz APIs
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/quizzes/**",
+                                                                "/api/subjects/**")
+                                                .permitAll()
 
-                        // Creator APIs - Allow authenticated users, let @PreAuthorize handle permissions
-                        .requestMatchers(HttpMethod.POST, "/api/quizzes/**")
-                        .authenticated()
+                                                // Admin APIs
+                                                .requestMatchers("/api/tomzxyadmin/**")
+                                                .hasRole("ADMIN")
 
-                        .requestMatchers(HttpMethod.PUT, "/api/quizzes/**")
-                        .authenticated()
+                                                // Creator APIs - Allow authenticated users, let @PreAuthorize handle
+                                                // permissions
+                                                .requestMatchers(HttpMethod.POST, "/api/quizzes/**")
+                                                .authenticated()
 
-                        .requestMatchers(HttpMethod.DELETE, "/api/quizzes/**")
-                        .authenticated()
-                        
+                                                .requestMatchers(HttpMethod.PUT, "/api/quizzes/**")
+                                                .authenticated()
 
-                        // Other APIs
-                        .anyRequest().authenticated()
-                )
+                                                .requestMatchers(HttpMethod.DELETE, "/api/quizzes/**")
+                                                .authenticated()
 
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                                                // Other APIs
+                                                .anyRequest().authenticated())
 
-        return http.build();
-    }
+                                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+                return http.build();
+        }
 
-        CorsConfiguration configuration = new CorsConfiguration();
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
 
-        configuration.setAllowCredentials(true);
-        configuration.setAllowedOrigins(List.of("http://localhost:8081", "http://localhost:8082", "http://localhost:8083"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+                CorsConfiguration configuration = new CorsConfiguration();
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                configuration.setAllowCredentials(true);
+                configuration.setAllowedOrigins(
+                                List.of("http://localhost:8081", "http://localhost:8082", "http://localhost:8083"));
+                configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                configuration.setAllowedHeaders(List.of("*"));
 
-        source.registerCorsConfiguration("/**", configuration);
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
-        return source;
-    }
+                source.registerCorsConfiguration("/**", configuration);
 
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration configuration) throws Exception {
-        return configuration.getAuthenticationManager();
-    }
+                return source;
+        }
 
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        @Bean
+        public AuthenticationManager authenticationManager(
+                        AuthenticationConfiguration configuration) throws Exception {
+                return configuration.getAuthenticationManager();
+        }
+
+        @Bean
+        public BCryptPasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 }

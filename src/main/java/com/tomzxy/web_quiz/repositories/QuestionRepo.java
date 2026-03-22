@@ -1,7 +1,7 @@
 package com.tomzxy.web_quiz.repositories;
 
 import com.tomzxy.web_quiz.enums.Level;
-import com.tomzxy.web_quiz.enums.QuestionAndAnswerType;
+import com.tomzxy.web_quiz.enums.ContentType;
 import com.tomzxy.web_quiz.models.Question;
 import lombok.NonNull;
 import org.springframework.data.domain.Page;
@@ -40,8 +40,8 @@ public interface QuestionRepo extends JpaRepository<Question, Long>, JpaSpecific
     Page<Question> findByLevel(@Param("level") Level level, Pageable pageable);
 
     // Filter by question type
-    @Query("SELECT q FROM Question q WHERE q.questionType = :questionType AND q.isActive = true")
-    Page<Question> findByQuestionType(@Param("questionType") QuestionAndAnswerType questionType, Pageable pageable);
+    @Query("SELECT q FROM Question q WHERE q.type = :type AND q.isActive = true")
+    Page<Question> findByType(@Param("type") ContentType type, Pageable pageable);
 
     // Filter by subject - through QuizQuestionLink -> Quiz -> Subject
     @Query("SELECT DISTINCT q FROM Question q JOIN QuizQuestionLink qql ON qql.question = q JOIN qql.quiz quiz WHERE quiz.subject.id = :subjectId AND q.isActive = true")
@@ -55,9 +55,8 @@ public interface QuestionRepo extends JpaRepository<Question, Long>, JpaSpecific
     List<String> findAllByContentHashIn(@Param("incomingHashes") List<String> incomingHashes);
 
     // Filter by multiple question types
-    @Query("SELECT q FROM Question q WHERE q.questionType IN :questionTypes AND q.isActive = true")
-    Page<Question> findByQuestionTypes(@Param("questionTypes") Set<QuestionAndAnswerType> questionTypes,
-            Pageable pageable);
+    @Query("SELECT q FROM Question q WHERE q.type IN :types AND q.isActive = true")
+    Page<Question> findByTypes(@Param("types") Set<ContentType> types, Pageable pageable);
 
     // Filter by multiple subjects - through QuizQuestionLink -> Quiz -> Subject
     @Query("SELECT DISTINCT q FROM Question q JOIN QuizQuestionLink qql ON qql.question = q JOIN qql.quiz quiz WHERE quiz.subject.id IN :subjectIds AND q.isActive = true")
@@ -68,9 +67,9 @@ public interface QuestionRepo extends JpaRepository<Question, Long>, JpaSpecific
     Page<Question> findQuestionsWithCorrectAnswers(Pageable pageable);
 
     // Find questions by level and type
-    @Query("SELECT q FROM Question q WHERE q.level = :level AND q.questionType = :questionType AND q.isActive = true")
+    @Query("SELECT q FROM Question q WHERE q.level = :level AND q.type = :type AND q.isActive = true")
     Page<Question> findByLevelAndType(@Param("level") Level level,
-            @Param("questionType") QuestionAndAnswerType questionType, Pageable pageable);
+            @Param("type") ContentType type, Pageable pageable);
 
     // Find questions by subject and level - through QuizQuestionLink -> Quiz ->
     // Subject
@@ -80,9 +79,9 @@ public interface QuestionRepo extends JpaRepository<Question, Long>, JpaSpecific
 
     // Find questions by subject and type - through QuizQuestionLink -> Quiz ->
     // Subject
-    @Query("SELECT DISTINCT q FROM Question q JOIN QuizQuestionLink qql ON qql.question = q JOIN qql.quiz quiz WHERE quiz.subject.id = :subjectId AND q.questionType = :questionType AND q.isActive = true")
+    @Query("SELECT DISTINCT q FROM Question q JOIN QuizQuestionLink qql ON qql.question = q JOIN qql.quiz quiz WHERE quiz.subject.id = :subjectId AND q.type = :type AND q.isActive = true")
     Page<Question> findBySubjectIdAndType(@Param("subjectId") Long subjectId,
-            @Param("questionType") QuestionAndAnswerType questionType, Pageable pageable);
+            @Param("type") ContentType type, Pageable pageable);
 
     // Count questions by level
     @Query("SELECT COUNT(q) FROM Question q WHERE q.level = :level AND q.isActive = true")
@@ -93,8 +92,8 @@ public interface QuestionRepo extends JpaRepository<Question, Long>, JpaSpecific
     long countBySubjectId(@Param("subjectId") Long subjectId);
 
     // Count questions by type
-    @Query("SELECT COUNT(q) FROM Question q WHERE q.questionType = :questionType AND q.isActive = true")
-    long countByQuestionType(@Param("questionType") QuestionAndAnswerType questionType);
+    @Query("SELECT COUNT(q) FROM Question q WHERE q.type = :type AND q.isActive = true")
+    long countByType(@Param("type") ContentType type);
 
     // Find recent questions
     @Query("SELECT q FROM Question q WHERE q.isActive = true ORDER BY q.createdAt DESC")
@@ -125,8 +124,8 @@ public interface QuestionRepo extends JpaRepository<Question, Long>, JpaSpecific
     List<String> findAllQuestionNames(@Param("names") List<String> names);
 
     // Find all question types used
-    @Query("SELECT DISTINCT q.questionType FROM Question q WHERE q.isActive = true")
-    List<QuestionAndAnswerType> findAllQuestionTypes();
+    @Query("SELECT DISTINCT q.type FROM Question q WHERE q.isActive = true")
+    List<ContentType> findAllTypes();
 
     // Find questions by ID list
     @Query("SELECT q FROM Question q WHERE q.id IN :ids AND q.isActive = true")

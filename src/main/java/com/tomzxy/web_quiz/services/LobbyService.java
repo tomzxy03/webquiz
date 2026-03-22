@@ -5,10 +5,16 @@ import com.tomzxy.web_quiz.dto.requests.Notification.NotificationReqDTO;
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.Quiz.QuizResDTO;
+import com.tomzxy.web_quiz.dto.responses.lobby.LobbyCodeInviteResDTO;
 import com.tomzxy.web_quiz.dto.responses.lobby.LobbyNotificationResDTO;
 import com.tomzxy.web_quiz.dto.responses.lobby.LobbyQuizResDTO;
 import com.tomzxy.web_quiz.dto.responses.lobby.LobbyResDTO;
+import com.tomzxy.web_quiz.dto.responses.question.QuestionResDTO;
+
+import java.util.List;
+
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface LobbyService {
     LobbyResDTO createLobby(LobbyReqDTO lobbyReqDTO);
@@ -44,7 +50,7 @@ public interface LobbyService {
 
     void deleteNotification(Long lobbyId, Long notificationId);
 
-    LobbyResDTO joinLobby(String code);
+    LobbyResDTO joinLobby(Long lobbyId);
 
     // User's groups
     PageResDTO<?> getLobbyByUser(Long userId, int page, int size);
@@ -58,4 +64,13 @@ public interface LobbyService {
     LobbyQuizResDTO updateQuizInGroup(Long lobbyId, Long quizId, QuizReqDTO quizReqDTO);
 
     void removeQuizFromGroup(Long lobbyId, Long quizId);
+
+    //get code invite
+    LobbyCodeInviteResDTO getCodeInvite(Long lobbyId);
+
+    // find
+    LobbyResDTO findLobbyByCode(String code);
+
+    // reload codeInvite
+    LobbyCodeInviteResDTO reloadCodeInvite(Long lobbyId);
 }

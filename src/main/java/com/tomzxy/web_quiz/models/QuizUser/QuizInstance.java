@@ -2,10 +2,12 @@ package com.tomzxy.web_quiz.models.QuizUser;
 
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
 import com.tomzxy.web_quiz.models.snapshot.QuizQuestionSnapshot;
+
 import jakarta.persistence.*;
 import lombok.*;
 import jakarta.persistence.Index;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -88,16 +90,19 @@ public class QuizInstance extends BaseEntity {
         return this.status == QuizInstanceStatus.TIMED_OUT;
     }
 
-    public Long getElapsedTimeMinutes() {
+    public Long getElapsedTimeSeconds() {
         if (endedAt == null)
             return null;
-        return java.time.Duration.between(startedAt, endedAt).toMinutes();
+
+        return Duration.between(startedAt, endedAt).getSeconds();
     }
 
     public double getScorePercentage() {
         if (totalPoints == 0)
             return 0.0;
-        return (double) earnedPoints / totalPoints * 100;
+
+        double percent = (double) earnedPoints * 100 / totalPoints;
+        return Math.round(percent * 100.0) / 100.0;
     }
 
     public void addUserResponse(QuizUserResponse response) {

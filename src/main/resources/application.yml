@@ -1,4 +1,7 @@
 spring:
+  jackson:
+    mapper:
+      accept-case-insensitive-enums: true
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -35,4 +38,7 @@ logging:
 flyway:
   enabled: true
   locations: classpath:db/migration
+
+groq:
+  api-key: ${GROQ_KEY}
 

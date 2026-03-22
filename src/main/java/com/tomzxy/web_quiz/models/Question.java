@@ -1,7 +1,8 @@
 package com.tomzxy.web_quiz.models;
 
+import com.tomzxy.web_quiz.enums.AnswerType;
 import com.tomzxy.web_quiz.enums.Level;
-import com.tomzxy.web_quiz.enums.QuestionAndAnswerType;
+import com.tomzxy.web_quiz.enums.ContentType;
 import com.tomzxy.web_quiz.models.Host.QuestionBank;
 import jakarta.persistence.*;
 
@@ -22,6 +23,7 @@ import java.util.Set;
 @Table(name = "questions", indexes = {
         @Index(name = "idx_question_type", columnList = "question_type"),
         @Index(name = "idx_question_level", columnList = "level"),
+        @Index(name = "idx_question_answer_type", columnList = "answer_type"),
         @Index(name = "idx_question_created_at", columnList = "created_at"),
         @Index(name = "idx_question_bank", columnList = "bank_id"),
         @Index(name = "idx_question_folder", columnList = "folder_id"),
@@ -34,11 +36,15 @@ public class Question extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "question_type", nullable = false, length = 20)
-    private QuestionAndAnswerType questionType;
+    private ContentType type;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "level", nullable = true, length = 20)
     private Level level;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "answer_type", nullable = false, length = 20)
+    private AnswerType answerType;
 
     // Thuộc về Question Bank nào (REQUIRED)
     @ManyToOne(fetch = FetchType.LAZY)
@@ -50,7 +56,7 @@ public class Question extends BaseEntity {
     @JoinColumn(name = "folder_id")
     private Folder folder; // Có thể null!
 
-    @Column(name = "content_hash", nullable = false, unique = true, length = 64)
+    @Column(name = "content_hash", nullable = false, length = 64)
     private String contentHash; // to distinguish, comparing between question and question
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -86,7 +92,7 @@ public class Question extends BaseEntity {
                 + (questionName != null ? questionName.substring(0, Math.min(50, questionName.length())) + "..."
                         : "null")
                 + '\'' +
-                ", questionType=" + questionType +
+                ", type=" + type +
                 ", level=" + level +
                 ", isActive=" + isActive() +
                 '}';

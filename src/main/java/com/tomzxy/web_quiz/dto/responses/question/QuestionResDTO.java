@@ -1,9 +1,8 @@
 package com.tomzxy.web_quiz.dto.responses.question;
 
-
 import com.tomzxy.web_quiz.dto.responses.answer.AnswerResDTO;
-import com.tomzxy.web_quiz.enums.Level;
-import com.tomzxy.web_quiz.enums.QuestionAndAnswerType;
+import com.tomzxy.web_quiz.enums.AnswerType;
+import com.tomzxy.web_quiz.enums.ContentType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -21,8 +20,9 @@ public class QuestionResDTO {
 
     private String questionName;
 
-    private QuestionAndAnswerType questionType;
+    private ContentType type;
+
+    private AnswerType answerType;
 
     private List<AnswerResDTO> answers;
 }
-
