@@ -1,176 +1,116 @@
-## Các Tính Năng Quản Trị Hệ Thống (Admin APIs)
-
-Tất cả các requests dưới đây sử dụng form base `DataResDTO<T>`, cấu trúc chuẩn trả về:
-```json
-{
-  "code": 200,          // 200: OK, 201: Created
-  "message": "...",     // Thông điệp kết quả
-  "items": { ... }      // Chứa dữ liệu trả về theo từng DTO cụ thể
-}
-```
-
-### 1. Thống Kê Dashboard
-- **`GET /tomzxyadmin`**
-  - **Request:** Trống
-  - **Response (`AdminDashboardResDTO`):**
-    ```json
-    {
-      "totalUsers": 1205,
-      "totalGroups": 15,
-      "totalQuizzes": 403,
-      "totalResults": 15034,
-      "userTrend": "+5.2% tháng này",
-      "groupTrend": "+1.0% tháng này",
-      "quizTrend": "+12.4% tháng này",
-      "resultTrend": "+20.1% tháng này",
-      "recentQuizzes": [ { "id": 1, "title": "C++ Basics", "creatorName": "tomzxy03", "createdAt": "2026-03-22T..." } ],
-      "recentUsers": [ { "id": 2, "userName": "datvip2003", "email": "datvip2003@gmail.com", "joinedAt": "2026-03-20T..." } ]
-    }
-    ```
-
-### 2. Quản Lý Người Dùng
-- **`GET /tomzxyadmin/users`**
-  - **Query parameters (`AdminListReqDTO`):** `page`, `size`, `search`, `status`
-  - **Response (`PageResDTO<AdminUserResDTO>`):**
-    ```json
-    {
-      "content": [
-        { "id": 1, "userName": "datvip", "email": "dat@gmail.com", "role": "USER", "status": "ACTIVE", "joinedAt": "..." }
-      ],
-      "pageNo": 0, "pageSize": 10, "totalElements": 1, "totalPages": 1, "last": true
-    }
-    ```
-- **`GET /tomzxyadmin/users/{userId}`**
-  - **Request:** Trống
-  - **Response (`AdminUserDetailResDTO`):** Chứa thông tin của `AdminUserResDTO` ở trên, cộng thêm:
-    ```json
-    {
-      "groups": [ { "id": 1, "name": "Lập trình Java", "role": "MEMBER", "joinedAt": "..." } ],
-      "results": [ { "id": 10, "quizTitle": "Java Core", "score": 90.0, "timeSpentSeconds": 1500, "submittedAt": "..." } ]
-    }
-    ```
-- **`PUT /tomzxyadmin/users/{userId}`**
-  - **Request Body (`AdminUserUpdateReqDTO`):**
-    ```json
-    { "status": "ACTIVE", "roleIds": [2] }
-    ```
-  - **Response:** `AdminUserResDTO`
-- **`DELETE /tomzxyadmin/users/{userId}`**
-  - **Response:** Trống (`items: null`, `code: 6` - Delete thành công). Soft-delete (vô hiệu hóa user).
-
-### 3. Quản Lý Nhóm (Lobby)
-- **`GET /tomzxyadmin/groups`**
-  - **Query parameters:** `page`, `size`, `search`, `status`
-  - **Response (`PageResDTO<AdminGroupResDTO>`):** Returns `{ id, name, ownerName, status, createdAt, memberCount }`
-- **`GET /tomzxyadmin/groups/{groupId}`**
-  - **Response (`AdminGroupDetailResDTO`):** Data giống `AdminGroupResDTO` và thêm chi tiết:
-    ```json
-    {
-      "description": "Nhóm học Java",
-      "quizCount": 5, "announcementCount": 2,
-      "members": [ { "id": 1, "userName": "datvip", "email": "dat@gmail.com", "role": "HOST", "joinedAt": "..." } ],
-      "quizzes": [ { "id": 3, "title": "OOP Basic", "status": "PUBLISHED", "createdAt": "..." } ]
-    }
-    ```
-- **`PUT /tomzxyadmin/groups/{groupId}`**
-  - **Request Body (`AdminGroupUpdateReqDTO`):** `{ "status": "ACTIVE" }`
-  - **Response:** `AdminGroupResDTO`
-- **`DELETE /tomzxyadmin/groups/{groupId}`**
-  - **Response:** Trống. Soft-delete nhóm.
-
-### 4. Quản Lý Quizzes (Bài Thi)
-- **`GET /tomzxyadmin/quizzes`**
-  - **Query params:** `page`, `size`, `search`, `status`, `groupId`
-  - **Response (`PageResDTO<AdminQuizResDTO>`):** Returns `{ id, title, creatorName, groupName, status, visibility, createdAt }`
-- **`GET /tomzxyadmin/quizzes/{quizId}`**
-  - **Response (`AdminQuizDetailResDTO`):** Data giống `AdminQuizResDTO` kèm thêm:
-    ```json
-    {
-      "questionCount": 20, "attemptCount": 150,
-      "config": {
-         "timeLimitMinutes": 45,
-         "passingScore": 50,
-         "shuffleQuestions": true,
-         "shuffleOptions": true,
-         "allowReview": true,
-         "maxAttempts": 2
-      }
-    }
-    ```
-- **`PUT /tomzxyadmin/quizzes/{quizId}`**
-  - **Request Body (`AdminQuizUpdateReqDTO`):** `{ "status": "PUBLISHED", "visibility": "PUBLIC" }`
-  - **Response:** `AdminQuizResDTO`
-- **`DELETE /tomzxyadmin/quizzes/{quizId}`**
-  - **Response:** Trống. Soft-delete quiz.
-
-### 5. Quản Lý Lịch Sử Bài Làm (Results)
-- **`GET /tomzxyadmin/results`**
-  - **Query params:** `page`, `size`, `search` (theo user/quiz title)
-  - **Response (`PageResDTO<AdminResultResDTO>`):** Returns `{ id, quizTitle, userName, groupName, status, score, timeSpentSeconds, submittedAt }`
-- **`GET /tomzxyadmin/results/{resultId}`**
-  - **Response (`AdminResultDetailResDTO`):** Data giống `AdminResultResDTO` cộng thêm:
-    ```json
-    {
-      "correctAnswers": 15,
-      "wrongAnswers": 4,
-      "skippedAnswers": 1
-    }
-    ```
-- **`DELETE /tomzxyadmin/results/{resultId}`**
-  - **Response:** Trống. Soft-delete kết quả thi đó.
-
-### 6. Quản Lý Môn Học (Subjects)
-- **`GET /tomzxyadmin/subjects`**
-  - **Response:** Array of `AdminSubjectResDTO` `{ id, name, description, active, quizCount }`
-- **`POST /tomzxyadmin/subjects`**
-  - **Request Body (`AdminSubjectReqDTO`):** `{ "name": "Lịch Sử", "description": "Lịch sử Việt Nam" }`
-  - **Response:** Trống (`code: 201 Created`)
-- **`PUT /tomzxyadmin/subjects/{subjectId}`**
-  - **Request Body (`AdminSubjectReqDTO`):** Nhập tên và description cần update.
-  - **Response:** `AdminSubjectResDTO`
-- **`DELETE /tomzxyadmin/subjects/{subjectId}`**
-  - **Response:** Trống. Soft-delete subject.
-
-### 7. Quản Lý Quyền Hệ Thống (Roles)
-- **`GET /tomzxyadmin/roles`**
-  - **Response:** Array of `AdminRoleResDTO` 
-    ```json
-    [
-      { "id": 1, "name": "ADMIN", "userCount": 2, "permissions": ["VIEW_user", "UPDATE_user", "DELETE_quiz"] }
-    ]
-    ```
-- **`GET /tomzxyadmin/roles/{roleId}`**
-  - **Response:** `AdminRoleResDTO`
-- **`POST /tomzxyadmin/roles`**
-  - **Request Body (`AdminRoleReqDTO`):**
-    ```json
-    {
-      "name": "MODERATOR",
-      "permissions": ["VIEW_user", "UPDATE_user", "VIEW_quiz"]
-    }
-    ```
-  - **Response:** `AdminRoleResDTO`
-- **`PUT /tomzxyadmin/roles/{roleId}`**
-  - **Request Body (`AdminRoleReqDTO`):** (Ghi đè lại toàn bộ permissions của Role này)
-  - **Response:** `AdminRoleResDTO`
-- **`DELETE /tomzxyadmin/roles/{roleId}`**
-  - **Response:** Trống. (Không thể xóa nếu role đang có người dùng)
-
-### 8. Quản Lý Ngân Hàng Câu Hỏi (Question Banks)
-- **`GET /tomzxyadmin/question-banks`**
-  - **Query params:** `page`, `size`
-  - **Response (`PageResDTO<AdminQuestionBankResDTO>`):**
-    ```json
-    {
-      "content": [
-        { "id": 1, "ownerName": "datvip2003", "folderCount": 10, "questionCount": 200, "createdAt": "..." }
-      ]
-    }
-    ```
-
-### 9. Quản Lý Thông Báo (Notifications)
-- **`GET /tomzxyadmin/notifications`**
-  - **Query params:** `page`, `size`
-  - **Response (`PageResDTO<AdminNotificationResDTO>`):** Returns `{ id, title, type, targetGroupName, creatorName, createdAt }`
-- **`DELETE /tomzxyadmin/notifications/{notificationId}`**
-  - **Response:** Trống. Xóa cứng thông báo.
+	at org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory.getConnection(LettuceConnectionFactory.java:1051) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+	at org.springframework.data.redis.core.RedisConnectionUtils.fetchConnection(RedisConnectionUtils.java:195) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+	at org.springframework.data.redis.core.RedisConnectionUtils.doGetConnection(RedisConnectionUtils.java:144) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+	at org.springframework.data.redis.core.RedisConnectionUtils.getConnection(RedisConnectionUtils.java:105) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+	at org.springframework.data.redis.core.RedisTemplate.execute(RedisTemplate.java:383) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+	at org.springframework.data.redis.core.RedisTemplate.execute(RedisTemplate.java:363) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119) ~[spring-tx-6.1.13.jar!/:6.1.13]
+	at org.springframework.data.redis.core.AbstractOperations.execute(AbstractOperations.java:97) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+	at org.springframework.data.redis.core.DefaultZSetOperations.rangeByScore(DefaultZSetOperations.java:285) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+	at com.tomzxy.web_quiz.services.impl.QuizInstanceServiceImpl.handleTimedOutInstances(QuizInstanceServiceImpl.java:601) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Unknown Source) ~[na:na]
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:355) ~[spring-aop-6.1.13.jar!/:6.1.13]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196) ~[spring-aop-6.1.13.jar!/:6.1.13]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163) ~[spring-aop-6.1.13.jar!/:6.1.13]
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768) ~[spring-aop-6.1.13.jar!/:6.1.13]
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:379) ~[spring-tx-6.1.13.jar!/:6.1.13]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.13.jar!/:6.1.13]
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768) ~[spring-aop-6.1.13.jar!/:6.1.13]
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:720) ~[spring-aop-6.1.13.jar!/:6.1.13]
+	at com.tomzxy.web_quiz.services.impl.QuizInstanceServiceImpl$$SpringCGLIB$$0.handleTimedOutInstances(<generated>) ~[!/:0.0.1-SNAPSHOT]
+	at com.tomzxy.web_quiz.configs.QuizTimeoutScheduler.checkTimeouts(QuizTimeoutScheduler.java:27) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Unknown Source) ~[na:na]
+	at org.springframework.scheduling.support.ScheduledMethodRunnable.runInternal(ScheduledMethodRunnable.java:130) ~[spring-context-6.1.13.jar!/:6.1.13]
+	at org.springframework.scheduling.support.ScheduledMethodRunnable.lambda$run$2(ScheduledMethodRunnable.java:124) ~[spring-context-6.1.13.jar!/:6.1.13]
+	at io.micrometer.observation.Observation.observe(Observation.java:499) ~[micrometer-observation-1.13.4.jar!/:1.13.4]
+	at org.springframework.scheduling.support.ScheduledMethodRunnable.run(ScheduledMethodRunnable.java:124) ~[spring-context-6.1.13.jar!/:6.1.13]
+	at org.springframework.scheduling.support.DelegatingErrorHandlingRunnable.run(DelegatingErrorHandlingRunnable.java:54) ~[spring-context-6.1.13.jar!/:6.1.13]
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source) ~[na:na]
+	at java.base/java.util.concurrent.FutureTask.runAndReset(Unknown Source) ~[na:na]
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source) ~[na:na]
+	at java.base/java.lang.Thread.run(Unknown Source) ~[na:na]
+Caused by: io.lettuce.core.RedisConnectionException: Unable to connect to redis.railway.internal/<unresolved>:6379
+at io.lettuce.core.RedisConnectionException.create(RedisConnectionException.java:78) ~[lettuce-core-6.3.2.RELEASE.jar!/:6.3.2.RELEASE/8941aea]
+at io.lettuce.core.RedisConnectionException.create(RedisConnectionException.java:56) ~[lettuce-core-6.3.2.RELEASE.jar!/:6.3.2.RELEASE/8941aea]
+at io.lettuce.core.AbstractRedisClient.getConnection(AbstractRedisClient.java:350) ~[lettuce-core-6.3.2.RELEASE.jar!/:6.3.2.RELEASE/8941aea]
+at io.lettuce.core.RedisClient.connect(RedisClient.java:215) ~[lettuce-core-6.3.2.RELEASE.jar!/:6.3.2.RELEASE/8941aea]
+at org.springframework.data.redis.connection.lettuce.StandaloneConnectionProvider.lambda$getConnection$1(StandaloneConnectionProvider.java:112) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+at java.base/java.util.Optional.orElseGet(Unknown Source) ~[na:na]
+at org.springframework.data.redis.connection.lettuce.StandaloneConnectionProvider.getConnection(StandaloneConnectionProvider.java:112) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+at org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory$ExceptionTranslatingConnectionProvider.getConnection(LettuceConnectionFactory.java:1778) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+... 40 common frames omitted
+Caused by: io.lettuce.core.RedisCommandExecutionException: NOAUTH HELLO must be called with the client already authenticated, otherwise the HELLO <proto> AUTH <user> <pass> option can be used to authenticate the client and select the RESP protocol version at the same time
+at io.lettuce.core.internal.ExceptionFactory.createExecutionException(ExceptionFactory.java:147) ~[lettuce-core-6.3.2.RELEASE.jar!/:6.3.2.RELEASE/8941aea]
+at io.lettuce.core.internal.ExceptionFactory.createExecutionException(ExceptionFactory.java:116) ~[lettuce-core-6.3.2.RELEASE.jar!/:6.3.2.RELEASE/8941aea]
+at io.lettuce.core.protocol.AsyncCommand.completeResult(AsyncCommand.java:120) ~[lettuce-core-6.3.2.RELEASE.jar!/:6.3.2.RELEASE/8941aea]
+at io.lettuce.core.protocol.AsyncCommand.complete(AsyncCommand.java:111) ~[lettuce-core-6.3.2.RELEASE.jar!/:6.3.2.RELEASE/8941aea]
+at io.lettuce.core.protocol.CommandHandler.complete(CommandHandler.java:745) ~[lettuce-core-6.3.2.RELEASE.jar!/:6.3.2.RELEASE/8941aea]
+at io.lettuce.core.protocol.CommandHandler.decode(CommandHandler.java:680) ~[lettuce-core-6.3.2.RELEASE.jar!/:6.3.2.RELEASE/8941aea]
+at io.lettuce.core.protocol.CommandHandler.channelRead(CommandHandler.java:597) ~[lettuce-core-6.3.2.RELEASE.jar!/:6.3.2.RELEASE/8941aea]
+at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:442) ~[netty-transport-4.1.113.Final.jar!/:4.1.113.Final]
+at io.netty.channel.DefaultChannelPipeline.fireChannelRead(DefaultChannelPipeline.java:868) ~[netty-transport-4.1.113.Final.jar!/:4.1.113.Final]
+at io.netty.channel.nio.AbstractNioByteChannel$NioByteUnsafe.read(AbstractNioByteChannel.java:166) ~[netty-transport-4.1.113.Final.jar!/:4.1.113.Final]
+at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:788) ~[netty-transport-4.1.113.Final.jar!/:4.1.113.Final]
+at io.netty.channel.nio.NioEventLoop.processSelectedKeysOptimized(NioEventLoop.java:724) ~[netty-transport-4.1.113.Final.jar!/:4.1.113.Final]
+at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:650) ~[netty-transport-4.1.113.Final.jar!/:4.1.113.Final]
+at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:562) ~[netty-transport-4.1.113.Final.jar!/:4.1.113.Final]
+at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420) ~[netty-transport-4.1.113.Final.jar!/:4.1.113.Final]
+at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412) ~[netty-transport-4.1.113.Final.jar!/:4.1.113.Final]
+at io.netty.channel.DefaultChannelPipeline$HeadContext.channelRead(DefaultChannelPipeline.java:1357) ~[netty-transport-4.1.113.Final.jar!/:4.1.113.Final]
+at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:440) ~[netty-transport-4.1.113.Final.jar!/:4.1.113.Final]
+at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420) ~[netty-transport-4.1.113.Final.jar!/:4.1.113.Final]
+at io.netty.util.concurrent.SingleThreadEventExecutor$4.run(SingleThreadEventExecutor.java:997) ~[netty-common-4.1.113.Final.jar!/:4.1.113.Final]
+at io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74) ~[netty-common-4.1.113.Final.jar!/:4.1.113.Final]
+at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30) ~[netty-common-4.1.113.Final.jar!/:4.1.113.Final]
+... 1 common frames omitted
+at org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory.getSharedConnection(LettuceConnectionFactory.java:1245) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+at org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory$SharedConnection.getNativeConnection(LettuceConnectionFactory.java:1582) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+at org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory$SharedConnection.lambda$getConnection$0(LettuceConnectionFactory.java:1562) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+2026-03-23T07:28:54.934Z ERROR 1 --- [   scheduling-1] c.t.w.configs.QuizTimeoutScheduler       : Error in timeout scheduler
+at org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory.getConnection(LettuceConnectionFactory.java:1051) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+at org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory.doInLock(LettuceConnectionFactory.java:1523) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+at org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory$SharedConnection.getConnection(LettuceConnectionFactory.java:1559) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+org.springframework.data.redis.RedisConnectionFailureException: Unable to connect to Redis
+at org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory$ExceptionTranslatingConnectionProvider.translateException(LettuceConnectionFactory.java:1849) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+at org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory$ExceptionTranslatingConnectionProvider.getConnection(LettuceConnectionFactory.java:1780) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+at java.base/java.lang.reflect.Method.invoke(Unknown Source) ~[na:na]
+at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:355) ~[spring-aop-6.1.13.jar!/:6.1.13]
+at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196) ~[spring-aop-6.1.13.jar!/:6.1.13]
+at org.springframework.data.redis.core.RedisConnectionUtils.fetchConnection(RedisConnectionUtils.java:195) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+at org.springframework.data.redis.core.AbstractOperations.execute(AbstractOperations.java:97) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+at org.springframework.data.redis.core.DefaultZSetOperations.rangeByScore(DefaultZSetOperations.java:285) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+at org.springframework.data.redis.core.RedisConnectionUtils.doGetConnection(RedisConnectionUtils.java:144) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+at com.tomzxy.web_quiz.services.impl.QuizInstanceServiceImpl.handleTimedOutInstances(QuizInstanceServiceImpl.java:601) ~[!/:0.0.1-SNAPSHOT]
+at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source) ~[na:na]
+at org.springframework.data.redis.core.RedisConnectionUtils.getConnection(RedisConnectionUtils.java:105) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+at org.springframework.data.redis.core.RedisTemplate.execute(RedisTemplate.java:383) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+at org.springframework.data.redis.core.RedisTemplate.execute(RedisTemplate.java:363) ~[spring-data-redis-3.3.4.jar!/:3.3.4]
+at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163) ~[spring-aop-6.1.13.jar!/:6.1.13]
+at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768) ~[spring-aop-6.1.13.jar!/:6.1.13]
+at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:379) ~[spring-tx-6.1.13.jar!/:6.1.13]
+at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119) ~[spring-tx-6.1.13.jar!/:6.1.13]
+at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.13.jar!/:6.1.13]
+at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768) ~[spring-aop-6.1.13.jar!/:6.1.13]
+at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:720) ~[spring-aop-6.1.13.jar!/:6.1.13]
+at com.tomzxy.web_quiz.services.impl.QuizInstanceServiceImpl$$SpringCGLIB$$0.handleTimedOutInstances(<generated>) ~[!/:0.0.1-SNAPSHOT]
+at com.tomzxy.web_quiz.configs.QuizTimeoutScheduler.checkTimeouts(QuizTimeoutScheduler.java:27) ~[!/:0.0.1-SNAPSHOT]
+at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source) ~[na:na]
+at java.base/java.lang.reflect.Method.invoke(Unknown Source) ~[na:na]
+at org.springframework.scheduling.support.ScheduledMethodRunnable.runInternal(ScheduledMethodRunnable.java:130) ~[spring-context-6.1.13.jar!/:6.1.13]
+at org.springframework.scheduling.support.ScheduledMethodRunnable.lambda$run$2(ScheduledMethodRunnable.java:124) ~[spring-context-6.1.13.jar!/:6.1.13]
+at io.micrometer.observation.Observation.observe(Observation.java:499) ~[micrometer-observation-1.13.4.jar!/:1.13.4]
+at org.springframework.scheduling.support.ScheduledMethodRunnable.run(ScheduledMethodRunnable.java:124) ~[spring-context-6.1.13.jar!/:6.1.13]
+at org.springframework.scheduling.support.DelegatingErrorHandlingRunnable.run(DelegatingErrorHandlingRunnable.java:54) ~[spring-context-6.1.13.jar!/:6.1.13]
+at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source) ~[na:na]
+at java.base/java.util.concurrent.FutureTask.runAndReset(Unknown Source) ~[na:na]
+at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source) ~[na:na]
+at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source) ~[na:na]
+at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source) ~[na:na]
+at java.base/java.lang.Thread.run(Unknown Source) ~[na:na]
+Caused by: io.lettuce.core.RedisConnectionException: Unable to connect to redis.railway.internal/<unresolved>:6379
+at io.lettuce.core.RedisConnectionException.create(RedisConnectionException.java:78) ~[lettuce-core-6.3.2.RELEASE.jar!/:6.3.2.RELEASE/8941aea]
+at io.lettuce.core.RedisConnectionException.create(RedisConnectionException.java:56) ~[lettuce-core-6.3.2.RELEASE.jar!/:6.3.2.RELEASE/8941aea]

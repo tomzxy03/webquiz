@@ -21,6 +21,8 @@ spring:
     redis:
       host: ${SPRING_REDIS_HOST}
       port: ${SPRING_REDIS_PORT}
+      username: ${SPRING_REDIS_USERNAME}
+      password: ${SPRING_REDIS_PASSWORD}
 
 jwt:
   secret: ${JWT_SECRET}
@@ -41,4 +43,3 @@ flyway:
 
 groq:
   api-key: ${GROQ_KEY}
-
