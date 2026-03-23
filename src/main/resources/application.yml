@@ -19,7 +19,11 @@ spring:
 
   data:
     redis:
-      url: ${SPRING_REDIS_URL:redis://quiz-redis:6379}
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
+      password: ${SPRING_REDIS_PASSWORD:}
+      username: ${REDISUSER:default}
+      client-type: lettuce
 
 jwt:
   secret: ${JWT_SECRET}
