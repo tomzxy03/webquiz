@@ -93,7 +93,9 @@ public class WebConfig {
 
                 configuration.setAllowCredentials(true);
                 configuration.setAllowedOrigins(
-                                List.of("http://localhost:8081", "http://localhost:8082", "http://localhost:8083", "https://quizory-nine.vercel.app/"));
+                                List.of("http://localhost:8081","http://localhost:5173", // Port mặc định của Vite
+                                        "https://*.vercel.app",   // Cho phép tất cả subdomain của vercel (tiện cho preview)
+                                        "https://quizory-*.vercel.app"));
                 configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                 configuration.setAllowedHeaders(List.of("*"));
 
