@@ -30,9 +30,8 @@ logging:
   level:
     root: INFO
     org.springframework: INFO
-    org.springframework.security: DEBUG 
-    org.hibernate: INFO
-    com.tomzxy.web_quiz: DEBUG
+    org.hibernate: WARN
+    com.tomzxy.web_quiz: INFO
 
 flyway:
   enabled: true

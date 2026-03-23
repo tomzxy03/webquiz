@@ -123,11 +123,7 @@ public class RolePermissionInit implements CommandLineRunner {
             admin.setPassword(passwordEncoder.encode("datvip2003"));
             admin.setRoles(Set.of(adminRole));
 
-            admin = userRepo.save(admin);
-
-            QuestionBank bank = new QuestionBank();
-            bank.setOwner(admin);
-            questionBankRepo.save(bank);
+            userRepo.save(admin);
 
             log.info("Admin user created.");
         }
