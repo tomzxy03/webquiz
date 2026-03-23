@@ -19,10 +19,7 @@ spring:
 
   data:
     redis:
-      host: ${SPRING_REDIS_HOST}
-      port: ${SPRING_REDIS_PORT}
-      username: ${SPRING_REDIS_USERNAME}
-      password: ${SPRING_REDIS_PASSWORD}
+      url: ${SPRING_REDIS_URL:redis://quiz-redis:6379}
 
 jwt:
   secret: ${JWT_SECRET}
