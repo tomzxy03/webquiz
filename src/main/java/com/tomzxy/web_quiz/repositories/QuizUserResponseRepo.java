@@ -115,5 +115,6 @@ public interface QuizUserResponseRepo extends JpaRepository<QuizUserResponse, Lo
 
         Collection<AttemptResDTO> countCorrectByQuizInstanceIdIn(List<Long> instanceIds);
 
-        Collection<QuizInstanceStatus> countByQuizInstanceId(List<Long> inProgressIds);
+        @Query("SELECT qur.quizInstance.id, COUNT(qur) FROM QuizUserResponse qur WHERE qur.quizInstance.id IN :quizInstanceIds AND qur.isActive = true GROUP BY qur.quizInstance.id")
+        List<Object[]> countByQuizInstanceIdIn(@Param("quizInstanceIds") List<Long> quizInstanceIds);
 }
