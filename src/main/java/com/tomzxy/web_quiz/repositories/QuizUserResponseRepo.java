@@ -113,7 +113,8 @@ public interface QuizUserResponseRepo extends JpaRepository<QuizUserResponse, Lo
                         @Param("abandonedTime") LocalDateTime abandonedTime,
                         @Param("completedTime") LocalDateTime completedTime);
 
-        Collection<AttemptResDTO> countCorrectByQuizInstanceIdIn(List<Long> instanceIds);
+        @Query("SELECT qur.quizInstance.id, COUNT(qur) FROM QuizUserResponse qur WHERE qur.quizInstance.id IN :quizInstanceIds AND qur.isCorrect = true AND qur.isActive = true GROUP BY qur.quizInstance.id")
+        List<Object[]> countCorrectByQuizInstanceIdIn(@Param("quizInstanceIds") List<Long> quizInstanceIds);
 
         @Query("SELECT qur.quizInstance.id, COUNT(qur) FROM QuizUserResponse qur WHERE qur.quizInstance.id IN :quizInstanceIds AND qur.isActive = true GROUP BY qur.quizInstance.id")
         List<Object[]> countByQuizInstanceIdIn(@Param("quizInstanceIds") List<Long> quizInstanceIds);
