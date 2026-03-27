@@ -7,6 +7,7 @@ import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -85,4 +86,12 @@ public interface QuizInstanceRepo extends JpaRepository<QuizInstance, Long> {
         List<QuizInstance> findRecentByUserIdAndStatusIn(@Param("userId") Long userId,
                         @Param("statuses") List<QuizInstanceStatus> statuses, Pageable pageable);
 
+        @Modifying
+        @Query("DELETE FROM QuizInstance i WHERE i.guestId IS NOT NULL AND (" +
+                        "(i.status = 'IN_PROGRESS' AND i.updatedAt < :abandonedTime) OR " +
+                        "(i.status IN ('SUBMITTED', 'COMPLETED') AND i.updatedAt < :completedTime))") // Thêm SUBMITTED
+                                                                                                      // vào đây
+        int deleteGuestInstancesByCriteria(
+                        @Param("abandonedTime") LocalDateTime abandonedTime,
+                        @Param("completedTime") LocalDateTime completedTime);
 }
