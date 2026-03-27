@@ -5,11 +5,13 @@ import com.tomzxy.web_quiz.dto.requests.quiz.QuizQuestionReqDTO;
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.Quiz.QuizResDTO;
+import com.tomzxy.web_quiz.models.IdentityContext;
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
 import org.springframework.data.domain.Page;
 import com.tomzxy.web_quiz.dto.responses.Quiz.QuizDetailResDTO;
 import com.tomzxy.web_quiz.dto.responses.QuizInstanceResDTO;
 
+import java.security.Identity;
 import java.util.List;
 
 public interface QuizService {
@@ -23,7 +25,7 @@ public interface QuizService {
 
     QuizResDTO getById(Long id);
 
-    QuizDetailResDTO getQuizDetail(Long id);
+    QuizDetailResDTO getQuizDetail(Long id, IdentityContext identity);
 
     QuizInstanceResDTO getActiveInstance(Long quizId);
 

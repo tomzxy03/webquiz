@@ -21,6 +21,7 @@ CREATE INDEX idx_quiz_host ON public.quizzes(host_id);
 CREATE INDEX idx_quiz_subject ON public.quizzes(subject_id);
 CREATE INDEX idx_quiz_visibility ON public.quizzes(visibility);
 CREATE INDEX idx_quiz_created_at ON public.quizzes(created_at);
+CREATE INDEX idx_quiz_total_questions ON public.quizzes(total_questions);
 
 -- 4. QUIZ INSTANCE INDEXES
 CREATE INDEX idx_quiz_instance_quiz ON public.quiz_instances(quiz_id);

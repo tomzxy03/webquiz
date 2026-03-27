@@ -10,12 +10,12 @@ public class QuizSpecification {
 
         Specification<Quiz> spec = Specification.where(isActive());
 
-        spec = spec.and(SpecificationUtils.equal("subject.id", filter.getSubjectId()));
+        spec = spec.and(SpecificationUtils.equalJoin("subject", "id", filter.getSubjectId()));
         spec = spec.and(SpecificationUtils.like("title", filter.getSearch()));
-        spec = spec.and(SpecificationUtils.greaterThanOrEqual("questionCount", filter.getMinQuestions()));
-        spec = spec.and(SpecificationUtils.lessThanOrEqual("questionCount", filter.getMaxQuestions()));
-        spec = spec.and(SpecificationUtils.greaterThanOrEqual("duration", filter.getMinDuration()));
-        spec = spec.and(SpecificationUtils.lessThanOrEqual("duration", filter.getMaxDuration()));
+        spec = spec.and(SpecificationUtils.greaterThanOrEqual("totalQuestion", filter.getMinQuestions()));
+        spec = spec.and(SpecificationUtils.lessThanOrEqual("totalQuestion", filter.getMaxQuestions()));
+        spec = spec.and(SpecificationUtils.greaterThanOrEqual("timeLimitMinutes", filter.getMinDuration()));
+        spec = spec.and(SpecificationUtils.lessThanOrEqual("timeLimitMinutes", filter.getMaxDuration()));
 
         return spec;
     }

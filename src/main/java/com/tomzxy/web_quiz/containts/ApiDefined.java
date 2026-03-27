@@ -226,4 +226,11 @@ public abstract class ApiDefined {
         public static final String QUESTION_BANKS = "/question-banks";
         public static final String QUESTION_BANK_ID = QUESTION_BANKS + "/{questionBankId}";
     }
+    public static final class Attempt{
+        public static final String BASE = API_PREFIX + "/attempts";
+        public static final String ID = "{attemptId}";
+        public static final String USER = "/user/{userId}";
+        public static final String QUIZ_USER = "/quiz/{quizId}/user/{userId}";
+        public static final String DELETE_MANY = "/delete_many";
+    }
 }

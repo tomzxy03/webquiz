@@ -44,6 +44,8 @@ public class QuizInstance extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
+    private String guestId; // Dành cho người chơi là khách (nếu user_id null)
+
     @Column(name = "started_at", nullable = false)
     private LocalDateTime startedAt;
 

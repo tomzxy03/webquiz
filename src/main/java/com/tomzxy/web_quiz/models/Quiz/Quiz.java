@@ -85,10 +85,9 @@ public class Quiz extends BaseEntity {
     @Column(name = "max_attempt")
     private Integer maxAttempt;
 
-    @Transient
-    public Integer getTotalQuestions() {
-        return this.quizQuestionLinks != null ? this.quizQuestionLinks.size() : 0;
-    }
+    @Column(name = "total_question")
+    private Integer totalQuestion;
+
 
     @Transient
     public Long getTotalAttempts() {
@@ -101,7 +100,7 @@ public class Quiz extends BaseEntity {
                 "id=" + getId() +
                 ", title='" + title + '\'' +
                 ", visibility=" + visibility +
-                ", totalQuestions=" + getTotalQuestions() +
+                ", totalQuestions=" + totalQuestion +
                 ", isAvailable=" + isActive() +
                 '}';
     }

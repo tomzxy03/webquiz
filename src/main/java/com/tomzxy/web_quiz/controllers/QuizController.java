@@ -2,6 +2,8 @@ package com.tomzxy.web_quiz.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tomzxy.web_quiz.configs.IdentityResolver;
+import com.tomzxy.web_quiz.configs.security.LobbySecurity;
 import com.tomzxy.web_quiz.containts.ApiDefined;
 import com.tomzxy.web_quiz.dto.requests.filter.QuizFilterReqDTO;
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizQuestionReqDTO;
@@ -12,6 +14,7 @@ import com.tomzxy.web_quiz.dto.responses.Quiz.QuizDetailResDTO;
 import com.tomzxy.web_quiz.dto.responses.Quiz.QuizResDTO;
 import com.tomzxy.web_quiz.dto.responses.QuizInstanceResDTO;
 import com.tomzxy.web_quiz.enums.AppCode;
+import com.tomzxy.web_quiz.models.IdentityContext;
 import com.tomzxy.web_quiz.services.QuizInstanceService;
 import com.tomzxy.web_quiz.services.QuizService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,6 +24,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.Id;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +35,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.http.HttpRequest;
 import java.util.List;
 
 @RestController
@@ -42,6 +48,8 @@ public class QuizController {
         private final ObjectMapper objectMapper;
         private final QuizService quizService;
         private final QuizInstanceService quizInstanceService;
+        private final IdentityResolver identityResolver;
+        private final LobbySecurity lobbySecurity;
 
         @GetMapping()
         @Operation(summary = "Get all quizzes", description = "Retrieve all quizzes with pagination")
@@ -65,7 +73,7 @@ public class QuizController {
         public ResponseEntity<DataResDTO<PageResDTO<?>>> getAllQuizzesWithFilter(
                         @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") @Min(0) int page,
                         @Parameter(description = "Page size (minimum 10)") @RequestParam(defaultValue = "10") @Min(10) int size,
-                        @Valid QuizFilterReqDTO quizFilterReqDTO) {
+                        @ModelAttribute @Valid QuizFilterReqDTO quizFilterReqDTO) {
                 log.info("Get all quizzes with filter");
                 return ResponseEntity
                                 .status(HttpStatus.OK)
@@ -79,9 +87,10 @@ public class QuizController {
                         @ApiResponse(responseCode = "404", description = "Quiz not found")
         })
         public ResponseEntity<DataResDTO<QuizDetailResDTO>> getQuiz(
-                        @Parameter(description = "Quiz ID") @PathVariable Long quizId) throws JsonProcessingException {
+                        @Parameter(description = "Quiz ID") @PathVariable Long quizId, HttpServletRequest httpServletRequest) throws JsonProcessingException {
+                IdentityContext identity = identityResolver.resolve(httpServletRequest);
                 log.info("Get quiz by {}", quizId);
-                QuizDetailResDTO quiz = quizService.getQuizDetail(quizId);
+                QuizDetailResDTO quiz = quizService.getQuizDetail(quizId, identity);
                 // log all data quiz
                 log.info("Quiz {} with attempt state {} and instance id {}", quiz, quiz.getAttemptState(), quiz.getInstanceId());
                 return ResponseEntity
@@ -89,13 +98,36 @@ public class QuizController {
                                 .body(DataResDTO.ok(quiz));
         }
 
+        // getLastestQuiz
+        @GetMapping(ApiDefined.Quiz.LATEST)
+        @Operation(summary = "Get quizzes lastest", description = "Retrieve a List quiz lastest")
+        @ApiResponses(value = {
+                @ApiResponse(responseCode = "200", description = "Quiz found successfully"),
+                @ApiResponse(responseCode = "404", description = "Quiz not found")
+        })
+        public ResponseEntity<DataResDTO<PageResDTO<?>>> getQuizLastest(
+                @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") @Min(0) int page,
+                @Parameter(description = "Page size (minimum 10)") @RequestParam(defaultValue = "10") @Min(10) int size) throws JsonProcessingException {
+                log.info("Get quizzes lastest");
+                return ResponseEntity
+                        .status(HttpStatus.OK)
+                        .body(DataResDTO.ok(quizService.getLatestQuizzes(page,size)));
+        }
+
         @PostMapping("/{quizId}/start")
         @Operation(summary = "Start quiz", description = "Start a new quiz attempt or resume existing")
-        @PreAuthorize("hasAuthority('quiz_VIEW')")
         public ResponseEntity<DataResDTO<QuizInstanceResDTO>> startQuiz(
-                        @Parameter(description = "Quiz ID") @PathVariable Long quizId) {
-                log.info("Starting quiz {}", quizId);
-                QuizInstanceResDTO instance = quizInstanceService.createQuizInstance(quizId);
+                        @Parameter(description = "Quiz ID") @PathVariable Long quizId, HttpServletRequest request) {
+                IdentityContext identity = identityResolver.resolve(request);
+                log.info("Starting quiz {} for user {}", quizId, identity.getUserId());
+
+                if(!lobbySecurity.canAccessQuiz(quizId, identity)) {
+                        log.warn("User {} attempted to access quiz {} without permission", identity.getUserId(), quizId);
+                        return ResponseEntity
+                                        .status(HttpStatus.FORBIDDEN)
+                                        .body(DataResDTO.error(AppCode.FORBIDDEN, "Bạn không có quyền truy cập quiz này"));
+                }
+                QuizInstanceResDTO instance = quizInstanceService.createQuizInstance(quizId, identity);
                 return ResponseEntity
                                 .status(HttpStatus.CREATED)
                                 .body(DataResDTO.create(instance));

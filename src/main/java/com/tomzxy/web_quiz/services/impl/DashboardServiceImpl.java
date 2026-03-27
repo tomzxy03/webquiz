@@ -60,8 +60,7 @@ public class DashboardServiceImpl implements DashboardService {
                                 .build();
 
                 // 2. User stats (3 independent count queries — very fast with indexes)
-                long inProgressCount = quizInstanceRepo.findByUserIdAndStatus(userId, QuizInstanceStatus.IN_PROGRESS)
-                                .size();
+                long inProgressCount = quizInstanceRepo.countByUserIdAndStatus(userId, QuizInstanceStatus.IN_PROGRESS);
                 long completedCount = quizInstanceRepo.countByUserIdAndStatusIn(userId, COMPLETED_STATUSES);
                 long totalTaken = inProgressCount + completedCount;
 
@@ -74,12 +73,28 @@ public class DashboardServiceImpl implements DashboardService {
                 List<QuizInstance> inProgressInstances = quizInstanceRepo
                                 .findInProgressWithQuizByUserId(userId, QuizInstanceStatus.IN_PROGRESS);
 
+                Map<Long, Long> answeredCountByInstanceId = new HashMap<>();
+                if (!inProgressInstances.isEmpty()) {
+                        List<Long> inProgressIds = inProgressInstances.stream()
+                                        .map(QuizInstance::getId)
+                                        .collect(Collectors.toList());
+                        answeredCountByInstanceId.putAll(
+                                        quizUserResponseRepo
+                                                        .countByQuizInstanceId(inProgressIds)
+                                                        .stream()
+                                                        .collect(Collectors.toMap(
+                                                                        r -> (Long) r[0],
+                                                                        r -> (Long) r[1])));
+                }
+
                 List<InProgressQuizInstance> inProgressDtos = inProgressInstances.stream()
                                 .limit(MAX_IN_PROGRESS)
                                 .map(qi -> {
                                         Quiz quiz = qi.getQuiz();
-                                        long answeredCount = quizUserResponseRepo.countByQuizInstanceId(qi.getId());
-                                        int totalQuestions = quiz.getTotalQuestions();
+                                        long answeredCount = answeredCountByInstanceId.getOrDefault(qi.getId(), 0L);
+                                        int totalQuestions = quiz.getTotalQuestion() != null
+                                                        ? quiz.getTotalQuestion().intValue()
+                                                        : 0;
 
                                         // Calculate remaining time
                                         Long timeRemaining = null;
@@ -106,7 +121,7 @@ public class DashboardServiceImpl implements DashboardService {
                                 .collect(Collectors.toList());
 
                 // 4. Recent & upcoming quizzes
-                Map<Long, QuizRecentItem> map = new LinkedHashMap<>();
+                Map<String, QuizRecentItem> map = new LinkedHashMap<>();
 
                 // 4a. Recent completed instances
                 Pageable recentPageable = PageRequest.of(0, MAX_RECENT);
@@ -117,7 +132,7 @@ public class DashboardServiceImpl implements DashboardService {
                         Quiz quiz = qi.getQuiz();
                         String status = mapToDashboardStatus(quiz, qi);
 
-                        map.put(qi.getId(), QuizRecentItem.builder()
+                        map.put("instance:" + qi.getId(), QuizRecentItem.builder()
                                         .id(qi.getId())
                                         .quizId(quiz.getId())
                                         .quizTitle(quiz.getTitle())
@@ -135,7 +150,7 @@ public class DashboardServiceImpl implements DashboardService {
                         Quiz quiz = qi.getQuiz();
                         String status = mapToDashboardStatus(quiz, qi);
 
-                        map.put(qi.getId(), QuizRecentItem.builder()
+                        map.put("instance:" + qi.getId(), QuizRecentItem.builder()
                                         .id(qi.getId())
                                         .quizId(quiz.getId())
                                         .quizTitle(quiz.getTitle())
@@ -151,6 +166,13 @@ public class DashboardServiceImpl implements DashboardService {
                                 .map(lm -> lm.getLobby().getId())
                                 .collect(Collectors.toList());
 
+                Map<Long, Long> openQuizCountByLobbyId = new HashMap<>();
+                if (!lobbyIds.isEmpty()) {
+                        openQuizCountByLobbyId.putAll(
+                                        quizRepo.countByLobbyIdInAndStatus(lobbyIds, QuizStatus.OPENED)
+                                        .stream()
+                                        .collect(Collectors.toMap(r -> (Long) r[0],r -> (Long) r[1])));
+                }
                 if (!lobbyIds.isEmpty()) {
                         Pageable upcomingPageable = PageRequest.of(0, MAX_UPCOMING);
                         List<Quiz> upcomingQuizzes = quizRepo.findUpcomingByLobbyIds(
@@ -176,7 +198,7 @@ public class DashboardServiceImpl implements DashboardService {
                                 String status = mapToDashboardStatus(quiz, null);
 
                                 if (status != null) {
-                                        map.put(quiz.getId(), QuizRecentItem.builder()
+                                        map.put("quiz:" + quiz.getId(), QuizRecentItem.builder()
                                                         .id(quiz.getId())
                                                         .quizId(quiz.getId())
                                                         .quizTitle(quiz.getTitle())
@@ -206,13 +228,7 @@ public class DashboardServiceImpl implements DashboardService {
                                                 roleStr = "MEMBER";
                                         }
 
-                                        // Count open quizzes in this lobby
-                                        long openCount = lobby.getQuizzes() != null
-                                                        ? lobby.getQuizzes().stream()
-                                                                        .filter(q -> q.getStatus() == QuizStatus.OPENED
-                                                                                        && q.isActive())
-                                                                        .count()
-                                                        : 0;
+                                        long openCount = openQuizCountByLobbyId.getOrDefault(lobby.getId(), 0L);
 
                                         return DashboardGroupSummary.builder()
                                                         .id(lobby.getId())
@@ -233,7 +249,9 @@ public class DashboardServiceImpl implements DashboardService {
                                                 .title(q.getTitle())
                                                 .subject(q.getSubject() != null ? q.getSubject().getSubjectName()
                                                                 : null)
-                                                .questionCount(q.getTotalQuestions())
+                                                .questionCount(q.getTotalQuestion() != null
+                                                                ? q.getTotalQuestion().intValue()
+                                                                : 0)
                                                 .updatedAt(q.getUpdatedAt() != null ? q.getUpdatedAt().toString()
                                                                 : null)
                                                 .build())

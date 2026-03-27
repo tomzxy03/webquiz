@@ -501,7 +501,7 @@ public class AdminServiceImpl implements AdminService {
                 .groupName(quiz.getLobby() != null ? quiz.getLobby().getLobbyName() : null)
                 .status(mapQuizStatus(quiz))
                 .visibility(mapQuizVisibility(quiz))
-                .questionCount(quiz.getTotalQuestions())
+                .questionCount(quiz.getTotalQuestion() != null ? quiz.getTotalQuestion().intValue() : 0)
                 .attemptsCount(quiz.getTotalAttempts() != null ? quiz.getTotalAttempts().intValue() : 0)
                 .createdAt(quiz.getCreatedAt() != null ? quiz.getCreatedAt().format(ISO_FMT) : null)
                 .build();
@@ -620,7 +620,7 @@ public class AdminServiceImpl implements AdminService {
                 .groupName(quiz.getLobby() != null ? quiz.getLobby().getLobbyName() : null)
                 .status(mapQuizStatus(quiz))
                 .visibility(mapQuizVisibility(quiz))
-                .questionCount(quiz.getTotalQuestions())
+                .questionCount(quiz.getTotalQuestion() != null ? quiz.getTotalQuestion().intValue() : 0)
                 .attemptsCount(quiz.getTotalAttempts() != null ? quiz.getTotalAttempts().intValue() : 0)
                 .timeLimitMinutes(quiz.getTimeLimitMinutes())
                 .maxAttempt(quiz.getMaxAttempt())
@@ -647,7 +647,7 @@ public class AdminServiceImpl implements AdminService {
         int correctCount = 0;
         int wrongCount = 0;
         int skippedCount = 0;
-        int totalQuestions = qi.getQuiz() != null ? qi.getQuiz().getTotalQuestions() : 0;
+        int totalQuestions = qi.getQuiz() != null ? qi.getQuiz().getTotalQuestion() : 0;
 
         if (qi.getUserResponses() != null) {
             for (com.tomzxy.web_quiz.models.QuizUser.QuizUserResponse r : qi.getUserResponses()) {

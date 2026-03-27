@@ -8,9 +8,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.tomzxy.web_quiz.dto.responses.AttemptResDTO;
+import com.tomzxy.web_quiz.enums.QuizInstanceStatus;
 import com.tomzxy.web_quiz.models.QuizUser.QuizUserResponse;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -109,4 +112,8 @@ public interface QuizUserResponseRepo extends JpaRepository<QuizUserResponse, Lo
         int deleteResponsesByGuestCriteria(
                         @Param("abandonedTime") LocalDateTime abandonedTime,
                         @Param("completedTime") LocalDateTime completedTime);
+
+        Collection<AttemptResDTO> countCorrectByQuizInstanceIdIn(List<Long> instanceIds);
+
+        Collection<QuizInstanceStatus> countByQuizInstanceId(List<Long> inProgressIds);
 }
