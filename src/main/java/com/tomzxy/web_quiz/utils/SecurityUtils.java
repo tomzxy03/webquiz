@@ -33,11 +33,14 @@ public class SecurityUtils {
 
         Authentication authentication = getAuthentication();
 
-        if (authentication == null) {
+        if (authentication == null || !authentication.isAuthenticated()) {
             return null;
         }
-        CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
-        return user.id();
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof CustomUserDetails) {
+            return ((CustomUserDetails) principal).id();
+        }
+        return null;
     }
 
 }

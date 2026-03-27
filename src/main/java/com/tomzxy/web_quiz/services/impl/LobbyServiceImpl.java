@@ -364,26 +364,23 @@ public class LobbyServiceImpl implements LobbyService {
     public PageResDTO<QuizResDTO> getGroupQuizzes(Long lobbyId, int page, int size) {
         PageRequest pageable = PageRequest.of(page, size);
     
-        // 1. Truy vấn thẳng từ Repo để Database làm việc phân trang hộ mình
         Page<Quiz> quizPage = quizRepo.findByLobbyId(lobbyId, pageable);
     
-        // 2. Map trực tiếp từ Quiz Entity sang QuizResDTO
         List<QuizResDTO> items = quizPage.getContent().stream()
             .map(quiz -> {
-                QuizResDTO dto = quizMapper.toDto(quiz); // Dùng mapper bạn đã có
-                // Bổ sung thêm các trường mà Mapper chưa có (nếu cần)
+                QuizResDTO dto = quizMapper.toDto(quiz); 
                 dto.setLobbyName(quiz.getLobby().getLobbyName()); 
                 dto.setHostName(quiz.getHost().getUserName());
+                dto.setSubjectName(quiz.getSubject().getSubjectName());
                 return dto;
             })
             .collect(Collectors.toList());
 
-        // 3. Trả về PageResDTO chứa danh sách Quiz "sạch"
         return PageResDTO.<QuizResDTO>builder()
             .page(page)
             .size(size)
             .total(quizPage.getTotalElements())
-            .total_page(quizPage.getTotalPages()) // Nên thêm cả tổng số trang
+            .total_page(quizPage.getTotalPages()) 
             .items(items)
             .build();
 }

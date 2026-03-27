@@ -10,6 +10,7 @@ import com.tomzxy.web_quiz.dto.responses.Quiz.QuizResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.QuizInstanceResDTO;
 import com.tomzxy.web_quiz.enums.AppCode;
+import com.tomzxy.web_quiz.enums.IdentityType;
 import com.tomzxy.web_quiz.enums.QuizInstanceStatus;
 import com.tomzxy.web_quiz.enums.QuizStatus;
 import com.tomzxy.web_quiz.enums.QuizVisibility;
@@ -25,6 +26,7 @@ import com.tomzxy.web_quiz.models.Quiz.QuizSpecification;
 import com.tomzxy.web_quiz.models.User.User;
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
 import com.tomzxy.web_quiz.models.Answer;
+import com.tomzxy.web_quiz.models.IdentityContext;
 import com.tomzxy.web_quiz.models.Question;
 import com.tomzxy.web_quiz.models.Subject;
 import com.tomzxy.web_quiz.repositories.*;
@@ -34,6 +36,7 @@ import com.tomzxy.web_quiz.services.common.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.mapstructs.QuizInstanceMapper;
 import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;
 import com.tomzxy.web_quiz.utils.SecurityUtils;
+import com.tomzxy.web_quiz.utils.SpecificationUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
@@ -87,7 +90,7 @@ public class QuizServiceImpl implements QuizService {
                 filter.getMaxQuestions() != null &&
                 filter.getMinQuestions() > filter.getMaxQuestions()) {
 
-            throw new RuntimeException("minQuestions cannot be greater than maxQuestions");
+            throw new ApiException(AppCode.BAD_REQUEST, "minQuestions cannot be greater than maxQuestions");
         }
         if (filter.getSubjectId() != null &&
                 !subjectRepo.existsById(filter.getSubjectId())) {
@@ -96,6 +99,10 @@ public class QuizServiceImpl implements QuizService {
         }
         Pageable pageable = PageRequest.of(page, size);
         Specification<Quiz> spec = QuizSpecification.filter(filter);
+        spec = SpecificationUtils.and(spec,
+                SpecificationUtils.equal("status", QuizStatus.OPENED));
+        spec = SpecificationUtils.and(spec,
+                SpecificationUtils.equal("visibility", QuizVisibility.PUBLIC));
         Page<Quiz> quizzes = quizRepo.findAll(spec, pageable);
         return convertToPageResDTO.convertPageResponse(quizzes, pageable, quizMapper::toDto);
 
@@ -108,8 +115,12 @@ public class QuizServiceImpl implements QuizService {
                 page,
                 size,
                 Sort.by(Sort.Direction.DESC, "createdAt"));
+        Specification<Quiz> spec = null;
+        spec = SpecificationUtils.and(spec, SpecificationUtils.isTrue("isActive"));
+        spec = SpecificationUtils.and(spec, SpecificationUtils.equal("status", QuizStatus.OPENED));
+        spec = SpecificationUtils.and(spec, SpecificationUtils.equal("visibility", QuizVisibility.PUBLIC));
         Page<Quiz> quizzes = quizRepo.findAll(
-                QuizSpecification.isActive(),
+                spec,
                 pageable);
         return convertToPageResDTO.convertPageResponse(quizzes, pageable, quizMapper::toDto);
     }
@@ -127,19 +138,33 @@ public class QuizServiceImpl implements QuizService {
 
     @Override
     @Transactional(readOnly = true)
-    public QuizDetailResDTO getQuizDetail(Long id) {
+    public QuizDetailResDTO getQuizDetail(Long id, IdentityContext identity) {
         Quiz quiz = quizRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Quiz not found with id: " + id));
 
         QuizResDTO quizDto = quizMapper.toDto(quiz);
-        Long userId = SecurityUtils.getCurrentUserId();
-        long attemptCount = getAttemptCount(quiz.getId(), userId);
-
+        Long userId = null;
+        String guestId = null;
+        long attemptCount = 0L;
+        if (identity.getType() == IdentityType.USER && identity.getUserId() != null) {
+            userId = identity.getUserId();
+            attemptCount = getAttemptCount(quiz.getId(), userId);
+        } else if (identity.getType() == IdentityType.GUEST && identity.getGuestId() != null) {
+            guestId = identity.getGuestId();
+            attemptCount = getAttemptCount(quiz.getId(), guestId);
+        }
         String attemptState = "NONE";
         Long instanceId = null;
 
         if (userId != null) {
             Optional<QuizInstance> activeInstance = quizInstanceRepo.findByQuizIdAndUserIdAndStatus(id, userId,
+                    QuizInstanceStatus.IN_PROGRESS);
+            if (activeInstance.isPresent()) {
+                attemptState = "IN_PROGRESS";
+                instanceId = activeInstance.get().getId();
+            }
+        } else if (guestId != null) {
+            Optional<QuizInstance> activeInstance = quizInstanceRepo.findByQuizIdAndGuestIdAndStatus(id, guestId,
                     QuizInstanceStatus.IN_PROGRESS);
             if (activeInstance.isPresent()) {
                 attemptState = "IN_PROGRESS";
@@ -221,6 +246,12 @@ public class QuizServiceImpl implements QuizService {
                 .filter(Objects::nonNull)
                 .toList();
 
+        if (new HashSet<>(questionIds).size() != questionIds.size()) {
+            throw new ExistedException(
+                    AppCode.DATA_EXISTED,
+                    "Duplicate question in request");
+        }
+
         Map<Long, Question> questionMap = questionRepo.findAllById(questionIds)
                 .stream()
                 .collect(Collectors.toMap(Question::getId, q -> q));
@@ -289,7 +320,6 @@ public class QuizServiceImpl implements QuizService {
 
             questionRepo.saveAll(newQuestions);
             quiz.setStatus(QuizStatus.OPENED);
-            quizRepo.save(quiz);
         }
 
         List<QuizQuestionLink> links = new ArrayList<>();
@@ -309,7 +339,8 @@ public class QuizServiceImpl implements QuizService {
 
             links.add(link);
         }
-
+        quiz.setTotalQuestion(links.size());
+        quizRepo.save(quiz);
         quizQuestionLinkRepo.saveAll(links);
     }
 
@@ -387,32 +418,10 @@ public class QuizServiceImpl implements QuizService {
                 List.of(QuizInstanceStatus.TIMED_OUT, QuizInstanceStatus.SUBMITTED));
     }
 
-    private void createQuestionLinks(Quiz quiz, List<QuizQuestionReqDTO> questions) {
-
-        List<QuizQuestionLink> links = new ArrayList<>();
-
-        for (QuizQuestionReqDTO req : questions) {
-
-            Question question = questionRepo.findById(req.getQuestionId())
-                    .orElseThrow(() -> new NotFoundException("Question not found: " + req.getQuestionId()));
-
-            QuizQuestionId linkId = new QuizQuestionId(
-                    quiz.getId(),
-                    question.getId());
-
-            QuizQuestionLink link = QuizQuestionLink.builder()
-                    .id(linkId)
-                    .quiz(quiz)
-                    .question(question)
-                    .points(req.getPoints() != null ? req.getPoints() : 1)
-                    .build();
-
-            links.add(link);
-        }
-
-        quizQuestionLinkRepo.saveAll(links);
+    private long getAttemptCount(Long quizId, String guestId) {
+        return quizInstanceRepo.countByQuizIdAndGuestIdAndStatusIn(
+                quizId, guestId,
+                List.of(QuizInstanceStatus.TIMED_OUT, QuizInstanceStatus.SUBMITTED));
     }
-
-    
 
 }

@@ -2,7 +2,6 @@ package com.tomzxy.web_quiz.repositories;
 
 import com.tomzxy.web_quiz.dto.responses.lobby.LobbyResDTO;
 import com.tomzxy.web_quiz.models.Lobby;
-import com.tomzxy.web_quiz.models.User.User;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

@@ -1,5 +1,6 @@
 package com.tomzxy.web_quiz.controllers;
 
+import com.tomzxy.web_quiz.containts.ApiDefined;
 import com.tomzxy.web_quiz.dto.requests.CreateAttemptReqDTO;
 import com.tomzxy.web_quiz.dto.responses.AttemptDetailResDTO;
 import com.tomzxy.web_quiz.dto.responses.AttemptResDTO;
@@ -24,7 +25,7 @@ import java.util.List;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("/api/attempts")
+@RequestMapping(ApiDefined.Attempt.BASE)
 @Tag(name = "Attempts", description = "Exam attempt management APIs")
 public class AttemptsController {
 
@@ -46,7 +47,7 @@ public class AttemptsController {
                                 .body(DataResDTO.ok(attempts));
         }
 
-        @GetMapping("/{id}")
+        @GetMapping(ApiDefined.Attempt.ID)
         @Operation(summary = "Get exam attempt detail by ID", description = "Retrieve detailed information about a specific attempt")
         @PreAuthorize("hasAuthority('quiz_result_VIEW')")
         @ApiResponses(value = {
@@ -62,7 +63,7 @@ public class AttemptsController {
                                 .body(DataResDTO.ok(attempt));
         }
 
-        @GetMapping("/user/{userId}")
+        @GetMapping(ApiDefined.Attempt.USER)
         @Operation(summary = "Get all attempts by user", description = "Retrieve all attempts for a specific user")
         @PreAuthorize("hasAuthority('quiz_result_VIEW')")
         @ApiResponses(value = {
@@ -77,7 +78,7 @@ public class AttemptsController {
                                 .body(DataResDTO.ok(attempts));
         }
 
-        @GetMapping("/quiz/{quizId}/user/{userId}")
+        @GetMapping(ApiDefined.Attempt.QUIZ_USER)
         @Operation(summary = "Get attempts for specific quiz and user", description = "Retrieve attempts for a specific quiz and user combination")
         @PreAuthorize("hasAuthority('quiz_result_VIEW')")
         @ApiResponses(value = {

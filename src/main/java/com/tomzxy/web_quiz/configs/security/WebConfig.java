@@ -63,6 +63,20 @@ public class WebConfig {
                                                                 "/api/subjects/**")
                                                 .permitAll()
 
+                                                // Guest quiz attempt APIs (explicit allowlist)
+                                                .requestMatchers(HttpMethod.POST,
+                                                                "/api/quizzes/*/start",
+                                                                "/api/quiz-instances/start",
+                                                                "/api/quiz-instances/*/answer",
+                                                                "/api/quiz-instances/*/submit")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/quiz-instances/check-eligibility",
+                                                                "/api/quiz-instances/*",
+                                                                "/api/quiz-instances/*/state",
+                                                                "/api/quiz-instances/*/result")
+                                                .permitAll()
+
                                                 // Admin APIs
                                                 .requestMatchers("/api/tomzxyadmin/**")
                                                 .hasRole("ADMIN")

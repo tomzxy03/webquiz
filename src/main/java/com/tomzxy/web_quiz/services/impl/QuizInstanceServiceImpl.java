@@ -9,12 +9,14 @@ import com.tomzxy.web_quiz.dto.responses.Quiz.QuizResultDetailResDTO;
 import com.tomzxy.web_quiz.dto.responses.Quiz.QuizStateResDTO;
 import com.tomzxy.web_quiz.dto.responses.question.QuestionResultResDTO;
 import com.tomzxy.web_quiz.enums.AppCode;
+import com.tomzxy.web_quiz.enums.IdentityType;
 import com.tomzxy.web_quiz.enums.QuizInstanceStatus;
 import com.tomzxy.web_quiz.enums.QuizStatus;
 import com.tomzxy.web_quiz.enums.ResponseStatus;
 import com.tomzxy.web_quiz.exception.ApiException;
 import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.models.*;
+import com.tomzxy.web_quiz.models.IdentityContext;
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
 import com.tomzxy.web_quiz.models.Quiz.QuizQuestionLink;
 import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;
@@ -27,7 +29,6 @@ import com.tomzxy.web_quiz.repositories.*;
 import com.tomzxy.web_quiz.services.QuizInstanceService;
 import com.tomzxy.web_quiz.services.common.ConvertToPageResDTO;
 import com.tomzxy.web_quiz.mapstructs.QuizInstanceMapper;
-import com.tomzxy.web_quiz.utils.SecurityUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -89,16 +90,75 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         return LOCK_KEY_PREFIX + instanceId;
     }
 
+    private IdentityContext requireIdentity(IdentityContext identity) {
+        if (identity == null || identity.getType() == null) {
+            throw new ApiException(AppCode.UNAUTHORIZED, "Identity is required");
+        }
+        if (identity.getType() == IdentityType.USER) {
+            if (identity.getUserId() == null) {
+                throw new ApiException(AppCode.UNAUTHORIZED, "User identity is required");
+            }
+        } else if (identity.getType() == IdentityType.GUEST) {
+            if (identity.getGuestId() == null || identity.getGuestId().isBlank()) {
+                throw new ApiException(AppCode.UNAUTHORIZED, "Guest identity is required");
+            }
+        }
+        return identity;
+    }
+
+    private Optional<QuizInstance> findActiveInstance(Long quizId, IdentityContext identity) {
+        if (identity.getType() == IdentityType.USER) {
+            return quizInstanceRepo.findByQuizIdAndUserIdAndStatus(quizId, identity.getUserId(),
+                    QuizInstanceStatus.IN_PROGRESS);
+        }
+        if (identity.getType() == IdentityType.GUEST) {
+            return quizInstanceRepo.findByQuizIdAndGuestIdAndStatus(quizId, identity.getGuestId(),
+                    QuizInstanceStatus.IN_PROGRESS);
+        }
+        return Optional.empty();
+    }
+
+    private long countAttempts(Long quizId, IdentityContext identity) {
+        if (identity.getType() == IdentityType.USER) {
+            return quizInstanceRepo.countByQuizIdAndUserIdAndStatusIn(
+                    quizId, identity.getUserId(),
+                    List.of(QuizInstanceStatus.SUBMITTED, QuizInstanceStatus.TIMED_OUT));
+        }
+        if (identity.getType() == IdentityType.GUEST) {
+            return quizInstanceRepo.countByQuizIdAndGuestIdAndStatusIn(
+                    quizId, identity.getGuestId(),
+                    List.of(QuizInstanceStatus.SUBMITTED, QuizInstanceStatus.TIMED_OUT));
+        }
+        return 0L;
+    }
+
+    private void assertOwnership(QuizInstance instance, IdentityContext identity, String action) {
+        if (identity.getType() == IdentityType.USER) {
+            if (instance.getUser() == null || !instance.getUser().getId().equals(identity.getUserId())) {
+                throw new ApiException(AppCode.FORBIDDEN, "No permission to " + action);
+            }
+            return;
+        }
+        if (identity.getType() == IdentityType.GUEST) {
+            if (instance.getGuestId() == null || !instance.getGuestId().equals(identity.getGuestId())) {
+                throw new ApiException(AppCode.FORBIDDEN, "No permission to " + action);
+            }
+            return;
+        }
+        throw new ApiException(AppCode.FORBIDDEN, "No permission to " + action);
+    }
+
     // ============ 3.1 Start Quiz ============
     @Override
     @Transactional
-    public QuizInstanceResDTO createQuizInstance(Long quizId) {
+    public QuizInstanceResDTO createQuizInstance(Long quizId, IdentityContext identity) {
         log.info("Starting quiz instance for quiz: {}", quizId);
-        Long userId = SecurityUtils.getCurrentUserId();
+        IdentityContext ctx = requireIdentity(identity);
+        Long userId = ctx.getType() == IdentityType.USER ? ctx.getUserId() : null;
+        String guestId = ctx.getType() == IdentityType.GUEST ? ctx.getGuestId() : null;
 
         // 1. Check existing IN_PROGRESS attempt
-        Optional<QuizInstance> existing = quizInstanceRepo.findByQuizIdAndUserIdAndStatus(quizId, userId,
-                QuizInstanceStatus.IN_PROGRESS);
+        Optional<QuizInstance> existing = findActiveInstance(quizId, ctx);
         if (existing.isPresent()) {
             QuizInstance instance = existing.get();
             QuizInstanceResDTO res = quizInstanceMapper.toQuizInstanceResDTO(instance);
@@ -117,8 +177,7 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
 
         // 2. Check attempt limit (#4: null guard for maxAttempt)
         if (quiz.getMaxAttempt() != null && quiz.getMaxAttempt() > 0) {
-            long count = quizInstanceRepo.countByQuizIdAndUserIdAndStatusIn(quizId, userId,
-                    List.of(QuizInstanceStatus.SUBMITTED, QuizInstanceStatus.TIMED_OUT));
+            long count = countAttempts(quizId, ctx);
             if (count >= quiz.getMaxAttempt()) {
                 throw new ApiException(AppCode.BAD_REQUEST, "Maximum attempt limit reached");
             }
@@ -131,6 +190,7 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         QuizInstance instance = QuizInstance.builder()
                 .quiz(quiz)
                 .user(userId != null ? userRepo.findById(userId).orElse(null) : null)
+                .guestId(userId == null ? guestId : null)
                 .startedAt(LocalDateTime.now())
                 .status(QuizInstanceStatus.IN_PROGRESS)
                 .totalPoints(snapshot.getTotalPoints())
@@ -302,15 +362,16 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
     }
 
     @Override
-    public QuizInstanceResDTO createQuizInstance(QuizInstanceReqDTO request) {
-        return createQuizInstance(request.getQuizId());
+    public QuizInstanceResDTO createQuizInstance(QuizInstanceReqDTO request, IdentityContext identity) {
+        return createQuizInstance(request.getQuizId(), identity);
     }
 
     // ============ 3.2 Answer Question ============
     @Override
     @Transactional
-    public void saveAnswer(Long instanceId, Long userId, QuizAnswerReqDTO request) {
+    public void saveAnswer(Long instanceId, IdentityContext identity, QuizAnswerReqDTO request) {
         log.info("Saving answer for instance: {}, question: {}", instanceId, request.getQuestionId());
+        IdentityContext ctx = requireIdentity(identity);
 
         QuizInstance instance = quizInstanceRepo.findById(instanceId)
                 .orElseThrow(() -> new NotFoundException("Quiz instance not found"));
@@ -321,9 +382,7 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         }
 
         // 2. Check ownership
-        if (instance.getUser() != null && !instance.getUser().getId().equals(userId)) {
-            throw new ApiException(AppCode.FORBIDDEN, "No permission to answer this quiz");
-        }
+        assertOwnership(instance, ctx, "answer this quiz");
 
         // 3. Check time: current_time <= start_time + duration*60
         QuizQuestionSnapshot snapshot = instance.getSnapshot();
@@ -391,14 +450,13 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
     // ============ 3.3 Resume / Get State ============
     @Override
     @Transactional(readOnly = true)
-    public QuizStateResDTO getQuizState(Long instanceId, Long userId) {
+    public QuizStateResDTO getQuizState(Long instanceId, IdentityContext identity) {
+        IdentityContext ctx = requireIdentity(identity);
         QuizInstance instance = quizInstanceRepo.findById(instanceId)
                 .orElseThrow(() -> new NotFoundException("Quiz instance not found"));
 
         // 1. Check ownership and status
-        if (!instance.getUser().getId().equals(userId)) {
-            throw new ApiException(AppCode.FORBIDDEN, "No permission to access this quiz instance");
-        }
+        assertOwnership(instance, ctx, "access this quiz instance");
         if (!instance.isInProgress()) {
             throw new ApiException(AppCode.BAD_REQUEST, "Quiz instance is no longer in progress");
         }
@@ -469,7 +527,8 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
     // ============ 3.4 Submit Quiz ============
     @Override
     @Transactional
-    public QuizResultDetailResDTO submitQuiz(Long instanceId, Long userId) {
+    public QuizResultDetailResDTO submitQuiz(Long instanceId, IdentityContext identity) {
+        IdentityContext ctx = requireIdentity(identity);
         String submitLockKey = "quiz:instance:" + instanceId + ":submit-lock";
 
         // 1. Acquire submit lock (prevent double submit)
@@ -488,9 +547,7 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
             }
 
             // Verify ownership
-            if (instance.getUser() != null && !instance.getUser().getId().equals(userId)) {
-                throw new ApiException(AppCode.FORBIDDEN, "No permission to submit this quiz");
-            }
+            assertOwnership(instance, ctx, "submit this quiz");
 
             return processSubmission(instance, QuizInstanceStatus.SUBMITTED);
         } finally {
@@ -714,13 +771,12 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
     // ============ Other endpoints ============
 
     @Override
-    public QuizInstanceResDTO getQuizInstance(Long instanceId, Long userId) {
+    public QuizInstanceResDTO getQuizInstance(Long instanceId, IdentityContext identity) {
+        IdentityContext ctx = requireIdentity(identity);
         QuizInstance instance = quizInstanceRepo.findById(instanceId)
                 .orElseThrow(() -> new NotFoundException("Quiz instance not found"));
 
-        if (instance.getUser() != null && !instance.getUser().getId().equals(userId)) {
-            throw new ApiException(AppCode.FORBIDDEN);
-        }
+        assertOwnership(instance, ctx, "access this quiz instance");
 
         if (!instance.isInProgress()) {
             throw new ApiException(AppCode.FORBIDDEN, "Quiz instance is no longer in progress");
@@ -731,13 +787,12 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
 
     @Override
     @Transactional
-    public void deleteQuizInstance(Long instanceId, Long userId) {
+    public void deleteQuizInstance(Long instanceId, IdentityContext identity) {
+        IdentityContext ctx = requireIdentity(identity);
         QuizInstance instance = quizInstanceRepo.findById(instanceId)
                 .orElseThrow(() -> new NotFoundException("Quiz instance not found"));
 
-        if (instance.getUser() != null && !instance.getUser().getId().equals(userId)) {
-            throw new ApiException(AppCode.NOT_PERMISSION, "No permission to delete this quiz instance");
-        }
+        assertOwnership(instance, ctx, "delete this quiz instance");
 
         // Clean up Redis
         stringRedisTemplate.delete(answersKey(instanceId));
@@ -802,7 +857,8 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean canUserStartQuiz(Long quizId, Long userId) {
+    public boolean canUserStartQuiz(Long quizId, IdentityContext identity) {
+        IdentityContext ctx = requireIdentity(identity);
         Quiz quiz = quizRepo.findById(quizId).orElse(null);
         if (quiz == null || !quiz.isActive()) {
             return false;
@@ -811,20 +867,17 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         if (quiz.getMaxAttempt() == null || quiz.getMaxAttempt() <= 0) {
             return true; // unlimited attempts
         }
-        long userAttempts = quizInstanceRepo.countByQuizIdAndUserIdAndStatusIn(
-                quizId, userId,
-                List.of(QuizInstanceStatus.SUBMITTED, QuizInstanceStatus.TIMED_OUT));
-        return userAttempts < quiz.getMaxAttempt();
+        long attempts = countAttempts(quizId, ctx);
+        return attempts < quiz.getMaxAttempt();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public QuizResultDetailResDTO getQuizResult(Long instanceId, Long userId) {
+    public QuizResultDetailResDTO getQuizResult(Long instanceId, IdentityContext identity) {
+        IdentityContext ctx = requireIdentity(identity);
         QuizInstance instance = quizInstanceRepo.findById(instanceId)
                 .orElseThrow(() -> new NotFoundException("Quiz instance not found"));
-        if (instance.getUser() != null && !instance.getUser().getId().equals(userId)) {
-            throw new ApiException(AppCode.NOT_PERMISSION, "No permission to view this quiz result");
-        }
+        assertOwnership(instance, ctx, "view this quiz result");
 
         // #10: Check that instance is completed
         if (instance.isInProgress()) {

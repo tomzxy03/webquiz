@@ -3,7 +3,9 @@ package com.tomzxy.web_quiz.services.impl;
 import com.tomzxy.web_quiz.dto.requests.AnswerSubmissionDTO;
 import com.tomzxy.web_quiz.dto.requests.CreateAttemptReqDTO;
 import com.tomzxy.web_quiz.dto.responses.*;
+import com.tomzxy.web_quiz.enums.AppCode;
 import com.tomzxy.web_quiz.enums.QuizInstanceStatus;
+import com.tomzxy.web_quiz.exception.ApiException;
 import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.models.Answer;
 import com.tomzxy.web_quiz.models.Question;
@@ -11,7 +13,9 @@ import com.tomzxy.web_quiz.models.Quiz.Quiz;
 import com.tomzxy.web_quiz.models.Quiz.QuizQuestionLink;
 import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;
 import com.tomzxy.web_quiz.models.QuizUser.QuizUserResponse;
-import com.tomzxy.web_quiz.repositories.*;
+import com.tomzxy.web_quiz.repositories.QuizInstanceRepo;
+import com.tomzxy.web_quiz.repositories.QuizRepo;
+import com.tomzxy.web_quiz.repositories.QuizUserResponseRepo;
 import com.tomzxy.web_quiz.services.AttemptService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,16 +37,13 @@ public class AttemptServiceImpl implements AttemptService {
     private final QuizInstanceRepo quizInstanceRepo;
     private final QuizUserResponseRepo quizUserResponseRepo;
     private final QuizRepo quizRepo;
-    private final QuestionRepo questionRepo;
 
     @Override
     public List<AttemptResDTO> getAllAttempts(Long userId, Long quizId) {
         List<QuizInstance> instances;
         if (userId != null && quizId != null) {
-            instances = quizInstanceRepo.findByQuizIdAndStatus(quizId, QuizInstanceStatus.SUBMITTED)
-                    .stream()
-                    .filter(i -> i.getUser() != null && i.getUser().getId().equals(userId))
-                    .collect(Collectors.toList());
+            instances = quizInstanceRepo.findAllByQuizIdAndUserIdAndStatus(
+                    quizId, userId, QuizInstanceStatus.SUBMITTED);
         } else if (userId != null) {
             instances = quizInstanceRepo.findByUserIdAndStatus(userId, QuizInstanceStatus.SUBMITTED);
         } else if (quizId != null) {
@@ -50,9 +51,7 @@ public class AttemptServiceImpl implements AttemptService {
         } else {
             instances = quizInstanceRepo.findByStatus(QuizInstanceStatus.SUBMITTED);
         }
-        return instances.stream()
-                .map(this::mapToAttemptResDTO)
-                .collect(Collectors.toList());
+        return mapToAttemptResDTOs(instances);
     }
 
     @Override
@@ -65,26 +64,29 @@ public class AttemptServiceImpl implements AttemptService {
     @Override
     public List<AttemptResDTO> getAttemptsByUser(Long userId) {
         List<QuizInstance> instances = quizInstanceRepo.findByUserIdAndStatus(userId, QuizInstanceStatus.SUBMITTED);
-        return instances.stream()
-                .map(this::mapToAttemptResDTO)
-                .collect(Collectors.toList());
+        return mapToAttemptResDTOs(instances);
     }
 
     @Override
     public List<AttemptResDTO> getAttemptsByQuizAndUser(Long quizId, Long userId) {
-        List<QuizInstance> instances = quizInstanceRepo.findByQuizIdAndStatus(quizId, QuizInstanceStatus.SUBMITTED)
-                .stream()
-                .filter(i -> i.getUser() != null && i.getUser().getId().equals(userId))
-                .collect(Collectors.toList());
-        return instances.stream()
-                .map(this::mapToAttemptResDTO)
-                .collect(Collectors.toList());
+        List<QuizInstance> instances = quizInstanceRepo.findAllByQuizIdAndUserIdAndStatus(
+                quizId, userId, QuizInstanceStatus.SUBMITTED);
+        return mapToAttemptResDTOs(instances);
     }
 
     @Override
     public AttemptDetailResDTO createAttempt(CreateAttemptReqDTO request) {
         Quiz quiz = quizRepo.findById(request.getQuizId())
                 .orElseThrow(() -> new NotFoundException("Quiz not found"));
+
+        if (request.getAnswers() == null || request.getAnswers().isEmpty()) {
+            throw new ApiException(AppCode.BAD_REQUEST, "Answer list cannot be empty");
+        }
+
+        Map<Long, QuizQuestionLink> linkByQuestionId = quiz.getQuizQuestionLinks().stream()
+                .collect(Collectors.toMap(
+                        link -> link.getQuestion().getId(),
+                        link -> link));
         
         // Note: userId should come from security context in real implementation
         // For now, we'll create instance without user - you'll need to inject IdentityResolver or SecurityContext
@@ -105,12 +107,23 @@ public class AttemptServiceImpl implements AttemptService {
         // Process answers
         Long earnedPoints = 0L;
         int correctAnswers = 0;
+        Set<Long> seenQuestionIds = new HashSet<>();
         for (AnswerSubmissionDTO answerSubmission : request.getAnswers()) {
-            Question question = questionRepo.findById(answerSubmission.getQuestionId())
-                    .orElseThrow(() -> new NotFoundException("Question not found: " + answerSubmission.getQuestionId()));
+            Long questionId = answerSubmission.getQuestionId();
+            if (questionId == null) {
+                throw new ApiException(AppCode.BAD_REQUEST, "Question ID is required");
+            }
+            if (!seenQuestionIds.add(questionId)) {
+                throw new ApiException(AppCode.BAD_REQUEST, "Duplicate question in request: " + questionId);
+            }
+            QuizQuestionLink link = linkByQuestionId.get(questionId);
+            if (link == null) {
+                throw new NotFoundException("Question not in quiz: " + questionId);
+            }
+            Question question = link.getQuestion();
             
             boolean isCorrect = checkAnswer(question, answerSubmission);
-            Long points = getQuestionPoints(quiz, question);
+            Long points = link.getPoints() != null ? link.getPoints() : 1L;
             
             if (isCorrect) {
                 earnedPoints += points;
@@ -172,11 +185,11 @@ public class AttemptServiceImpl implements AttemptService {
         
         Map<String, Integer> quizzesByDifficulty = new HashMap<>(); // Would need difficulty field
         
-        List<AttemptResDTO> recentActivity = instances.stream()
+        List<QuizInstance> recentActivityInstances = instances.stream()
                 .sorted(Comparator.comparing(QuizInstance::getEndedAt).reversed())
                 .limit(10)
-                .map(this::mapToAttemptResDTO)
                 .collect(Collectors.toList());
+        List<AttemptResDTO> recentActivityDtos = mapToAttemptResDTOs(recentActivityInstances);
         
         return UserStatisticsResDTO.builder()
                 .userId(userId)
@@ -186,15 +199,33 @@ public class AttemptServiceImpl implements AttemptService {
                 .totalTimeSpent(totalTimeSpent)
                 .quizzesBySubject(quizzesBySubject)
                 .quizzesByDifficulty(quizzesByDifficulty)
-                .recentActivity(recentActivity)
+                .recentActivity(recentActivityDtos)
                 .build();
     }
 
-    private AttemptResDTO mapToAttemptResDTO(QuizInstance instance) {
-        int correctAnswers = (int) quizUserResponseRepo.findByQuizInstanceId(instance.getId()).stream()
-                .filter(QuizUserResponse::isCorrect)
-                .count();
-        
+    private List<AttemptResDTO> mapToAttemptResDTOs(List<QuizInstance> instances) {
+        if (instances == null || instances.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> instanceIds = instances.stream()
+                .map(QuizInstance::getId)
+                .toList();
+        Map<Long, Long> correctCountByInstanceId = quizUserResponseRepo
+                .countCorrectByQuizInstanceIdIn(instanceIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        r -> (Long) r[0],
+                        r -> (Long) r[1]));
+
+        return instances.stream()
+                .map(instance -> mapToAttemptResDTO(
+                        instance,
+                        correctCountByInstanceId.getOrDefault(instance.getId(), 0L)))
+                .collect(Collectors.toList());
+    }
+
+    private AttemptResDTO mapToAttemptResDTO(QuizInstance instance, long correctAnswers) {
         return AttemptResDTO.builder()
                 .id(instance.getId())
                 .quizId(instance.getQuiz().getId())
@@ -202,8 +233,8 @@ public class AttemptServiceImpl implements AttemptService {
                 .title(instance.getQuiz().getTitle())
                 .date(formatDate(instance.getEndedAt() != null ? instance.getEndedAt() : instance.getStartedAt()))
                 .score(formatScore(instance.getScorePercentage()))
-                .totalQuestions(instance.getQuiz().getTotalQuestions())
-                .correctAnswers(correctAnswers)
+                .totalQuestions(instance.getQuiz().getTotalQuestion() != null ? instance.getQuiz().getTotalQuestion().intValue() : 0)
+                .correctAnswers((int) correctAnswers)
                 .points(instance.getEarnedPoints())
                 .duration(formatDuration(instance.getStartedAt(), instance.getEndedAt()))
                 .completedAt(instance.getEndedAt())
@@ -213,19 +244,23 @@ public class AttemptServiceImpl implements AttemptService {
     }
 
     private AttemptDetailResDTO mapToAttemptDetailResDTO(QuizInstance instance) {
-        AttemptResDTO base = mapToAttemptResDTO(instance);
-        
         List<QuizUserResponse> responses = quizUserResponseRepo.findByQuizInstanceId(instance.getId());
+        long correctAnswers = responses.stream()
+                .filter(QuizUserResponse::isCorrect)
+                .count();
+        AttemptResDTO base = mapToAttemptResDTO(instance, correctAnswers);
+        Map<Long, QuizUserResponse> responseByQuestionId = responses.stream()
+                .collect(Collectors.toMap(
+                        QuizUserResponse::getQuestionId,
+                        r -> r,
+                        (a, b) -> a));
         List<Question> questions = instance.getQuiz().getQuizQuestionLinks().stream()
                 .map(QuizQuestionLink::getQuestion)
                 .collect(Collectors.toList());
         
         List<UserAnswerResDTO> answers = new ArrayList<>();
         for (Question question : questions) {
-            QuizUserResponse response = responses.stream()
-                    .filter(r -> r.getQuestionId().equals(question.getId()))
-                    .findFirst()
-                    .orElse(null);
+            QuizUserResponse response = responseByQuestionId.get(question.getId());
             
             answers.add(UserAnswerResDTO.builder()
                     .id(response != null ? response.getId() : null)
@@ -257,13 +292,22 @@ public class AttemptServiceImpl implements AttemptService {
     }
 
     private boolean checkAnswer(Question question, AnswerSubmissionDTO submission) {
+        Set<Long> allAnswerIds = question.getAnswers().stream()
+                .map(Answer::getId)
+                .collect(Collectors.toSet());
         List<Answer> correctAnswers = question.getAnswers().stream()
                 .filter(Answer::isAnswerCorrect)
                 .collect(Collectors.toList());
         
         if (submission.getSelectedOptionIds() != null && !submission.getSelectedOptionIds().isEmpty()) {
-            return correctAnswers.stream()
-                    .anyMatch(ca -> submission.getSelectedOptionIds().contains(ca.getId()));
+            Set<Long> selected = new HashSet<>(submission.getSelectedOptionIds());
+            if (!allAnswerIds.containsAll(selected)) {
+                return false;
+            }
+            Set<Long> correctIds = correctAnswers.stream()
+                    .map(Answer::getId)
+                    .collect(Collectors.toSet());
+            return !correctIds.isEmpty() && selected.equals(correctIds);
         }
         
         if (submission.getAnswerText() != null && !submission.getAnswerText().trim().isEmpty()) {
@@ -272,14 +316,6 @@ public class AttemptServiceImpl implements AttemptService {
         }
         
         return false;
-    }
-
-    private Long getQuestionPoints(Quiz quiz, Question question) {
-        return quiz.getQuizQuestionLinks().stream()
-                .filter(link -> link.getQuestion().getId().equals(question.getId()))
-                .map(QuizQuestionLink::getPoints)
-                .findFirst()
-                .orElse(1L); // Default to 1 point if not found
     }
 
     private Long calculateTotalPoints(Quiz quiz) {

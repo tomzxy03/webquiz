@@ -20,6 +20,7 @@ public class QuizResDTO {
     private Integer totalQuestion;
     private QuizVisibility quizVisibility;
     private QuizStatus status;
+    private String subjectName;
     private String hostName;
     private String lobbyName;
     private Integer timeLimitMinutes;

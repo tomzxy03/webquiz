@@ -34,4 +34,15 @@ public class SpecificationUtils {
     public static <T> Specification<T> isTrue(String field) {
         return (root, query, cb) -> cb.isTrue(root.get(field));
     }
+    public static <T> Specification<T> and(Specification<T> base, Specification<T> other) {
+        if (base == null) return other;
+        if (other == null) return base;
+        return base.and(other);
+    }
+    public static <T> Specification<T> equalJoin(String field, String joinField, Object value) {
+    return (root, query, cb) -> {
+        if (value == null) return null;
+        return cb.equal(root.join(field).get(joinField), value);
+    };
+}
 }

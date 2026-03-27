@@ -15,7 +15,6 @@ import com.tomzxy.web_quiz.models.Quiz.QuestionLayout;
 import com.tomzxy.web_quiz.models.User.User;
 import com.tomzxy.web_quiz.repositories.*;
 import com.tomzxy.web_quiz.services.QuestionService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -50,6 +49,7 @@ public class DataSeeder implements CommandLineRunner {
 
     private final Faker faker = new Faker(new Locale("vi"));
     private static final String DEFAULT_PASSWORD = "password123";
+
     private static final int SUBJECT_COUNT = 10;
     private static final int USER_COUNT = 8;
     private static final int QUIZ_COUNT = 40;
@@ -57,6 +57,8 @@ public class DataSeeder implements CommandLineRunner {
     private static final int FOLDERS_PER_USER = 3;
     private static final int QUESTIONS_PER_FOLDER = 6;
     private static final int QUESTIONS_PER_BANK = 6;
+    private static final double PUBLIC_QUIZ_RATIO = 0.5;
+
     private static final List<String> VN_SUBJECTS = Arrays.asList(
             "Toan hoc", "Vat ly", "Hoa hoc", "Sinh hoc", "Lich su",
             "Dia ly", "Ngu van", "Tieng Anh", "Tin hoc", "Giao duc cong dan"
@@ -88,7 +90,7 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     @Transactional
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         if (userRepo.count() > 2) {
             log.info("Data already seeded, skipping...");
             return;
@@ -96,19 +98,10 @@ public class DataSeeder implements CommandLineRunner {
 
         log.info("Starting data seeding...");
 
-        // 1. Seed Subjects
         List<Subject> subjects = seedSubjects(SUBJECT_COUNT);
-
-        // 2. Seed Users
         List<User> users = seedUsers(USER_COUNT);
-
-        // 3. Seed QuestionBanks, Folders, Questions, Answers
         seedQuestionSystem(users);
-
-        // 4. Seed Quizzes
         List<Quiz> quizzes = seedQuizzes(subjects, users, QUIZ_COUNT);
-
-        // 5. Seed Lobbies
         seedLobbies(users, quizzes, LOBBY_COUNT);
 
         log.info("Data seeding completed successfully!");
@@ -118,7 +111,7 @@ public class DataSeeder implements CommandLineRunner {
         List<Subject> subjects = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             Subject subject = new Subject();
-            subject.setSubjectName(pickRandom(VN_SUBJECTS));
+            subject.setSubjectName(VN_SUBJECTS.get(i % VN_SUBJECTS.size()));
             subject.setDescription(pickRandom(VN_DESCRIPTIONS));
             subjects.add(subjectRepo.save(subject));
         }
@@ -132,16 +125,17 @@ public class DataSeeder implements CommandLineRunner {
         List<User> users = new ArrayList<>();
         String encodedPassword = passwordEncoder.encode(DEFAULT_PASSWORD);
 
+        Set<String> usedUsernames = new HashSet<>();
+        Set<String> usedEmails = new HashSet<>();
+
         for (int i = 0; i < count; i++) {
             User user = new User();
-            String firstName = faker.name().firstName();
-            String lastName = faker.name().lastName();
-            String temp = Normalizer.normalize(firstName + lastName, Normalizer.Form.NFD);
-            String userName = temp.replaceAll("\\p{M}", "").replace(" ", "").toLowerCase();
+            String baseUsername = makeUsername(faker.name().firstName(), faker.name().lastName());
+            String userName = uniqueValue(baseUsername, usedUsernames);
+            String email = uniqueValue(userName + "@gmail.com", usedEmails);
+
             user.setUserName(userName);
-            user.setEmail((user.getUserName() + faker.number().numberBetween(1, 9999) + "@gmail.com")
-                    .replace(" ", "")
-                    .toLowerCase());
+            user.setEmail(email);
             user.setLastLoginAt(LocalDateTime.now().minusDays(faker.number().numberBetween(0, 30)));
             user.setProfilePictureUrl(faker.internet().avatar());
             user.setPassword(encodedPassword);
@@ -154,23 +148,19 @@ public class DataSeeder implements CommandLineRunner {
 
     private void seedQuestionSystem(List<User> users) {
         for (User user : users) {
-            // Each user has one QuestionBank
             QuestionBank bank = new QuestionBank();
             bank.setOwner(user);
             bank = questionBankRepo.save(bank);
 
-            // Create some folders for the user
             for (int i = 0; i < FOLDERS_PER_USER; i++) {
                 Folder folder = new Folder();
                 folder.setName(pickRandom(VN_DEPARTMENTS));
                 folder.setBank(bank);
                 folder = folderRepo.save(folder);
 
-                // Add questions to folder
                 seedQuestions(bank, folder, QUESTIONS_PER_FOLDER);
             }
 
-            // Add some questions directly to bank (no folder)
             seedQuestions(bank, null, QUESTIONS_PER_BANK);
         }
     }
@@ -218,7 +208,7 @@ public class DataSeeder implements CommandLineRunner {
             quiz.setHost(users.get(faker.random().nextInt(users.size())));
             quiz.setTimeLimitMinutes(faker.random().nextInt(10, 60));
             quiz.setStatus(QuizStatus.OPENED);
-            quiz.setVisibility(QuizVisibility.PUBLIC);
+            quiz.setVisibility(pickQuizVisibility());
             quiz.setStartDate(LocalDateTime.now());
             quiz.setEndDate(LocalDateTime.now().plusDays(7));
             quiz.setMaxAttempt(faker.random().nextInt(1, 4));
@@ -241,12 +231,8 @@ public class DataSeeder implements CommandLineRunner {
             quiz = quizRepo.save(quiz);
             quizzes.add(quiz);
 
-            // Link some random questions to this quiz
-            Set<Question> selectedQuestions = new HashSet<>();
-            int numQuest = faker.random().nextInt(5, 15);
-            for (int j = 0; j < numQuest; j++) {
-                selectedQuestions.add(allQuestions.get(faker.random().nextInt(allQuestions.size())));
-            }
+            Set<Question> selectedQuestions = pickRandomQuestions(allQuestions, faker.random().nextInt(5, 15));
+            List<QuizQuestionLink> links = new ArrayList<>();
 
             for (Question q : selectedQuestions) {
                 QuizQuestionLink link = new QuizQuestionLink();
@@ -254,15 +240,27 @@ public class DataSeeder implements CommandLineRunner {
                 link.setQuiz(quiz);
                 link.setQuestion(q);
                 link.setPoints(faker.number().numberBetween(1L, 10L));
-                quizQuestionLinkRepo.save(link);
+                links.add(link);
             }
+
+            quizQuestionLinkRepo.saveAll(links);
+            quiz.setTotalQuestion(selectedQuestions.size());
+            if (quiz.getVisibility() == QuizVisibility.PUBLIC) {
+                quiz.setLobby(null);
+            }
+            quizRepo.save(quiz);
         }
         return quizzes;
     }
 
     private void seedLobbies(List<User> users, List<Quiz> quizzes, int count) {
-        if (quizzes.isEmpty()) return;
-        List<Quiz> quizPool = new ArrayList<>(quizzes);
+        if (quizzes.isEmpty()) {
+            return;
+        }
+
+        List<Quiz> quizPool = quizzes.stream()
+                .filter(q -> q.getVisibility() != QuizVisibility.PUBLIC)
+                .collect(Collectors.toList());
         Collections.shuffle(quizPool);
         int quizIndex = 0;
 
@@ -273,11 +271,9 @@ public class DataSeeder implements CommandLineRunner {
             lobby.setHost(host);
             lobby.setCodeInvite(faker.number().digits(6));
 
-            // save lobby trước
             Lobby savedLobby = lobbyRepo.save(lobby);
 
             Set<LobbyMember> members = new HashSet<>();
-            // Host member
             LobbyMemberId hostId = new LobbyMemberId(savedLobby.getId(), host.getId());
             LobbyMember hostMember = LobbyMember.builder()
                     .id(hostId)
@@ -296,7 +292,7 @@ public class DataSeeder implements CommandLineRunner {
             List<User> selectedUsers = shuffledUsers.stream()
                     .filter(u -> !u.getId().equals(host.getId()))
                     .limit(numMembers)
-                    .toList();
+                    .collect(Collectors.toList());
 
             members.addAll(selectedUsers.stream()
                     .map(user -> {
@@ -326,7 +322,41 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 
+    private Set<Question> pickRandomQuestions(List<Question> allQuestions, int count) {
+        Set<Question> selected = new HashSet<>();
+        if (allQuestions.isEmpty() || count <= 0) {
+            return selected;
+        }
+
+        for (int i = 0; i < count; i++) {
+            selected.add(allQuestions.get(faker.random().nextInt(allQuestions.size())));
+        }
+        return selected;
+    }
+
     private String pickRandom(List<String> values) {
         return values.get(faker.random().nextInt(values.size()));
+    }
+
+    private QuizVisibility pickQuizVisibility() {
+        return faker.random().nextDouble() < PUBLIC_QUIZ_RATIO
+                ? QuizVisibility.PUBLIC
+                : QuizVisibility.CLASS_ONLY;
+    }
+
+    private String makeUsername(String firstName, String lastName) {
+        String temp = Normalizer.normalize(firstName + lastName, Normalizer.Form.NFD);
+        String base = temp.replaceAll("\\p{M}", "").replace(" ", "").toLowerCase();
+        return base.isBlank() ? "user" : base;
+    }
+
+    private String uniqueValue(String base, Set<String> used) {
+        String candidate = base;
+        int counter = 1;
+        while (!used.add(candidate)) {
+            candidate = base + counter;
+            counter++;
+        }
+        return candidate;
     }
 }

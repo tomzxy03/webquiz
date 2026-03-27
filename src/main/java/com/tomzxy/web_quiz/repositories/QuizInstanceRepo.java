@@ -1,12 +1,12 @@
 package com.tomzxy.web_quiz.repositories;
 
 import com.tomzxy.web_quiz.enums.QuizInstanceStatus;
-import com.tomzxy.web_quiz.enums.QuizStatus;
 import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -20,6 +20,9 @@ public interface QuizInstanceRepo extends JpaRepository<QuizInstance, Long> {
 
         // Tìm quiz instance theo quiz và user
         Optional<QuizInstance> findByQuizIdAndUserIdAndStatus(Long quizId, Long userId, QuizInstanceStatus status);
+
+        // Tìm quiz instance theo quiz và user và guest
+        Optional<QuizInstance> findByQuizIdAndGuestIdAndStatus(Long quizId, String guestId, QuizInstanceStatus status);
 
         // Tìm quiz instance đang chạy của user
         List<QuizInstance> findByUserIdAndStatus(Long userId, QuizInstanceStatus status);
@@ -75,6 +78,10 @@ public interface QuizInstanceRepo extends JpaRepository<QuizInstance, Long> {
         long countByUserIdAndStatusIn(@Param("userId") Long userId,
                         @Param("statuses") List<QuizInstanceStatus> statuses);
 
+        long countByUserIdAndStatus(Long userId, QuizInstanceStatus status);
+
+        List<QuizInstance> findAllByQuizIdAndUserIdAndStatus(Long quizId, Long userId, QuizInstanceStatus status);
+
         // Dashboard: in-progress instances with quiz details (fetch join — no N+1)
         @Query("SELECT qi FROM QuizInstance qi JOIN FETCH qi.quiz q WHERE qi.user.id = :userId AND qi.status = :status ORDER BY qi.startedAt DESC")
         List<QuizInstance> findInProgressWithQuizByUserId(@Param("userId") Long userId,
@@ -84,5 +91,16 @@ public interface QuizInstanceRepo extends JpaRepository<QuizInstance, Long> {
         @Query("SELECT qi FROM QuizInstance qi JOIN FETCH qi.quiz q WHERE qi.user.id = :userId AND qi.status IN :statuses ORDER BY qi.updatedAt DESC")
         List<QuizInstance> findRecentByUserIdAndStatusIn(@Param("userId") Long userId,
                         @Param("statuses") List<QuizInstanceStatus> statuses, Pageable pageable);
+
+        long countByQuizIdAndGuestIdAndStatusIn(Long quizId, String guestId, List<QuizInstanceStatus> of);
+
+        @Modifying
+        @Query("DELETE FROM QuizInstance i WHERE i.guestId IS NOT NULL AND (" +
+                        "(i.status = 'IN_PROGRESS' AND i.updatedAt < :abandonedTime) OR " +
+                        "(i.status IN ('SUBMITTED', 'COMPLETED') AND i.updatedAt < :completedTime))") // Thêm SUBMITTED
+                                                                                                      // vào đây
+        int deleteGuestInstancesByCriteria(
+                        @Param("abandonedTime") LocalDateTime abandonedTime,
+                        @Param("completedTime") LocalDateTime completedTime);
 
 }
