@@ -80,7 +80,7 @@ public class DashboardServiceImpl implements DashboardService {
                                         .collect(Collectors.toList());
                         answeredCountByInstanceId.putAll(
                                         quizUserResponseRepo
-                                                        .countByQuizInstanceId(inProgressIds)
+                                                        .countByQuizInstanceIdIn(inProgressIds)
                                                         .stream()
                                                         .collect(Collectors.toMap(
                                                                         r -> (Long) r[0],
