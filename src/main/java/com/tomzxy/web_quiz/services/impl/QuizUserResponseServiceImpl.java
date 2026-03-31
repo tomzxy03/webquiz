@@ -36,37 +36,6 @@ public class QuizUserResponseServiceImpl implements QuizUserResponseService {
     private final ConvertToPageResDTO convertToPageResDTO;
 
     @Override
-    public QuizUserResponseResDTO createUserResponse(QuizUserResponseReqDTO request) {
-        log.info("Creating user response for quiz instance: {}", request.getQuizInstanceId());
-        
-        QuizInstance quizInstance = quizInstanceRepo.findById(request.getQuizInstanceId())
-                .orElseThrow(() -> new NotFoundException("Quiz instance not found"));
-        
-        QuizUserResponse response = quizUserResponseMapper.toQuizUserResponse(request);
-        response.setQuizInstance(quizInstance);
-        response.setAnsweredAt(LocalDateTime.now());
-        
-        response = quizUserResponseRepo.save(response);
-        
-        return quizUserResponseMapper.toQuizUserResponseResDTO(response);
-    }
-
-    @Override
-    public QuizUserResponseResDTO updateUserResponse(Long id, QuizUserResponseReqDTO request) {
-        log.info("Updating user response: {}", id);
-        
-        QuizUserResponse response = quizUserResponseRepo.findById(id)
-                .orElseThrow(() -> new NotFoundException("User response not found"));
-        
-        quizUserResponseMapper.updateQuizUserResponseFromDto(request, response);
-        response.setUpdatedAt(LocalDateTime.now());
-        
-        response = quizUserResponseRepo.save(response);
-        
-        return quizUserResponseMapper.toQuizUserResponseResDTO(response);
-    }
-
-    @Override
     public QuizUserResponseResDTO getUserResponseById(Long id) {
         log.info("Getting user response by id: {}", id);
         
@@ -74,17 +43,6 @@ public class QuizUserResponseServiceImpl implements QuizUserResponseService {
                 .orElseThrow(() -> new NotFoundException("User response not found"));
         
         return quizUserResponseMapper.toQuizUserResponseResDTO(response);
-    }
-
-    @Override
-    public void deleteUserResponse(Long id) {
-        log.info("Deleting user response: {}", id);
-        
-        QuizUserResponse response = quizUserResponseRepo.findById(id)
-                .orElseThrow(() -> new NotFoundException("User response not found"));
-        
-        response.setActive(false);
-        response = quizUserResponseRepo.save(response);
     }
 
     @Override
@@ -97,66 +55,6 @@ public class QuizUserResponseServiceImpl implements QuizUserResponseService {
         
         PageResDTO<QuizUserResponseResDTO> result = convertToPageResDTO.convertPageResponse(responses, pageable, quizUserResponseMapper::toQuizUserResponseResDTO);
         return (PageResDTO<QuizUserResponseResDTO>) (PageResDTO<?>) result;
-    }
-
-    @Override
-    public QuizUserResponseResDTO submitAnswer(Long quizInstanceId, Long userId, Long selectedAnswerId, String userAnswer) {
-        log.info("Submitting answer for quiz instance: {}, user: {}", quizInstanceId, userId);
-        
-        QuizInstance quizInstance = quizInstanceRepo.findById(quizInstanceId)
-                .orElseThrow(() -> new NotFoundException("Quiz instance not found"));
-        
-        if (!quizInstance.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("User not authorized for this quiz instance");
-        }
-        
-        QuizUserResponse response = QuizUserResponse.builder()
-                .quizInstance(quizInstance)
-                .selectedAnswerId(selectedAnswerId)
-                .answeredAt(LocalDateTime.now())
-                .isSkipped(false)
-                .build();
-        
-        response = quizUserResponseRepo.save(response);
-        
-        return quizUserResponseMapper.toQuizUserResponseResDTO(response);
-    }
-
-    @Override
-    public QuizUserResponseResDTO updateAnswer(Long responseId, Long selectedAnswerId, String userAnswer) {
-        log.info("Updating answer for response: {}", responseId);
-        
-        QuizUserResponse response = quizUserResponseRepo.findById(responseId)
-                .orElseThrow(() -> new NotFoundException("User response not found"));
-        
-        response.setSelectedAnswerId(selectedAnswerId);
-        response.setUpdatedAt(LocalDateTime.now());
-        
-        response = quizUserResponseRepo.save(response);
-        
-        return quizUserResponseMapper.toQuizUserResponseResDTO(response);
-    }
-
-    @Override
-    public QuizUserResponseResDTO skipQuestion(Long quizInstanceId, Long userId) {
-        log.info("Skipping question for quiz instance: {}, user: {}", quizInstanceId, userId);
-        
-        QuizInstance quizInstance = quizInstanceRepo.findById(quizInstanceId)
-                .orElseThrow(() -> new NotFoundException("Quiz instance not found"));
-        
-        if (!quizInstance.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("User not authorized for this quiz instance");
-        }
-        
-        QuizUserResponse response = QuizUserResponse.builder()
-                .quizInstance(quizInstance)
-                .isSkipped(true)
-                .answeredAt(LocalDateTime.now())
-                .build();
-        
-        response = quizUserResponseRepo.save(response);
-        
-        return quizUserResponseMapper.toQuizUserResponseResDTO(response);
     }
 
     @Override
@@ -374,73 +272,6 @@ public class QuizUserResponseServiceImpl implements QuizUserResponseService {
         return quizUserResponseRepo.findByUserIdAndIsActiveTrue(userId).stream()
                 .mapToLong(r -> !r.isSkipped() ? 1 : 0)
                 .sum();
-    }
-
-    // Validation methods
-    @Override
-    public boolean canUserSubmitResponse(Long quizInstanceId, Long userId) {
-        QuizInstance quizInstance = quizInstanceRepo.findById(quizInstanceId).orElse(null);
-        return quizInstance != null && quizInstance.getUser().getId().equals(userId) && quizInstance.isInProgress();
-    }
-
-    @Override
-    public boolean canUserUpdateResponse(Long responseId, Long userId) {
-        QuizUserResponse response = quizUserResponseRepo.findById(responseId).orElse(null);
-        return response != null && response.getQuizInstance().getUser().getId().equals(userId);
-    }
-
-    @Override
-    public boolean hasUserAnsweredQuestion(Long quizInstanceId, Long userId) {
-        return !quizUserResponseRepo.findByQuizInstanceIdAndUserId(quizInstanceId, userId).isEmpty();
-    }
-
-    @Override
-    public boolean isResponseValid(QuizUserResponseReqDTO request) {
-        return request != null && request.getQuizInstanceId() != null;
-    }
-
-    @Override
-    public boolean isTimeExpired(Long quizInstanceId) {
-        QuizInstance quizInstance = quizInstanceRepo.findById(quizInstanceId).orElse(null);
-        return quizInstance != null && quizInstance.isTimedOut();
-    }
-
-    @Override
-    public boolean isQuestionSkippable(Long quizInstanceId) {
-        return canUserSubmitResponse(quizInstanceId, null);
-    }
-
-    @Override
-    public boolean isResponseCorrect(Long selectedAnswerId, String userAnswer, Long questionId) {
-        // This would need to be implemented based on your specific logic
-        return false;
-    }
-
-    @Override
-    public boolean isResponseTimeEfficient(Integer timeSpentSeconds) {
-        return timeSpentSeconds != null && timeSpentSeconds <= 30;
-    }
-
-    @Override
-    public boolean isResponseTimeConsuming(Integer timeSpentSeconds) {
-        return timeSpentSeconds != null && timeSpentSeconds > 120;
-    }
-
-    @Override
-    public boolean needsReview(Integer timeSpentSeconds) {
-        return isResponseTimeEfficient(timeSpentSeconds) || isResponseTimeConsuming(timeSpentSeconds);
-    }
-
-    @Override
-    public boolean canResubmitResponse(Long responseId) {
-        QuizUserResponse response = quizUserResponseRepo.findById(responseId).orElse(null);
-        return response != null && response.getQuizInstance().isInProgress();
-    }
-
-    @Override
-    public boolean isResponseStale(Long responseId, LocalDateTime cutoffDate) {
-        QuizUserResponse response = quizUserResponseRepo.findById(responseId).orElse(null);
-        return response != null && response.getCreatedAt().isBefore(cutoffDate);
     }
 
     // Additional methods that need implementation

@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.tomzxy.web_quiz.dto.responses.AttemptResDTO;
 import com.tomzxy.web_quiz.enums.QuizInstanceStatus;
 import com.tomzxy.web_quiz.models.QuizUser.QuizUserResponse;
 
@@ -112,6 +111,10 @@ public interface QuizUserResponseRepo extends JpaRepository<QuizUserResponse, Lo
         int deleteResponsesByGuestCriteria(
                         @Param("abandonedTime") LocalDateTime abandonedTime,
                         @Param("completedTime") LocalDateTime completedTime);
+
+        @Modifying
+        @Query("DELETE FROM QuizUserResponse r WHERE r.quizInstance.id = :quizInstanceId")
+        int deleteByQuizInstanceId(@Param("quizInstanceId") Long quizInstanceId);
 
         @Query("SELECT qur.quizInstance.id, COUNT(qur) FROM QuizUserResponse qur WHERE qur.quizInstance.id IN :quizInstanceIds AND qur.isCorrect = true AND qur.isActive = true GROUP BY qur.quizInstance.id")
         List<Object[]> countCorrectByQuizInstanceIdIn(@Param("quizInstanceIds") List<Long> quizInstanceIds);

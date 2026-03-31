@@ -20,11 +20,12 @@ import org.hibernate.type.SqlTypes;
 @NoArgsConstructor
 @Builder
 @Table(name = "quiz_user_responses", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_instance_question", columnNames = { "quiz_instance_id", "question_id" })
+        @UniqueConstraint(name = "uk_instance_question", columnNames = { "quiz_instance_id", "question_snapshot_key" })
 }, indexes = {
         @Index(name = "idx_quiz_user_response_instance", columnList = "quiz_instance_id"),
         @Index(name = "idx_quiz_user_response_instance_correct", columnList = "quiz_instance_id, is_correct"),
-        @Index(name = "idx_quiz_user_response_instance_answered", columnList = "quiz_instance_id, answered_at")
+        @Index(name = "idx_quiz_user_response_instance_answered", columnList = "quiz_instance_id, answered_at"),
+        @Index(name = "idx_quiz_user_response_snapshot_key", columnList = "quiz_instance_id, question_snapshot_key")
 })
 public class QuizUserResponse extends BaseEntity {
 
@@ -32,7 +33,7 @@ public class QuizUserResponse extends BaseEntity {
     @JoinColumn(name = "quiz_instance_id", nullable = false)
     private QuizInstance quizInstance;
 
-    @Column(name = "question_id", nullable = false)
+    @Column(name = "question_id", nullable = true)
     private Long questionId;
 
     @Column(name = "question_snapshot_key")
@@ -44,7 +45,7 @@ public class QuizUserResponse extends BaseEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "selected_answer_ids", columnDefinition = "jsonb")
     @Builder.Default
-    private List<Long> selectedAnswerIds = new ArrayList<>(); // All selected answer IDs (multi-choice)
+    private List<Long> selectedAnswerIds = new ArrayList<>(); // Selected answer indices (snapshot-based)
 
     @Builder.Default
     @Column(name = "is_correct", nullable = false)

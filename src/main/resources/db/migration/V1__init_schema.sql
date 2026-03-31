@@ -99,7 +99,7 @@ CREATE TABLE public.quiz_user_responses (
     is_correct boolean NOT NULL,
     is_skipped boolean NOT NULL,
     points_earned bigint NOT NULL,
-    question_id bigint NOT NULL,
+    question_id bigint,
     question_snapshot_key varchar(255),
     response_time_seconds integer,
     selected_answer_id bigint,

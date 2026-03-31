@@ -13,6 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 public class QuizInstanceQuestionResDTO {
     private Long id;
+    private String snapshotKey;
     private Integer displayOrder;
     private Long points;
     private String questionText;

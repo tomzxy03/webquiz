@@ -19,15 +19,14 @@ public class IdentityResolver {
     private final UserRepo userRepo;
 
     public IdentityContext resolve(HttpServletRequest request) {
-        // 1. Check JWT trước (Ưu tiên User đã login)
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             // Lấy từ SecurityContext (vì Filter đã parse JWT và đặt vào đó rồi)
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth != null && auth.getPrincipal() instanceof CustomUserDetails user) {
-                User usertemp = userRepo.findByEmailAndIsActiveTrue(user.getUsername())
+                User userTemp = userRepo.findByEmailAndIsActiveTrue(user.getUsername())
                         .orElseThrow(() -> new RuntimeException("User not found"));
-                return new IdentityContext(IdentityType.USER, String.valueOf(usertemp.getId()));
+                return new IdentityContext(IdentityType.USER, String.valueOf(userTemp.getId()));
             }
         }
 
