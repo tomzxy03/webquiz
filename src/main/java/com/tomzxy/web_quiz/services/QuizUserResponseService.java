@@ -10,23 +10,10 @@ import java.util.Optional;
 
 public interface QuizUserResponseService {
 
-    // CRUD operations
-    QuizUserResponseResDTO createUserResponse(QuizUserResponseReqDTO request);
-    
-    QuizUserResponseResDTO updateUserResponse(Long id, QuizUserResponseReqDTO request);
-    
     QuizUserResponseResDTO getUserResponseById(Long id);
     
-    void deleteUserResponse(Long id);
     
     PageResDTO<?> getAllUserResponses(int page, int size);
-
-    // Business operations
-    QuizUserResponseResDTO submitAnswer(Long quizInstanceQuestionId, Long userId, Long selectedAnswerId, String userAnswer);
-    
-    QuizUserResponseResDTO updateAnswer(Long responseId, Long selectedAnswerId, String userAnswer);
-    
-    QuizUserResponseResDTO skipQuestion(Long quizInstanceQuestionId, Long userId);
     
     List<QuizUserResponseResDTO> getUserResponses(Long userId);
     
@@ -93,28 +80,4 @@ public interface QuizUserResponseService {
     
     Long getAnsweredQuestionCount(Long userId);
 
-    // Validation and business rules
-    boolean canUserSubmitResponse(Long quizInstanceQuestionId, Long userId);
-    
-    boolean canUserUpdateResponse(Long responseId, Long userId);
-    
-    boolean hasUserAnsweredQuestion(Long quizInstanceQuestionId, Long userId);
-    
-    boolean isResponseValid(QuizUserResponseReqDTO request);
-    
-    boolean isTimeExpired(Long quizInstanceQuestionId);
-    
-    boolean isQuestionSkippable(Long quizInstanceQuestionId);
-    
-    boolean isResponseCorrect(Long selectedAnswerId, String userAnswer, Long questionId);
-    
-    boolean isResponseTimeEfficient(Integer timeSpentSeconds);
-    
-    boolean isResponseTimeConsuming(Integer timeSpentSeconds);
-    
-    boolean needsReview(Integer timeSpentSeconds);
-    
-    boolean canResubmitResponse(Long responseId);
-    
-    boolean isResponseStale(Long responseId, LocalDateTime cutoffDate);
 } 

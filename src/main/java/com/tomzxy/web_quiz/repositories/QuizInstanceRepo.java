@@ -21,8 +21,15 @@ public interface QuizInstanceRepo extends JpaRepository<QuizInstance, Long> {
         // Tìm quiz instance theo quiz và user
         Optional<QuizInstance> findByQuizIdAndUserIdAndStatus(Long quizId, Long userId, QuizInstanceStatus status);
 
-        // Tìm quiz instance theo quiz và user và guest
+        // Tìm quiz instance theo quiz và guest
         Optional<QuizInstance> findByQuizIdAndGuestIdAndStatus(Long quizId, String guestId, QuizInstanceStatus status);
+
+        // Latest in-progress instance (avoid NonUniqueResultException)
+        Optional<QuizInstance> findTopByQuizIdAndUserIdAndStatusOrderByStartedAtDesc(Long quizId, Long userId,
+                        QuizInstanceStatus status);
+
+        Optional<QuizInstance> findTopByQuizIdAndGuestIdAndStatusOrderByStartedAtDesc(Long quizId, String guestId,
+                        QuizInstanceStatus status);
 
         // Tìm quiz instance đang chạy của user
         List<QuizInstance> findByUserIdAndStatus(Long userId, QuizInstanceStatus status);
@@ -103,4 +110,12 @@ public interface QuizInstanceRepo extends JpaRepository<QuizInstance, Long> {
                         @Param("abandonedTime") LocalDateTime abandonedTime,
                         @Param("completedTime") LocalDateTime completedTime);
 
+        @Query("""
+                            SELECT qi FROM QuizInstance qi
+                            JOIN FETCH qi.quiz q
+                            JOIN FETCH q.lobby l
+                            JOIN FETCH qi.user u
+                            WHERE qi.id = :id
+                        """)
+        Optional<QuizInstance> findFullById(Long id);
 }

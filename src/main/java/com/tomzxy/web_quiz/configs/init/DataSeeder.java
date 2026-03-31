@@ -48,16 +48,20 @@ public class DataSeeder implements CommandLineRunner {
     private final QuestionService questionService;
 
     private final Faker faker = new Faker(new Locale("vi"));
-    private static final String DEFAULT_PASSWORD = "password123";
+    private static final String DEFAULT_PASSWORD = "123456";
 
     private static final int SUBJECT_COUNT = 10;
-    private static final int USER_COUNT = 8;
+    private static final int USER_COUNT = 2000;
     private static final int QUIZ_COUNT = 40;
     private static final int LOBBY_COUNT = 20;
     private static final int FOLDERS_PER_USER = 3;
     private static final int QUESTIONS_PER_FOLDER = 6;
     private static final int QUESTIONS_PER_BANK = 6;
     private static final double PUBLIC_QUIZ_RATIO = 0.5;
+    private static final String LOAD_TEST_EMAIL_DOMAIN = "example.com";
+    private static final String LOAD_TEST_QUIZ_TITLE = "Load Test Quiz";
+    private static final String LOAD_TEST_LOBBY_NAME = "Load Test Group";
+    private static final String LOAD_TEST_GROUP_QUIZ_TITLE = "Load Test Group Quiz";
 
     private static final List<String> VN_SUBJECTS = Arrays.asList(
             "Toan hoc", "Vat ly", "Hoa hoc", "Sinh hoc", "Lich su",
@@ -91,18 +95,47 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        if (userRepo.count() > 2) {
-            log.info("Data already seeded, skipping...");
+        Optional<User> loadTestUser = userRepo.findByEmail(loadTestEmail(1));
+        boolean loadTestQuizReady = loadTestUser.isPresent()
+                && quizRepo.existsByTitleAndHostId(LOAD_TEST_QUIZ_TITLE, loadTestUser.get().getId());
+        boolean loadTestGroupReady = loadTestUser.isPresent()
+                && lobbyRepo.existsByLobbyName(LOAD_TEST_LOBBY_NAME)
+                && quizRepo.existsByTitleAndHostId(LOAD_TEST_GROUP_QUIZ_TITLE, loadTestUser.get().getId());
+        if (loadTestQuizReady && loadTestGroupReady) {
+            log.info("Load test data already seeded, skipping...");
             return;
         }
 
         log.info("Starting data seeding...");
 
-        List<Subject> subjects = seedSubjects(SUBJECT_COUNT);
-        List<User> users = seedUsers(USER_COUNT);
-        seedQuestionSystem(users);
-        List<Quiz> quizzes = seedQuizzes(subjects, users, QUIZ_COUNT);
-        seedLobbies(users, quizzes, LOBBY_COUNT);
+        List<Subject> subjects = subjectRepo.count() > 0
+                ? subjectRepo.findAll()
+                : seedSubjects(SUBJECT_COUNT);
+        List<User> users = userRepo.count() > 0
+                ? userRepo.findAll()
+                : seedUsers(USER_COUNT);
+        // Always ensure load-test users exist and have known credentials
+        users = ensureLoadTestUsers(users, USER_COUNT);
+
+        if (!loadTestQuizReady) {
+            seedQuestionSystem(users);
+            List<Quiz> quizzes = users.isEmpty()
+                    ? Collections.emptyList()
+                    : seedQuizzes(subjects, users, QUIZ_COUNT);
+            User loadTestHost = !users.isEmpty()
+                    ? users.get(0)
+                    : userRepo.findByEmail(loadTestEmail(1)).orElse(null);
+            if (loadTestHost != null) {
+                ensureLoadTestQuiz(subjects, loadTestHost);
+            }
+            if (!users.isEmpty() && !quizzes.isEmpty()) {
+                seedLobbies(users, quizzes, LOBBY_COUNT);
+            }
+        }
+
+        if (!users.isEmpty()) {
+            ensureLoadTestLobby(users, subjects);
+        }
 
         log.info("Data seeding completed successfully!");
     }
@@ -128,14 +161,17 @@ public class DataSeeder implements CommandLineRunner {
         Set<String> usedUsernames = new HashSet<>();
         Set<String> usedEmails = new HashSet<>();
 
-        for (int i = 0; i < count; i++) {
-            User user = new User();
-            String baseUsername = makeUsername(faker.name().firstName(), faker.name().lastName());
-            String userName = uniqueValue(baseUsername, usedUsernames);
-            String email = uniqueValue(userName + "@gmail.com", usedEmails);
+        for (int i = 1; i <= count; i++) {
+            String userName = "user" + i;
+            String email = loadTestEmail(i);
 
-            user.setUserName(userName);
-            user.setEmail(email);
+            if (userRepo.existsByEmail(email)) {
+                continue;
+            }
+
+            User user = new User();
+            user.setUserName(uniqueValue(userName, usedUsernames));
+            user.setEmail(uniqueValue(email, usedEmails));
             user.setLastLoginAt(LocalDateTime.now().minusDays(faker.number().numberBetween(0, 30)));
             user.setProfilePictureUrl(faker.internet().avatar());
             user.setPassword(encodedPassword);
@@ -144,6 +180,43 @@ public class DataSeeder implements CommandLineRunner {
             users.add(userRepo.save(user));
         }
         return users;
+    }
+
+    private List<User> ensureLoadTestUsers(List<User> existingUsers, int count) {
+        Role userRole = roleRepo.findByName(PredefinedRole.USER_ROLE)
+                .orElseThrow(() -> new RuntimeException("USER_ROLE not found"));
+
+        String encodedPassword = passwordEncoder.encode(DEFAULT_PASSWORD);
+        List<User> ensured = new ArrayList<>(existingUsers);
+
+        for (int i = 1; i <= count; i++) {
+            String email = loadTestEmail(i);
+            Optional<User> found = userRepo.findByEmail(email);
+            if (found.isPresent()) {
+                User user = found.get();
+                if (!user.isEmailVerified()) {
+                    user.setEmailVerified(true);
+                }
+                if (user.getRoles() == null || user.getRoles().isEmpty()) {
+                    user.setRoles(new HashSet<>(Collections.singletonList(userRole)));
+                }
+                user.setPassword(encodedPassword);
+                ensured.add(userRepo.save(user));
+                continue;
+            }
+
+            User user = new User();
+            user.setUserName("user" + i);
+            user.setEmail(email);
+            user.setLastLoginAt(LocalDateTime.now().minusDays(faker.number().numberBetween(0, 30)));
+            user.setProfilePictureUrl(faker.internet().avatar());
+            user.setPassword(encodedPassword);
+            user.setRoles(new HashSet<>(Collections.singletonList(userRole)));
+            user.setEmailVerified(true);
+            ensured.add(userRepo.save(user));
+        }
+
+        return ensured;
     }
 
     private void seedQuestionSystem(List<User> users) {
@@ -211,7 +284,7 @@ public class DataSeeder implements CommandLineRunner {
             quiz.setVisibility(pickQuizVisibility());
             quiz.setStartDate(LocalDateTime.now());
             quiz.setEndDate(LocalDateTime.now().plusDays(7));
-            quiz.setMaxAttempt(faker.random().nextInt(1, 4));
+            quiz.setMaxAttempt(faker.random().nextInt(1, 10));
 
             QuizConfig config = new QuizConfig();
             config.setShuffleQuestions(faker.bool().bool());
@@ -251,6 +324,148 @@ public class DataSeeder implements CommandLineRunner {
             quizRepo.save(quiz);
         }
         return quizzes;
+    }
+
+    private void ensureLoadTestQuiz(List<Subject> subjects, User host) {
+        if (subjects.isEmpty() || host == null) {
+            return;
+        }
+
+        Long hostId = host.getId();
+        if (hostId == null || quizRepo.existsByTitleAndHostId(LOAD_TEST_QUIZ_TITLE, hostId)) {
+            return;
+        }
+
+        List<Question> allQuestions = questionRepo.findAll();
+        if (allQuestions.isEmpty()) {
+            return;
+        }
+
+        Quiz quiz = new Quiz();
+        quiz.setTitle(LOAD_TEST_QUIZ_TITLE);
+        quiz.setDescription("Quiz for load testing");
+        quiz.setSubject(subjects.get(0));
+        quiz.setHost(host);
+        quiz.setTimeLimitMinutes(30);
+        quiz.setStatus(QuizStatus.OPENED);
+        quiz.setVisibility(QuizVisibility.PUBLIC);
+        quiz.setStartDate(LocalDateTime.now());
+        quiz.setEndDate(LocalDateTime.now().plusDays(7));
+        quiz.setMaxAttempt(3);
+
+        QuizConfig config = new QuizConfig();
+        config.setShuffleQuestions(true);
+        config.setShuffleAnswers(true);
+        config.setAutoDistributePoints(true);
+        config.setShowScoreImmediately(false);
+        config.setAllowReview(true);
+        config.setPassingScore(60);
+        quiz.setConfig(config);
+
+        QuestionLayout layout = new QuestionLayout();
+        layout.setQuestionNumbering("numeric");
+        layout.setQuestionPerPage(1);
+        layout.setAnswerPerRow(1);
+        quiz.setQuestionLayout(layout);
+
+        quiz = quizRepo.save(quiz);
+
+        Set<Question> selectedQuestions = pickRandomQuestions(allQuestions, Math.min(10, allQuestions.size()));
+        List<QuizQuestionLink> links = new ArrayList<>();
+        for (Question q : selectedQuestions) {
+            QuizQuestionLink link = new QuizQuestionLink();
+            link.setId(new QuizQuestionId(quiz.getId(), q.getId()));
+            link.setQuiz(quiz);
+            link.setQuestion(q);
+            link.setPoints(5L);
+            links.add(link);
+        }
+        quizQuestionLinkRepo.saveAll(links);
+        quiz.setTotalQuestion(selectedQuestions.size());
+        quiz.setLobby(null);
+        quizRepo.save(quiz);
+    }
+
+    private void ensureLoadTestLobby(List<User> users, List<Subject> subjects) {
+        if (users.isEmpty() || subjects.isEmpty()) {
+            return;
+        }
+
+        if (lobbyRepo.existsByLobbyName(LOAD_TEST_LOBBY_NAME)) {
+            return;
+        }
+
+        User host = users.get(0);
+        Lobby lobby = new Lobby();
+        lobby.setLobbyName(LOAD_TEST_LOBBY_NAME);
+        lobby.setHost(host);
+        lobby.setCodeInvite(faker.number().digits(6));
+        Lobby savedLobby = lobbyRepo.save(lobby);
+
+        Set<LobbyMember> members = new HashSet<>();
+        for (User user : users) {
+            LobbyMemberId id = new LobbyMemberId(savedLobby.getId(), user.getId());
+            LobbyRole role = user.getId().equals(host.getId()) ? LobbyRole.HOST : LobbyRole.MEMBER;
+            LobbyMember member = LobbyMember.builder()
+                    .id(id)
+                    .lobby(savedLobby)
+                    .user(user)
+                    .role(role)
+                    .joinedAt(LocalDateTime.now())
+                    .build();
+            members.add(member);
+        }
+        savedLobby.setMembers(members);
+        lobbyRepo.save(savedLobby);
+
+        List<Question> allQuestions = questionRepo.findAll();
+        if (allQuestions.isEmpty()) {
+            return;
+        }
+
+        Quiz quiz = new Quiz();
+        quiz.setTitle(LOAD_TEST_GROUP_QUIZ_TITLE);
+        quiz.setDescription("Group quiz for load testing");
+        quiz.setSubject(subjects.get(0));
+        quiz.setHost(host);
+        quiz.setTimeLimitMinutes(30);
+        quiz.setStatus(QuizStatus.OPENED);
+        quiz.setVisibility(QuizVisibility.CLASS_ONLY);
+        quiz.setStartDate(LocalDateTime.now());
+        quiz.setEndDate(LocalDateTime.now().plusDays(7));
+        quiz.setMaxAttempt(10);
+        quiz.setLobby(savedLobby);
+
+        QuizConfig config = new QuizConfig();
+        config.setShuffleQuestions(true);
+        config.setShuffleAnswers(true);
+        config.setAutoDistributePoints(true);
+        config.setShowScoreImmediately(false);
+        config.setAllowReview(true);
+        config.setPassingScore(60);
+        quiz.setConfig(config);
+
+        QuestionLayout layout = new QuestionLayout();
+        layout.setQuestionNumbering("numeric");
+        layout.setQuestionPerPage(1);
+        layout.setAnswerPerRow(1);
+        quiz.setQuestionLayout(layout);
+
+        quiz = quizRepo.save(quiz);
+
+        Set<Question> selectedQuestions = pickRandomQuestions(allQuestions, Math.min(10, allQuestions.size()));
+        List<QuizQuestionLink> links = new ArrayList<>();
+        for (Question q : selectedQuestions) {
+            QuizQuestionLink link = new QuizQuestionLink();
+            link.setId(new QuizQuestionId(quiz.getId(), q.getId()));
+            link.setQuiz(quiz);
+            link.setQuestion(q);
+            link.setPoints(5L);
+            links.add(link);
+        }
+        quizQuestionLinkRepo.saveAll(links);
+        quiz.setTotalQuestion(selectedQuestions.size());
+        quizRepo.save(quiz);
     }
 
     private void seedLobbies(List<User> users, List<Quiz> quizzes, int count) {
@@ -358,5 +573,9 @@ public class DataSeeder implements CommandLineRunner {
             counter++;
         }
         return candidate;
+    }
+
+    private String loadTestEmail(int index) {
+        return "user" + index + "@" + LOAD_TEST_EMAIL_DOMAIN;
     }
 }

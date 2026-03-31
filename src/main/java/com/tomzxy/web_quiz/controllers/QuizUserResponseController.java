@@ -35,39 +35,6 @@ public class QuizUserResponseController {
 
         private final QuizUserResponseService quizUserResponseService;
 
-        // CRUD operations
-        @PostMapping()
-        @Operation(summary = "Create user response", description = "Create a new quiz user response")
-        @PreAuthorize("hasAuthority('answer_user_CREATE')")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "201", description = "User response created successfully", content = @Content(schema = @Schema(implementation = DataResDTO.class))),
-                        @ApiResponse(responseCode = "400", description = "Invalid request data")
-        })
-        public ResponseEntity<DataResDTO<QuizUserResponseResDTO>> createUserResponse(
-                        @Valid @RequestBody QuizUserResponseReqDTO request) {
-                log.info("Create user response");
-                return ResponseEntity
-                                .status(HttpStatus.CREATED)
-                                .body(DataResDTO.create(quizUserResponseService.createUserResponse(request)));
-        }
-
-        @PutMapping(ApiDefined.QuizUserResponse.ID)
-        @Operation(summary = "Update user response", description = "Update an existing quiz user response")
-        @PreAuthorize("hasAuthority('answer_user_UPDATE')")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "User response updated successfully"),
-                        @ApiResponse(responseCode = "404", description = "User response not found"),
-                        @ApiResponse(responseCode = "400", description = "Invalid request data")
-        })
-        public ResponseEntity<DataResDTO<QuizUserResponseResDTO>> updateUserResponse(
-                        @Parameter(description = "User response ID") @PathVariable Long id,
-                        @Valid @RequestBody QuizUserResponseReqDTO request) {
-                log.info("Update user response with id {}", id);
-                return ResponseEntity
-                                .status(HttpStatus.OK)
-                                .body(DataResDTO.update(quizUserResponseService.updateUserResponse(id, request)));
-        }
-
         @GetMapping(ApiDefined.QuizUserResponse.ID)
         @Operation(summary = "Get user response by ID", description = "Retrieve a quiz user response by its ID")
         @PreAuthorize("hasAuthority('answer_user_VIEW')")
@@ -81,22 +48,6 @@ public class QuizUserResponseController {
                 return ResponseEntity
                                 .status(HttpStatus.OK)
                                 .body(DataResDTO.ok(quizUserResponseService.getUserResponseById(id)));
-        }
-
-        @DeleteMapping(ApiDefined.QuizUserResponse.ID)
-        @Operation(summary = "Delete user response", description = "Delete a quiz user response by its ID")
-        @PreAuthorize("hasAuthority('answer_user_DELETE')")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "User response deleted successfully"),
-                        @ApiResponse(responseCode = "404", description = "User response not found")
-        })
-        public ResponseEntity<DataResDTO<Void>> deleteUserResponse(
-                        @Parameter(description = "User response ID") @PathVariable Long id) {
-                log.info("Delete user response with id {}", id);
-                quizUserResponseService.deleteUserResponse(id);
-                return ResponseEntity
-                                .status(HttpStatus.OK)
-                                .body(DataResDTO.delete());
         }
 
         @GetMapping()
@@ -113,61 +64,6 @@ public class QuizUserResponseController {
                                 .status(HttpStatus.OK)
                                 .body(DataResDTO.ok(quizUserResponseService.getAllUserResponses(page, size)));
         }
-
-        // Business operations
-        @PostMapping(ApiDefined.QuizUserResponse.SUBMIT)
-        @Operation(summary = "Submit answer", description = "Submit an answer for a quiz question")
-        @PreAuthorize("hasAuthority('answer_user_CREATE')")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Answer submitted successfully"),
-                        @ApiResponse(responseCode = "400", description = "Invalid request data")
-        })
-        public ResponseEntity<DataResDTO<QuizUserResponseResDTO>> submitAnswer(
-                        @Parameter(description = "Quiz instance question ID") @RequestParam Long quizInstanceQuestionId,
-                        @Parameter(description = "User ID") @RequestParam Long userId,
-                        @Parameter(description = "Selected answer ID") @RequestParam(required = false) Long selectedAnswerId,
-                        @Parameter(description = "User answer text") @RequestParam(required = false) String userAnswer) {
-                log.info("Submit answer for question {}", quizInstanceQuestionId);
-                return ResponseEntity
-                                .status(HttpStatus.OK)
-                                .body(DataResDTO.ok(quizUserResponseService.submitAnswer(quizInstanceQuestionId, userId,
-                                                selectedAnswerId, userAnswer)));
-        }
-
-        @PutMapping(ApiDefined.QuizUserResponse.ANSWER)
-        @Operation(summary = "Update answer", description = "Update an existing answer")
-        @PreAuthorize("hasAuthority('answer_user_UPDATE')")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Answer updated successfully"),
-                        @ApiResponse(responseCode = "404", description = "Response not found")
-        })
-        public ResponseEntity<DataResDTO<QuizUserResponseResDTO>> updateAnswer(
-                        @Parameter(description = "Response ID") @PathVariable Long responseId,
-                        @Parameter(description = "Selected answer ID") @RequestParam(required = false) Long selectedAnswerId,
-                        @Parameter(description = "User answer text") @RequestParam(required = false) String userAnswer) {
-                log.info("Update answer for response {}", responseId);
-                return ResponseEntity
-                                .status(HttpStatus.OK)
-                                .body(DataResDTO.ok(quizUserResponseService.updateAnswer(responseId, selectedAnswerId,
-                                                userAnswer)));
-        }
-
-        @PostMapping(ApiDefined.QuizUserResponse.SKIP)
-        @Operation(summary = "Skip question", description = "Skip a quiz question")
-        @PreAuthorize("hasAuthority('answer_user_CREATE')")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Question skipped successfully")
-        })
-        public ResponseEntity<DataResDTO<QuizUserResponseResDTO>> skipQuestion(
-                        @Parameter(description = "Quiz instance question ID") @RequestParam Long quizInstanceQuestionId,
-                        @Parameter(description = "User ID") @RequestParam Long userId) {
-                log.info("Skip question {}", quizInstanceQuestionId);
-                return ResponseEntity
-                                .status(HttpStatus.OK)
-                                .body(DataResDTO.ok(
-                                                quizUserResponseService.skipQuestion(quizInstanceQuestionId, userId)));
-        }
-
         @GetMapping(ApiDefined.QuizUserResponse.USER)
         @Operation(summary = "Get user responses", description = "Get all responses for a specific user")
         @PreAuthorize("hasAuthority('answer_user_VIEW')")

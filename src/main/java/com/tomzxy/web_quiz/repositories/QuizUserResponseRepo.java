@@ -115,4 +115,8 @@ public interface QuizUserResponseRepo extends JpaRepository<QuizUserResponse, Lo
         int deleteResponsesByGuestCriteria(
                         @Param("abandonedTime") LocalDateTime abandonedTime,
                         @Param("completedTime") LocalDateTime completedTime);
+
+        @Modifying
+        @Query("DELETE FROM QuizUserResponse r WHERE r.quizInstance.id = :quizInstanceId")
+        int deleteByQuizInstanceId(@Param("quizInstanceId") Long quizInstanceId);
 }

@@ -36,6 +36,8 @@ public interface QuizInstanceService {
 
   QuizResultDetailResDTO getQuizResult(Long instanceId, IdentityContext identity);
 
+  QuizResultDetailResDTO getQuizResultForHost(Long instanceId);
+
   void handleTimedOutInstances();
 
   void deleteQuizInstance(Long instanceId, IdentityContext identity);

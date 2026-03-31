@@ -63,8 +63,11 @@ CREATE UNIQUE INDEX uk_folder_name_root ON public.folder(name, bank_id) WHERE pa
 -- Quiz instance constraint: prevent multiple IN_PROGRESS attempts
 CREATE UNIQUE INDEX uk_active_attempt_per_user ON public.quiz_instances(user_id, quiz_id) WHERE (status = 'IN_PROGRESS');
 
+CREATE UNIQUE INDEX uk_active_attempt_per_guest ON public.quiz_instances(guest_id, quiz_id) WHERE (status = 'IN_PROGRESS');
+
 -- Quiz user response unique constraint
 ALTER TABLE ONLY public.quiz_user_responses ADD CONSTRAINT uk_instance_question UNIQUE (quiz_instance_id, question_id);
+ALTER TABLE quiz_user_responses ADD CONSTRAINT uq_instance_question UNIQUE (quiz_instance_id, question_snapshot_key);
 
         -- Quiz instance in-progress constraint
 

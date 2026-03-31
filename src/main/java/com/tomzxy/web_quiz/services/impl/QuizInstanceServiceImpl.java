@@ -16,7 +16,6 @@ import com.tomzxy.web_quiz.enums.ResponseStatus;
 import com.tomzxy.web_quiz.exception.ApiException;
 import com.tomzxy.web_quiz.exception.NotFoundException;
 import com.tomzxy.web_quiz.models.*;
-import com.tomzxy.web_quiz.models.IdentityContext;
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
 import com.tomzxy.web_quiz.models.Quiz.QuizQuestionLink;
 import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;
@@ -38,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -53,6 +53,9 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -67,6 +70,8 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher applicationEvent;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private static final String ANSWERS_KEY_PREFIX = "quiz_instance:";
     private static final String ANSWERS_KEY_SUFFIX = ":answers";
@@ -75,7 +80,9 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
     private static final String LOCK_KEY_PREFIX = "quiz_instance:lock:";
 
     // ============ Lua script for atomic submit ============
-    private static final String GET_ANSWERS_LUA_SCRIPT = "return redis.call('HGETALL', KEYS[1])";
+    private static final String GET_AND_DELETE_LUA = "local data = redis.call('HGETALL', KEYS[1]); " +
+            "redis.call('DEL', KEYS[1]); " +
+            "return data;";
 
     // ============ Helper: Redis key builders ============
     private String answersKey(Long instanceId) {
@@ -108,12 +115,12 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
 
     private Optional<QuizInstance> findActiveInstance(Long quizId, IdentityContext identity) {
         if (identity.getType() == IdentityType.USER) {
-            return quizInstanceRepo.findByQuizIdAndUserIdAndStatus(quizId, identity.getUserId(),
-                    QuizInstanceStatus.IN_PROGRESS);
+            return quizInstanceRepo.findTopByQuizIdAndUserIdAndStatusOrderByStartedAtDesc(
+                    quizId, identity.getUserId(), QuizInstanceStatus.IN_PROGRESS);
         }
         if (identity.getType() == IdentityType.GUEST) {
-            return quizInstanceRepo.findByQuizIdAndGuestIdAndStatus(quizId, identity.getGuestId(),
-                    QuizInstanceStatus.IN_PROGRESS);
+            return quizInstanceRepo.findTopByQuizIdAndGuestIdAndStatusOrderByStartedAtDesc(
+                    quizId, identity.getGuestId(), QuizInstanceStatus.IN_PROGRESS);
         }
         return Optional.empty();
     }
@@ -198,7 +205,13 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
                 .snapshot(snapshot)
                 .build();
 
-        instance = quizInstanceRepo.save(instance);
+        try {
+            instance = quizInstanceRepo.save(instance);
+        } catch (DataIntegrityViolationException e) {
+            // Race condition: instance đã được tạo bởi request khác
+            instance = findActiveInstance(quizId, ctx)
+                    .orElseThrow(() -> new ApiException(AppCode.BAD_REQUEST, "Failed to create quiz instance"));
+        }
 
         // 5. Cache snapshot in Redis
         int durationMinutes = snapshot.getDuration() != null ? snapshot.getDuration() : 60;
@@ -262,7 +275,10 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
             Question question = link.getQuestion();
 
             QuestionSnapshot qs = new QuestionSnapshot();
-            qs.setKey(question.getId().toString());
+            if (question.getContentHash() == null || question.getContentHash().isBlank()) {
+                throw new ApiException(AppCode.INTERNAL_ERROR, "Question content hash missing for snapshot");
+            }
+            qs.setKey(UUID.randomUUID().toString()); // or use question.getContentHash()
             qs.setContent(question.getQuestionName());
             qs.setType(question.getType());
             qs.setAnswerType(question.getAnswerType());
@@ -320,7 +336,8 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
             QuestionSnapshot qs = questions.get(i);
 
             QuizInstanceQuestionResDTO qDTO = new QuizInstanceQuestionResDTO();
-            qDTO.setId(Long.parseLong(qs.getKey())); // ID của câu hỏi
+            qDTO.setId(null);
+            qDTO.setSnapshotKey(qs.getKey());
             qDTO.setDisplayOrder(i + 1);
             qDTO.setPoints(qs.getPoints());
             qDTO.setQuestionText(qs.getContent());
@@ -370,7 +387,7 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
     @Override
     @Transactional
     public void saveAnswer(Long instanceId, IdentityContext identity, QuizAnswerReqDTO request) {
-        log.info("Saving answer for instance: {}, question: {}", instanceId, request.getQuestionId());
+        log.info("Saving answer for instance: {}, snapshotKey: {}", instanceId, request.getQuestionSnapshotKey());
         IdentityContext ctx = requireIdentity(identity);
 
         QuizInstance instance = quizInstanceRepo.findById(instanceId)
@@ -378,7 +395,8 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
 
         // 1. Check status
         if (!instance.isInProgress()) {
-            throw new ApiException(AppCode.BAD_REQUEST, "Quiz instance is no longer in progress");
+            log.warn("Attempt to save answer for non-in-progress instance: {}", instanceId);
+            return; // Silently ignore saves for non-in-progress instances
         }
 
         // 2. Check ownership
@@ -390,6 +408,10 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
             throw new ApiException(AppCode.BAD_REQUEST, "Snapshot not found for this instance");
         }
 
+        if (request.getQuestionSnapshotKey() == null || request.getQuestionSnapshotKey().isBlank()) {
+            throw new ApiException(AppCode.BAD_REQUEST, "Question snapshot key is required");
+        }
+
         if (snapshot.getDuration() != null) {
             long startEpoch = java.sql.Timestamp.valueOf(instance.getStartedAt()).toInstant().getEpochSecond();
             long endEpoch = startEpoch + (long) snapshot.getDuration() * 60;
@@ -398,15 +420,9 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
             }
         }
 
-        // 4. Validate questionId exists in snapshot
-        String questionKey = request.getQuestionId().toString();
-        Map<String, QuestionSnapshot> questionMap = snapshot.getQuestions().stream()
-                .collect(Collectors.toMap(QuestionSnapshot::getKey, q -> q));
-
-        QuestionSnapshot questionSnapshot = questionMap.get(request.getQuestionId().toString());
-        if (questionSnapshot == null) {
-            throw new ApiException(AppCode.BAD_REQUEST, "Question not found in snapshot");
-        }
+        // 4. Resolve question in snapshot
+        QuestionSnapshot questionSnapshot = resolveQuestionSnapshot(snapshot, request);
+        String questionKey = questionSnapshot.getKey();
 
         // 5. Validate answer indices
         List<Integer> answerIndices = request.getAnswer();
@@ -438,13 +454,20 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
 
             // Set TTL only if not already set (first answer)
             Long ttl = stringRedisTemplate.getExpire(redisKey);
-            if (ttl == null || ttl < 0) {
+            if (ttl == null || ttl <= 0) {
                 int durationMinutes = snapshot.getDuration() != null ? snapshot.getDuration() : 60;
                 stringRedisTemplate.expire(redisKey, Duration.ofSeconds((long) durationMinutes * 60 + 3600));
             }
         } catch (JsonProcessingException e) {
             throw new ApiException(AppCode.INTERNAL_ERROR, "Failed to serialize answer");
         }
+    }
+
+    private QuestionSnapshot resolveQuestionSnapshot(QuizQuestionSnapshot snapshot, QuizAnswerReqDTO request) {
+        return snapshot.getQuestions().stream()
+                .filter(q -> request.getQuestionSnapshotKey().equals(q.getKey()))
+                .findFirst()
+                .orElseThrow(() -> new ApiException(AppCode.BAD_REQUEST, "Question not found in snapshot"));
     }
 
     // ============ 3.3 Resume / Get State ============
@@ -531,24 +554,43 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         IdentityContext ctx = requireIdentity(identity);
         String submitLockKey = "quiz:instance:" + instanceId + ":submit-lock";
 
-        // 1. Acquire submit lock (prevent double submit)
+        QuizInstance instance = quizInstanceRepo.findById(instanceId)
+                .orElseThrow(() -> new NotFoundException("Quiz instance not found"));
+
+        // Verify ownership early
+        assertOwnership(instance, ctx, "submit this quiz");
+
+        // Idempotent submit: if already completed, return existing result
+        if (instance.isSubmitted() || instance.isTimedOut()) {
+            log.info("Submit idempotent return for instance {} (status={})", instanceId, instance.getStatus());
+            return mapResultBasedOnConfig(instance, instance.getStatus());
+        }
+
+        if (!instance.isInProgress()) {
+            log.warn("Submit rejected: instance {} not in progress (status={})", instanceId, instance.getStatus());
+            throw new ApiException(AppCode.BAD_REQUEST, "Quiz instance is no longer in progress");
+        }
+
+        // Acquire submit lock (prevent double submit)
         Boolean acquired = stringRedisTemplate.opsForValue().setIfAbsent(submitLockKey, "LOCKED",
                 Duration.ofSeconds(30));
         if (acquired == null || !acquired) {
-            throw new ApiException(AppCode.CONFLICT, "Submission in progress or already submitted");
+            // Another submit is processing. If already finished, return result; otherwise
+            // conflict.
+            QuizInstance latest = quizInstanceRepo.findById(instanceId).orElse(null);
+            if (latest != null && (latest.isSubmitted() || latest.isTimedOut())) {
+                log.info("Submit idempotent return after lock for instance {} (status={})", instanceId,
+                        latest.getStatus());
+                return mapResultBasedOnConfig(latest, latest.getStatus());
+            }
+            log.warn("Submit in progress: instance {} locked by another submit", instanceId);
+            return QuizResultDetailResDTO.builder()
+                    .quizInstanceId(instanceId)
+                    .status(QuizInstanceStatus.IN_PROGRESS.name())
+                    .build();
         }
 
         try {
-            QuizInstance instance = quizInstanceRepo.findById(instanceId)
-                    .orElseThrow(() -> new NotFoundException("Quiz instance not found"));
-
-            if (!instance.isInProgress()) {
-                throw new ApiException(AppCode.BAD_REQUEST, "Quiz instance is no longer in progress");
-            }
-
-            // Verify ownership
-            assertOwnership(instance, ctx, "submit this quiz");
-
             return processSubmission(instance, QuizInstanceStatus.SUBMITTED);
         } finally {
             stringRedisTemplate.delete(submitLockKey);
@@ -562,18 +604,51 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         Long instanceId = instance.getId();
 
         // Atomic read & delete from Redis using Lua script
-        Map<Object, Object> redisAnswers = stringRedisTemplate.opsForHash().entries(answersKey(instanceId));
+        DefaultRedisScript<List> script = new DefaultRedisScript<>();
+        script.setScriptText(GET_AND_DELETE_LUA);
+        script.setResultType(List.class);
+
+        List<Object> raw = stringRedisTemplate.execute(
+                script,
+                Collections.singletonList(answersKey(instanceId)));
+
         Map<String, AnswerRecord> answerMap = new HashMap<>();
 
-        redisAnswers.forEach((k, v) -> {
-            try {
-                answerMap.put((String) k, objectMapper.readValue((String) v, AnswerRecord.class));
-            } catch (Exception e) {
-                log.warn("Failed to parse answer for question {} in instance {}: {}", k, instanceId, v);
+        if (raw != null) {
+            for (int i = 0; i < raw.size(); i += 2) {
+                String key = (String) raw.get(i);
+                String value = (String) raw.get(i + 1);
+                try {
+                    answerMap.put(key, objectMapper.readValue(value, AnswerRecord.class));
+                } catch (Exception e) {
+                    log.warn("Failed to parse answer for question {}", key);
+                }
             }
-        });
-        Map<Long, QuizUserResponse> existingResponses = quizUserResponseRepo.findByQuizInstanceId(instanceId).stream()
-                .collect(Collectors.toMap(QuizUserResponse::getQuestionId, r -> r));
+        }
+        // FALLBACK nếu Redis bị mất data
+        if (answerMap.isEmpty()) {
+            log.warn("Redis answers empty for instance {}, fallback to DB", instanceId);
+
+            List<QuizUserResponse> dbResponses = quizUserResponseRepo.findByQuizInstanceId(instanceId);
+
+            for (QuizUserResponse r : dbResponses) {
+                if (r.getSelectedAnswerIds() != null) {
+                    AnswerRecord record = new AnswerRecord();
+                    record.setAnswer(
+                            r.getSelectedAnswerIds().stream()
+                                    .map(Long::intValue)
+                                    .collect(Collectors.toList()));
+                    if (r.getAnsweredAt() != null) {
+                        record.setAnsweredAt(r.getAnsweredAt().atZone(ZoneId.systemDefault()).toInstant());
+                    } else {
+                        record.setAnsweredAt(Instant.now());
+                    }
+                    answerMap.put(r.getQuestionSnapshotKey(), record);
+                }
+            }
+        }
+        Map<String, QuizUserResponse> existingResponses = quizUserResponseRepo.findByQuizInstanceId(instanceId).stream()
+                .collect(Collectors.toMap(QuizUserResponse::getQuestionSnapshotKey, r -> r, (a, b) -> a));
         QuizQuestionSnapshot snapshot = instance.getSnapshot();
         Long earnedPoints = 0L;
         List<QuizUserResponse> responsesToSave = new ArrayList<>();
@@ -581,9 +656,8 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         Map<String, Object> answersSnapshotMap = new HashMap<>();
 
         for (QuestionSnapshot qs : snapshot.getQuestions()) {
-            String questionIdStr = qs.getKey();
-            Long questionId = Long.valueOf(questionIdStr);
-            AnswerRecord userRecord = answerMap.get(questionIdStr);
+            String questionSnapshotKey = qs.getKey();
+            AnswerRecord userRecord = answerMap.get(questionSnapshotKey);
 
             boolean isCorrect = false;
             List<Integer> userAnswer = (userRecord != null) ? userRecord.getAnswer() : null;
@@ -591,27 +665,27 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
                 Set<String> userSet = userAnswer.stream().map(String::valueOf).collect(Collectors.toSet());
                 Set<String> correctSet = new HashSet<>(qs.getCorrectAnswerIds());
                 isCorrect = userSet.equals(correctSet);
-                answersSnapshotMap.put(questionIdStr, userAnswer);
+                answersSnapshotMap.put(questionSnapshotKey, userAnswer);
             }
 
-            // Map selectedAnswerIds từ 0-based index sang Original ID
-            List<Long> selectedAnswerIds = new ArrayList<>();
-            if (userAnswer != null) {
-                for (int idx : userAnswer) {
-                    if (idx >= 0 && idx < qs.getAnswers().size()) {
-                        selectedAnswerIds.add(qs.getAnswers().get(idx).getOriginalAnswerId());
-                    }
-                }
-            }
+            List<Long> selectedAnswerIds = userAnswer != null
+                    ? userAnswer.stream().map(Integer::longValue).collect(Collectors.toList())
+                    : new ArrayList<>();
 
-            QuizUserResponse response = existingResponses.getOrDefault(questionId, new QuizUserResponse());
+            QuizUserResponse response = existingResponses.get(questionSnapshotKey);
+            if (response == null) {
+                response = new QuizUserResponse();
+            }
             response.setQuizInstance(instance);
-            response.setQuestionId(questionId);
+            response.setQuestionId(null);
+            response.setQuestionSnapshotKey(questionSnapshotKey);
             response.setSelectedAnswerIds(selectedAnswerIds);
+            response.setSelectedAnswerId(null);
             response.setCorrect(isCorrect);
             response.setPointsEarned(isCorrect ? qs.getPoints() : 0);
+            Instant answeredAt = userRecord != null ? userRecord.getAnsweredAt() : null;
             response.setAnsweredAt(
-                    userRecord != null ? LocalDateTime.ofInstant(userRecord.getAnsweredAt(), ZoneId.systemDefault())
+                    answeredAt != null ? LocalDateTime.ofInstant(answeredAt, ZoneId.systemDefault())
                             : LocalDateTime.now());
             response.setSkipped(userAnswer == null || userAnswer.isEmpty());
 
@@ -621,8 +695,25 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
                 earnedPoints += qs.getPoints();
         }
 
-        // Batch save all responses (#11)
-        quizUserResponseRepo.saveAll(responsesToSave);
+        // Save all responses with retry on unique-constraint race
+        try {
+            quizUserResponseRepo.saveAll(responsesToSave);
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Retry saveAll due to constraint violation for instance {}", instanceId, e);
+            entityManager.clear();
+            Map<String, QuizUserResponse> latestResponses = quizUserResponseRepo.findByQuizInstanceId(instanceId)
+                    .stream()
+                    .collect(Collectors.toMap(QuizUserResponse::getQuestionSnapshotKey, r -> r, (a, b) -> a));
+            for (QuizUserResponse response : responsesToSave) {
+                if (response.getId() == null) {
+                    QuizUserResponse existing = latestResponses.get(response.getQuestionSnapshotKey());
+                    if (existing != null) {
+                        response.setId(existing.getId());
+                    }
+                }
+            }
+            quizUserResponseRepo.saveAll(responsesToSave);
+        }
         // 6. Update instance
         instance.setEarnedPoints(earnedPoints);
         instance.setStatus(finalStatus);
@@ -631,6 +722,7 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         instance = quizInstanceRepo.save(instance);
 
         applicationEvent.publishEvent(new QuizSubmissionEvent(instanceId));
+        stringRedisTemplate.opsForZSet().remove(ACTIVE_INSTANCES_KEY, instanceId.toString());
         return mapResultBasedOnConfig(instance, finalStatus);
     }
 
@@ -715,31 +807,50 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         List<QuizInstance> activeInstances = quizInstanceRepo.findByStatus(QuizInstanceStatus.IN_PROGRESS);
 
         for (QuizInstance instance : activeInstances) {
+            String submitLockKey = "quiz:instance:" + instance.getId() + ":submit-lock";
+            if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(submitLockKey))) {
+                continue; // Skip autosave while submit is in progress
+            }
+            QuizQuestionSnapshot snapshot = getSnapshotFromCacheOrDb(instance);
+            Map<String, QuestionSnapshot> questionSnapshotMap = snapshot != null && snapshot.getQuestions() != null
+                    ? snapshot.getQuestions().stream().collect(Collectors.toMap(QuestionSnapshot::getKey, q -> q))
+                    : new HashMap<>();
             Map<Object, Object> redisAnswers = stringRedisTemplate.opsForHash().entries(answersKey(instance.getId()));
             if (redisAnswers.isEmpty())
                 continue;
 
             // Lấy các response hiện có trong DB để so sánh
-            Map<Long, QuizUserResponse> existingDBResponses = quizUserResponseRepo
+            Map<String, QuizUserResponse> existingDBResponses = quizUserResponseRepo
                     .findByQuizInstanceId(instance.getId())
-                    .stream().collect(Collectors.toMap(QuizUserResponse::getQuestionId, r -> r));
+                    .stream()
+                    .collect(Collectors.toMap(QuizUserResponse::getQuestionSnapshotKey, r -> r, (a, b) -> a));
 
             List<QuizUserResponse> updates = new ArrayList<>();
 
             for (Map.Entry<Object, Object> entry : redisAnswers.entrySet()) {
-                Long qId = Long.parseLong((String) entry.getKey());
+                String snapshotKey = (String) entry.getKey();
+                QuestionSnapshot qs = questionSnapshotMap.get(snapshotKey);
+                if (qs == null) {
+                    log.warn("Snapshot question not found for key {} in instance {}", snapshotKey, instance.getId());
+                    continue;
+                }
                 AnswerRecord record = parseRecord((String) entry.getValue());
 
-                QuizUserResponse existing = existingDBResponses.get(qId);
+                QuizUserResponse existing = existingDBResponses.get(snapshotKey);
                 LocalDateTime redisAnsweredAt = LocalDateTime.ofInstant(record.getAnsweredAt(), ZoneId.systemDefault());
 
                 // Chỉ UPSERT nếu là câu trả lời mới hoặc thời gian answeredAt mới hơn trong DB
                 if (existing == null || existing.getAnsweredAt().isBefore(redisAnsweredAt)) {
                     QuizUserResponse response = existing != null ? existing : new QuizUserResponse();
                     response.setQuizInstance(instance);
-                    response.setQuestionId(qId);
+                    response.setQuestionId(null);
+                    response.setQuestionSnapshotKey(snapshotKey);
                     response.setAnsweredAt(redisAnsweredAt);
                     response.setSkipped(record.getAnswer().isEmpty());
+                    response.setSelectedAnswerIds(
+                            record.getAnswer().stream()
+                                    .map(Integer::longValue)
+                                    .collect(Collectors.toList()));
                     // Lưu ý: Autosave không cần tính điểm ngay để tiết kiệm CPU, việc tính điểm để
                     // lúc Submit
                     updates.add(response);
@@ -897,6 +1008,28 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         return mapToQuizResultDetailResDTO(instance);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public QuizResultDetailResDTO getQuizResultForHost(Long instanceId) {
+        QuizInstance instance = quizInstanceRepo.findById(instanceId)
+                .orElseThrow(() -> new NotFoundException("Quiz instance not found"));
+
+        if (instance.isInProgress()) {
+            throw new ApiException(AppCode.BAD_REQUEST, "Quiz is still in progress. Submit first to view results.");
+        }
+
+        boolean showResult = instance.getQuiz().getConfig() != null
+                && Boolean.TRUE.equals(instance.getQuiz().getConfig().getShowScoreImmediately());
+        if (!showResult && instance.getStatus() == QuizInstanceStatus.TIMED_OUT) {
+            return QuizResultDetailResDTO.builder()
+                    .quizInstanceId(instance.getId())
+                    .status(instance.getStatus().name())
+                    .build();
+        }
+
+        return mapToQuizResultDetailResDTO(instance);
+    }
+
     // ============ Helper methods ============
 
     private QuizQuestionSnapshot getSnapshotFromCacheOrDb(QuizInstance instance) {
@@ -929,33 +1062,19 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         return snapshot;
     }
 
-    private List<Question> getQuestionsFromQuiz(Quiz quiz) {
-        return quiz.getQuizQuestionLinks().stream()
-                .map(QuizQuestionLink::getQuestion)
-                .collect(Collectors.toList());
-    }
-
-    private Long getQuestionPoints(Quiz quiz, Question question) {
-        return quiz.getQuizQuestionLinks().stream()
-                .filter(link -> link.getQuestion().getId().equals(question.getId()))
-                .map(QuizQuestionLink::getPoints)
-                .findFirst()
-                .orElse(1L);
-    }
-
     private QuizResultDetailResDTO mapToQuizResultDetailResDTO(QuizInstance instance) {
-        List<Question> questions = getQuestionsFromQuiz(instance.getQuiz());
+        QuizQuestionSnapshot snapshot = instance.getSnapshot();
         List<QuestionResultResDTO> questionResults = new ArrayList<>();
-        List<QuizUserResponse> responses = new ArrayList<>(
-                quizUserResponseRepo.findByQuizInstanceId(instance.getId()));
 
-        for (int i = 0; i < questions.size(); i++) {
-            Question question = questions.get(i);
-            QuizUserResponse userResponse = responses.stream()
-                    .filter(r -> question.getId().equals(r.getQuestionId()))
-                    .findFirst()
-                    .orElse(null);
-            questionResults.add(mapQuestionResultResDTO(question, instance, userResponse, i + 1));
+        Map<String, QuizUserResponse> responses = new ArrayList<>(
+                quizUserResponseRepo.findByQuizInstanceId(instance.getId())).stream()
+                .collect(Collectors.toMap(QuizUserResponse::getQuestionSnapshotKey, r -> r, (a, b) -> a));
+
+        if (snapshot != null && snapshot.getQuestions() != null) {
+            for (QuestionSnapshot qs : snapshot.getQuestions()) {
+                QuizUserResponse userResponse = responses.get(qs.getKey());
+                questionResults.add(mapQuestionResultResDTO(qs, userResponse));
+            }
         }
 
         return QuizResultDetailResDTO.builder()
@@ -973,47 +1092,48 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
                 .build();
     }
 
-    private QuestionResultResDTO mapQuestionResultResDTO(Question question, QuizInstance instance,
-            QuizUserResponse userResponse, int displayOrder) {
-        List<Answer> allAnswers = new ArrayList<>(question.getAnswers());
+    private QuestionResultResDTO mapQuestionResultResDTO(QuestionSnapshot qs, QuizUserResponse userResponse) {
         List<AnswerResultResDTO> answerResults = new ArrayList<>();
+        Set<String> correctSet = new HashSet<>(qs.getCorrectAnswerIds());
+        Set<Integer> userSet = userResponse != null && userResponse.getSelectedAnswerIds() != null
+                ? userResponse.getSelectedAnswerIds().stream().map(Long::intValue).collect(Collectors.toSet())
+                : new HashSet<>();
 
-        for (int i = 0; i < allAnswers.size(); i++) {
-            Answer answer = allAnswers.get(i);
-            // #2: Check against selectedAnswerIds for multi-choice support
-            boolean isUserSelected = false;
-            if (userResponse != null) {
-                if (userResponse.getSelectedAnswerIds() != null && !userResponse.getSelectedAnswerIds().isEmpty()) {
-                    isUserSelected = userResponse.getSelectedAnswerIds().contains(answer.getId());
-                } else {
-                    isUserSelected = answer.getId().equals(userResponse.getSelectedAnswerId());
-                }
+        List<String> correctAnswerTexts = new ArrayList<>();
+        List<String> userAnswerTexts = new ArrayList<>();
+
+        for (int i = 0; i < qs.getAnswers().size(); i++) {
+            AnswerSnapshot as = qs.getAnswers().get(i);
+            boolean isCorrect = correctSet.contains(String.valueOf(i));
+            boolean isUserSelected = userSet.contains(i);
+
+            if (isCorrect) {
+                correctAnswerTexts.add(as.getContent());
             }
+            if (isUserSelected) {
+                userAnswerTexts.add(as.getContent());
+            }
+
             answerResults.add(AnswerResultResDTO.builder()
-                    .answerInstanceId(answer.getId())
+                    .answerInstanceId((long) i)
                     .displayOrder(i + 1)
-                    .answerText(answer.getAnswerName())
-                    .isCorrect(answer.isAnswerCorrect())
+                    .answerText(as.getContent())
+                    .optionLabel(String.valueOf((char) ('A' + i)))
+                    .isCorrect(isCorrect)
                     .isUserSelected(isUserSelected)
                     .build());
         }
 
-        Answer correctAnswer = question.getAnswers().stream()
-                .filter(Answer::isAnswerCorrect)
-                .findFirst()
-                .orElse(null);
-
-        Long points = getQuestionPoints(instance.getQuiz(), question);
-
         return QuestionResultResDTO.builder()
-                .questionInstanceId(question.getId())
-                .displayOrder(displayOrder)
-                .questionText(question.getQuestionName())
-                .type(question.getType().name())
-                .answerType(question.getAnswerType() != null ? question.getAnswerType().name() : null)
-                .points(points)
+                .questionInstanceId(null)
+                .displayOrder(qs.getOrderIndex())
+                .questionText(qs.getContent())
+                .type(qs.getType() != null ? qs.getType().name() : null)
+                .answerType(qs.getAnswerType() != null ? qs.getAnswerType().name() : null)
+                .points(qs.getPoints())
                 .earnedPoints(userResponse != null ? userResponse.getPointsEarned() : 0L)
-                .correctAnswer(correctAnswer != null ? correctAnswer.getAnswerName() : null)
+                .userAnswer(userAnswerTexts.isEmpty() ? null : String.join(", ", userAnswerTexts))
+                .correctAnswer(correctAnswerTexts.isEmpty() ? null : String.join(", ", correctAnswerTexts))
                 .isCorrect(userResponse != null && userResponse.isCorrect())
                 .isSkipped(userResponse != null && userResponse.isSkipped())
                 .status(userResponse != null ? userResponse.getStatus().name() : ResponseStatus.SKIPPED.name())

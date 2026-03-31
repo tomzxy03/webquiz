@@ -8,17 +8,13 @@ public abstract class ApiDefined {
         public static final String LOGIN = "/login";
         public static final String SIGNUP = "/signup";
         public static final String LOGOUT = "/logout";
-        public static final String TOKEN = "/token";
         public static final String FORGOT_PASSWORD = "/forgot_password";
         public static final String RESET_PASSWORD = "/reset_password";
         public static final String ME = "/me";
-        public static final String REGISTER = "/register";
         public static final String REFRESH = "/refresh";
-        public static final String REFRESH_TOKEN = "/refresh_token";
         public static final String UPDATE_INFO = "/{userId}/profile";
         public static final String CHANGE_PASSWORD = "/change_password";
         public static final String CHANGE_AVATAR = "/avatar";
-        public static final String INTROSPECT = "/introspect";
     }
 
     public static final class User {
@@ -26,7 +22,6 @@ public abstract class ApiDefined {
         public static final String ID = "{userId}";
         public static final String PROFILE = "{userId}/profile";
         public static final String DELETE_MANY = "/delete_many";
-        public static final String QUIZZES = ID + "/quizzes_result";
     }
 
     public static final class Role {
@@ -131,10 +126,6 @@ public abstract class ApiDefined {
     public static final class QuizUserResponse {
         public static final String BASE = API_PREFIX + "/quiz_user_responses";
         public static final String ID = "{responseId}";
-        public static final String DELETE_MANY = "/delete_many";
-        public static final String SUBMIT = "/submit";
-        public static final String ANSWER = ID + "/answer";
-        public static final String SKIP = ID + "/skip";
         public static final String USER = "/user/{userId}";
         public static final String USER_PAGE = USER + "/page";
         public static final String QUIZ_INSTANCE = "/quiz-instance/{quizInstanceId}";
@@ -149,28 +140,10 @@ public abstract class ApiDefined {
 
     }
 
-    public static final class QuizResult {
-        public static final String BASE = API_PREFIX + "/quizzes_result";
-        public static final String ID = "{quiz_resultId}";
-        public static final String DELETE_MANY = "/delete_many";
-    }
-
     public static final class Dashboard {
         public static final String BASE = API_PREFIX + "/dashboard";
         public static final String BY_USER = "/{userId}";
         public static final String SUMMARY = "/summary";
-    }
-
-    public static final class Statistics {
-        public static final String BASE = API_PREFIX + "/statistics";
-        public static final String USER = "/user/{userId}";
-        public static final String QUIZ = "/quiz/{quizId}";
-        public static final String GLOBAL = "/dashboard";
-    }
-
-    public static final class Files {
-        public static final String BASE = API_PREFIX + "/files";
-        public static final String UPLOAD = "/upload";
     }
 
     public static final class QuestionBank {
@@ -205,10 +178,17 @@ public abstract class ApiDefined {
         public static final String MOVE_TO_FOLDER = "/{questionId}/move";
         public static final String MOVE_TO_ROOT = "/{questionId}/move-root";
     }
+    public static final class Attempt{
+        public static final String BASE = API_PREFIX + "/attempts";
+        public static final String ID = "/{quizInstanceId}";
+        public static final String ME = "/me";
+        public static final String SUBMISSION = "/groups/{groupId}/quizzes/{quizId}/submissions";
+        public static final String STATISTICS = ME + "/statistics";
+
+    }
 
     public static final class Admin {
         public static final String BASE = API_PREFIX + "/tomzxyadmin";
-
         public static final String USERS = "/users";
         public static final String USER_ID = USERS + "/{userId}";
         public static final String GROUPS = "/groups";
@@ -226,11 +206,5 @@ public abstract class ApiDefined {
         public static final String QUESTION_BANKS = "/question-banks";
         public static final String QUESTION_BANK_ID = QUESTION_BANKS + "/{questionBankId}";
     }
-    public static final class Attempt{
-        public static final String BASE = API_PREFIX + "/attempts";
-        public static final String ID = "{attemptId}";
-        public static final String USER = "/user/{userId}";
-        public static final String QUIZ_USER = "/quiz/{quizId}/user/{userId}";
-        public static final String DELETE_MANY = "/delete_many";
-    }
+
 }
