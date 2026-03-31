@@ -123,8 +123,8 @@ public class DataSeeder implements CommandLineRunner {
         seedQuestionSystem(users);
 
         List<Quiz> quizzes = quizRepo.count() > 0
-                ? quizRepo.findAll()
-                : Collections.emptyList();
+                ? new ArrayList<>(quizRepo.findAll())
+                : new ArrayList<>();
         if (!users.isEmpty() && quizzes.size() < QUIZ_COUNT) {
             quizzes.addAll(seedQuizzes(subjects, users, QUIZ_COUNT - quizzes.size()));
         }
