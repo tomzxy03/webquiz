@@ -7,6 +7,8 @@ import com.tomzxy.web_quiz.dto.requests.quiz.QuizQuestionReqDTO;
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizReqDTO;
 import com.tomzxy.web_quiz.dto.responses.Quiz.QuizDetailResDTO;
 import com.tomzxy.web_quiz.dto.responses.Quiz.QuizResDTO;
+import com.tomzxy.web_quiz.dto.responses.question.QuestionResDTO;
+import com.tomzxy.web_quiz.dto.responses.question.QuizQuestionResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.QuizInstanceResDTO;
 import com.tomzxy.web_quiz.enums.AppCode;
@@ -179,6 +181,31 @@ public class QuizServiceImpl implements QuizService {
                 .totalAttempt(Math.toIntExact(attemptCount))
                 .instanceId(instanceId)
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<QuizQuestionResDTO> get_Questions(Long quizId) {
+
+        quizRepo.findById(quizId)
+                .orElseThrow(() -> new NotFoundException("Quiz not found with id: " + quizId));
+
+        List<QuizQuestionLink> links = quizQuestionLinkRepo.findFullByQuizId(quizId);
+
+        return links.stream().map(link -> {
+            Question question = link.getQuestion();
+
+            List<Long> correctAnswerIds = question.getAnswers().stream()
+                    .filter(Answer::isAnswerCorrect)
+                    .map(Answer::getId)
+                    .toList();
+
+            QuizQuestionResDTO dto = new QuizQuestionResDTO();
+            dto.setQuestion(questionMapper.toQuestionResDTO(question));
+            dto.setCorrectAnswerIds(correctAnswerIds);
+
+            return dto;
+        }).toList();
     }
 
     @Override

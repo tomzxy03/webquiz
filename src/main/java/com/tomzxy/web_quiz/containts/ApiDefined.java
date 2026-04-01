@@ -180,9 +180,11 @@ public abstract class ApiDefined {
     }
     public static final class Attempt{
         public static final String BASE = API_PREFIX + "/attempts";
-        public static final String ID = "/{quizInstanceId}";
+        
         public static final String ME = "/me";
         public static final String SUBMISSION = "/groups/{groupId}/quizzes/{quizId}/submissions";
+        public static final String ME_DETAIL = ME + "/{quizInstanceId}";
+        public static final String SUBMISSION_DETAIL = "/groups/{groupId}/quizzes/{quizId}/submissions/{quizInstanceId}";
         public static final String STATISTICS = ME + "/statistics";
 
     }

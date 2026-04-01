@@ -14,6 +14,7 @@ import com.tomzxy.web_quiz.dto.responses.question.QuestionResDTO;
 import com.tomzxy.web_quiz.dto.responses.user.UserMemberResDTO;
 import com.tomzxy.web_quiz.enums.AppCode;
 import com.tomzxy.web_quiz.enums.LobbyRole;
+import com.tomzxy.web_quiz.enums.QuizStatus;
 import com.tomzxy.web_quiz.exception.ApiException;
 import com.tomzxy.web_quiz.exception.ExistedException;
 import com.tomzxy.web_quiz.exception.NotFoundException;
@@ -38,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -362,28 +364,38 @@ public class LobbyServiceImpl implements LobbyService {
     @Override
     @Transactional(readOnly = true)
     public PageResDTO<QuizResDTO> getGroupQuizzes(Long lobbyId, int page, int size) {
-        PageRequest pageable = PageRequest.of(page, size);
-    
+        PageRequest pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Quiz> quizPage = quizRepo.findByLobbyId(lobbyId, pageable);
-    
+        return mapQuizPage(quizPage, page, size);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResDTO<QuizResDTO> getGroupQuizzesOpened(Long lobbyId, int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Quiz> quizPage = quizRepo.findByLobbyIdAndStatus(lobbyId, QuizStatus.OPENED, pageable);
+        return mapQuizPage(quizPage, page, size);
+    }
+
+    private PageResDTO<QuizResDTO> mapQuizPage(Page<Quiz> quizPage, int page, int size) {
         List<QuizResDTO> items = quizPage.getContent().stream()
-            .map(quiz -> {
-                QuizResDTO dto = quizMapper.toDto(quiz); 
-                dto.setLobbyName(quiz.getLobby().getLobbyName()); 
-                dto.setHostName(quiz.getHost().getUserName());
-                dto.setSubjectName(quiz.getSubject().getSubjectName());
-                return dto;
-            })
-            .collect(Collectors.toList());
+                .map(quiz -> {
+                    QuizResDTO dto = quizMapper.toDto(quiz);
+                    dto.setLobbyName(quiz.getLobby().getLobbyName());
+                    dto.setHostName(quiz.getHost().getUserName());
+                    dto.setSubjectName(quiz.getSubject().getSubjectName());
+                    return dto;
+                })
+                .collect(Collectors.toList());
 
         return PageResDTO.<QuizResDTO>builder()
-            .page(page)
-            .size(size)
-            .total(quizPage.getTotalElements())
-            .total_page(quizPage.getTotalPages()) 
-            .items(items)
-            .build();
-}
+                .page(page)
+                .size(size)
+                .total(quizPage.getTotalElements())
+                .total_page(quizPage.getTotalPages())
+                .items(items)
+                .build();
+    }
 
     @Override
     @Transactional

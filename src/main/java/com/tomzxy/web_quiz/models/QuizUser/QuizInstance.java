@@ -59,8 +59,16 @@ public class QuizInstance extends BaseEntity {
     @Column(name = "snapshot", columnDefinition = "jsonb")
     private QuizQuestionSnapshot snapshot;
 
+    @Column(name = "total_questions", nullable = false)
+    private Long totalQuestions = 0L;
+
+    @Column(name = "correct_answers", nullable = false)
+    private Long correctAnswers = 0L;
+
     @Column(name = "earned_points", nullable = false)
     private Long earnedPoints = 0L;
+
+
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)

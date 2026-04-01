@@ -201,6 +201,8 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
                 .startedAt(LocalDateTime.now())
                 .status(QuizInstanceStatus.IN_PROGRESS)
                 .totalPoints(snapshot.getTotalPoints())
+                .totalQuestions(snapshot.getQuestions() != null ? (long) snapshot.getQuestions().size() : 0L)
+                .correctAnswers(0L)
                 .earnedPoints(0L)
                 .snapshot(snapshot)
                 .build();
@@ -717,6 +719,7 @@ public class QuizInstanceServiceImpl implements QuizInstanceService {
         // 6. Update instance
         instance.setEarnedPoints(earnedPoints);
         instance.setStatus(finalStatus);
+        instance.setCorrectAnswers(responsesToSave.stream().filter(QuizUserResponse::isCorrect).count());
         instance.setEndedAt(LocalDateTime.now());
         instance.setAnswersSnapshot(answersSnapshotMap);
         instance = quizInstanceRepo.save(instance);

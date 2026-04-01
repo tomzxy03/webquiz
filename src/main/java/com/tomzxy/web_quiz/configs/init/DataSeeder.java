@@ -7,12 +7,20 @@ import com.tomzxy.web_quiz.models.*;
 import com.tomzxy.web_quiz.models.Host.LobbyMember;
 import com.tomzxy.web_quiz.models.Host.LobbyMemberId;
 import com.tomzxy.web_quiz.models.Host.QuestionBank;
+import com.tomzxy.web_quiz.models.NotificationUser.Notification;
+import com.tomzxy.web_quiz.models.NotificationUser.NotificationUserId;
+import com.tomzxy.web_quiz.models.NotificationUser.UserNotification;
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
 import com.tomzxy.web_quiz.models.Quiz.QuizConfig;
 import com.tomzxy.web_quiz.models.Quiz.QuizQuestionId;
 import com.tomzxy.web_quiz.models.Quiz.QuizQuestionLink;
 import com.tomzxy.web_quiz.models.Quiz.QuestionLayout;
+import com.tomzxy.web_quiz.models.QuizUser.QuizInstance;
+import com.tomzxy.web_quiz.models.QuizUser.QuizUserResponse;
 import com.tomzxy.web_quiz.models.User.User;
+import com.tomzxy.web_quiz.models.snapshot.AnswerSnapshot;
+import com.tomzxy.web_quiz.models.snapshot.QuestionSnapshot;
+import com.tomzxy.web_quiz.models.snapshot.QuizQuestionSnapshot;
 import com.tomzxy.web_quiz.repositories.*;
 import com.tomzxy.web_quiz.services.QuestionService;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +52,10 @@ public class DataSeeder implements CommandLineRunner {
     private final QuizRepo quizRepo;
     private final LobbyRepo lobbyRepo;
     private final QuizQuestionLinkRepo quizQuestionLinkRepo;
+    private final QuizInstanceRepo quizInstanceRepo;
+    private final QuizUserResponseRepo quizUserResponseRepo;
+    private final NotificationRepo notificationRepo;
+    private final NotificationUserRepo notificationUserRepo;
     private final PasswordEncoder passwordEncoder;
     private final QuestionService questionService;
 
@@ -51,12 +63,15 @@ public class DataSeeder implements CommandLineRunner {
     private static final String DEFAULT_PASSWORD = "123456";
 
     private static final int SUBJECT_COUNT = 10;
-    private static final int USER_COUNT = 2000;
+    private static final int USER_COUNT = 10;
     private static final int QUIZ_COUNT = 40;
     private static final int LOBBY_COUNT = 20;
     private static final int FOLDERS_PER_USER = 3;
     private static final int QUESTIONS_PER_FOLDER = 6;
     private static final int QUESTIONS_PER_BANK = 6;
+    private static final int NOTIFICATION_COUNT = 6;
+    private static final int QUIZ_INSTANCE_SEED_USERS = 30;
+    private static final int QUIZ_INSTANCE_SEED_QUIZZES = 12;
     private static final double PUBLIC_QUIZ_RATIO = 0.5;
     private static final String LOAD_TEST_EMAIL_DOMAIN = "example.com";
     private static final String LOAD_TEST_QUIZ_TITLE = "Load Test Quiz";
@@ -95,17 +110,6 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        Optional<User> loadTestUser = userRepo.findByEmail(loadTestEmail(1));
-        boolean loadTestQuizReady = loadTestUser.isPresent()
-                && quizRepo.existsByTitleAndHostId(LOAD_TEST_QUIZ_TITLE, loadTestUser.get().getId());
-        boolean loadTestGroupReady = loadTestUser.isPresent()
-                && lobbyRepo.existsByLobbyName(LOAD_TEST_LOBBY_NAME)
-                && quizRepo.existsByTitleAndHostId(LOAD_TEST_GROUP_QUIZ_TITLE, loadTestUser.get().getId());
-        if (loadTestQuizReady && loadTestGroupReady) {
-            log.info("Load test data already seeded, skipping...");
-            return;
-        }
-
         log.info("Starting data seeding...");
 
         List<Subject> subjects = subjectRepo.count() > 0
@@ -116,26 +120,39 @@ public class DataSeeder implements CommandLineRunner {
                 : seedUsers(USER_COUNT);
         // Always ensure load-test users exist and have known credentials
         users = ensureLoadTestUsers(users, USER_COUNT);
+        seedQuestionSystem(users);
 
-        if (!loadTestQuizReady) {
-            seedQuestionSystem(users);
-            List<Quiz> quizzes = users.isEmpty()
-                    ? Collections.emptyList()
-                    : seedQuizzes(subjects, users, QUIZ_COUNT);
-            User loadTestHost = !users.isEmpty()
-                    ? users.get(0)
-                    : userRepo.findByEmail(loadTestEmail(1)).orElse(null);
-            if (loadTestHost != null) {
-                ensureLoadTestQuiz(subjects, loadTestHost);
-            }
-            if (!users.isEmpty() && !quizzes.isEmpty()) {
-                seedLobbies(users, quizzes, LOBBY_COUNT);
+        List<Quiz> quizzes = quizRepo.count() > 0
+                ? new ArrayList<>(quizRepo.findAll())
+                : new ArrayList<>();
+        if (!users.isEmpty() && quizzes.size() < QUIZ_COUNT) {
+            quizzes.addAll(seedQuizzes(subjects, users, QUIZ_COUNT - quizzes.size()));
+        }
+
+        User loadTestHost = !users.isEmpty()
+                ? users.get(0)
+                : userRepo.findByEmail(loadTestEmail(1)).orElse(null);
+        if (loadTestHost != null) {
+            ensureLoadTestQuiz(subjects, loadTestHost);
+        }
+        quizzes = quizRepo.findAll();
+
+        if (!users.isEmpty() && !quizzes.isEmpty()) {
+            long lobbyCount = lobbyRepo.count();
+            int missingLobbies = (int) Math.max(0, LOBBY_COUNT - lobbyCount);
+            if (missingLobbies > 0) {
+                seedLobbies(users, quizzes, missingLobbies);
             }
         }
 
         if (!users.isEmpty()) {
             ensureLoadTestLobby(users, subjects);
         }
+
+        quizzes = quizRepo.findAll();
+        List<Lobby> lobbies = lobbyRepo.count() > 0 ? lobbyRepo.findAll() : Collections.emptyList();
+        seedNotifications(users, lobbies);
+        seedQuizInstancesAndResponses(users, quizzes);
 
         log.info("Data seeding completed successfully!");
     }
@@ -221,9 +238,20 @@ public class DataSeeder implements CommandLineRunner {
 
     private void seedQuestionSystem(List<User> users) {
         for (User user : users) {
-            QuestionBank bank = new QuestionBank();
-            bank.setOwner(user);
-            bank = questionBankRepo.save(bank);
+            if (user.getId() == null) {
+                continue;
+            }
+            QuestionBank bank = questionBankRepo.findByOwnerId(user.getId())
+                    .orElseGet(() -> {
+                        QuestionBank newBank = new QuestionBank();
+                        newBank.setOwner(user);
+                        return questionBankRepo.save(newBank);
+                    });
+
+            List<Question> existing = questionRepo.findByBankId(bank.getId());
+            if (existing != null && !existing.isEmpty()) {
+                continue;
+            }
 
             for (int i = 0; i < FOLDERS_PER_USER; i++) {
                 Folder folder = new Folder();
@@ -280,10 +308,10 @@ public class DataSeeder implements CommandLineRunner {
             quiz.setSubject(subjects.get(faker.random().nextInt(subjects.size())));
             quiz.setHost(users.get(faker.random().nextInt(users.size())));
             quiz.setTimeLimitMinutes(faker.random().nextInt(10, 60));
-            quiz.setStatus(QuizStatus.OPENED);
+            QuizStatus status = pickQuizStatus();
+            quiz.setStatus(status);
             quiz.setVisibility(pickQuizVisibility());
-            quiz.setStartDate(LocalDateTime.now());
-            quiz.setEndDate(LocalDateTime.now().plusDays(7));
+            applyQuizSchedule(quiz, status);
             quiz.setMaxAttempt(faker.random().nextInt(1, 10));
 
             QuizConfig config = new QuizConfig();
@@ -559,6 +587,43 @@ public class DataSeeder implements CommandLineRunner {
                 : QuizVisibility.CLASS_ONLY;
     }
 
+    private QuizStatus pickQuizStatus() {
+        double roll = faker.random().nextDouble();
+        if (roll < 0.6) {
+            return QuizStatus.OPENED;
+        }
+        if (roll < 0.75) {
+            return QuizStatus.DRAFT;
+        }
+        if (roll < 0.85) {
+            return QuizStatus.CLOSED;
+        }
+        if (roll < 0.93) {
+            return QuizStatus.PAUSED;
+        }
+        return QuizStatus.ARCHIVED;
+    }
+
+    private void applyQuizSchedule(Quiz quiz, QuizStatus status) {
+        LocalDateTime now = LocalDateTime.now();
+        switch (status) {
+            case DRAFT -> {
+                LocalDateTime start = now.plusDays(faker.number().numberBetween(1, 14));
+                quiz.setStartDate(start);
+                quiz.setEndDate(start.plusDays(faker.number().numberBetween(1, 14)));
+            }
+            case CLOSED, ARCHIVED -> {
+                LocalDateTime end = now.minusDays(faker.number().numberBetween(1, 14));
+                quiz.setEndDate(end);
+                quiz.setStartDate(end.minusDays(faker.number().numberBetween(1, 14)));
+            }
+            default -> {
+                quiz.setStartDate(now.minusDays(faker.number().numberBetween(0, 2)));
+                quiz.setEndDate(now.plusDays(faker.number().numberBetween(3, 14)));
+            }
+        }
+    }
+
     private String makeUsername(String firstName, String lastName) {
         String temp = Normalizer.normalize(firstName + lastName, Normalizer.Form.NFD);
         String base = temp.replaceAll("\\p{M}", "").replace(" ", "").toLowerCase();
@@ -577,5 +642,262 @@ public class DataSeeder implements CommandLineRunner {
 
     private String loadTestEmail(int index) {
         return "user" + index + "@" + LOAD_TEST_EMAIL_DOMAIN;
+    }
+
+    private void seedNotifications(List<User> users, List<Lobby> lobbies) {
+        if (users.isEmpty() || notificationRepo.count() > 0) {
+            return;
+        }
+
+        User host = users.get(0);
+        List<Notification> notifications = new ArrayList<>();
+        for (int i = 0; i < NOTIFICATION_COUNT; i++) {
+            Notification notification = new Notification();
+            notification.setTitle("Thong bao he thong " + (i + 1));
+            notification.setContent("Noi dung thong bao mau " + (i + 1));
+            notification.setType(NotificationType.SYSTEM);
+            notification.setHost(host);
+            notifications.add(notificationRepo.save(notification));
+        }
+
+        if (!lobbies.isEmpty()) {
+            for (int i = 0; i < Math.min(3, lobbies.size()); i++) {
+                Lobby lobby = lobbies.get(i);
+                Notification notification = new Notification();
+                notification.setTitle("Thong bao lop " + (i + 1));
+                notification.setContent("Thong bao moi trong nhom " + lobby.getLobbyName());
+                notification.setType(NotificationType.GROUP);
+                notification.setLobby(lobby);
+                notification.setHost(lobby.getHost() != null ? lobby.getHost() : host);
+                notifications.add(notificationRepo.save(notification));
+            }
+        }
+
+        List<User> targetUsers = users.size() > 200 ? users.subList(0, 200) : users;
+        List<UserNotification> links = new ArrayList<>();
+        for (Notification notification : notifications) {
+            List<User> recipients;
+            if (notification.getType() == NotificationType.GROUP && notification.getLobby() != null) {
+                recipients = notification.getLobby().getMembers().stream()
+                        .map(LobbyMember::getUser)
+                        .collect(Collectors.toList());
+                if (recipients.isEmpty()) {
+                    recipients = targetUsers;
+                }
+            } else {
+                recipients = targetUsers;
+            }
+            for (User user : recipients) {
+                NotificationUserId id = new NotificationUserId(user.getId(), notification.getId());
+                UserNotification link = new UserNotification();
+                link.setId(id);
+                link.setUser(user);
+                link.setNotification(notification);
+                link.setRead(faker.bool().bool());
+                link.setReadAt(faker.bool().bool()
+                        ? LocalDateTime.now().minusDays(faker.number().numberBetween(0, 7))
+                        : null);
+                links.add(link);
+            }
+        }
+        notificationUserRepo.saveAll(links);
+    }
+
+    private void seedQuizInstancesAndResponses(List<User> users, List<Quiz> quizzes) {
+        if (users.isEmpty() || quizzes.isEmpty()) {
+            return;
+        }
+        if (quizInstanceRepo.count() > 0 && quizUserResponseRepo.count() > 0) {
+            return;
+        }
+
+        List<User> sampleUsers = users.size() > QUIZ_INSTANCE_SEED_USERS
+                ? users.subList(0, QUIZ_INSTANCE_SEED_USERS)
+                : users;
+        List<Quiz> quizPool = quizzes.stream()
+                .filter(q -> q.getQuizQuestionLinks() != null && !q.getQuizQuestionLinks().isEmpty())
+                .limit(QUIZ_INSTANCE_SEED_QUIZZES)
+                .collect(Collectors.toList());
+        if (quizPool.isEmpty()) {
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        int userIdx = 0;
+
+        for (Quiz quiz : quizPool) {
+            QuizQuestionSnapshot snapshot = buildSnapshot(quiz);
+            if (snapshot.getQuestions() == null || snapshot.getQuestions().isEmpty()) {
+                continue;
+            }
+
+            for (QuizInstanceStatus status : List.of(
+                    QuizInstanceStatus.IN_PROGRESS,
+                    QuizInstanceStatus.SUBMITTED,
+                    QuizInstanceStatus.TIMED_OUT)) {
+                User user = sampleUsers.get(userIdx++ % sampleUsers.size());
+                LocalDateTime startedAt = now.minusMinutes(faker.number().numberBetween(5, 300));
+
+                QuizInstance instance = new QuizInstance();
+                instance.setQuiz(quiz);
+                instance.setUser(user);
+                instance.setGuestId(null);
+                instance.setStartedAt(startedAt);
+                instance.setStatus(status);
+                instance.setSnapshot(snapshot);
+                instance.setTotalPoints(snapshot.getTotalPoints());
+
+                if (status != QuizInstanceStatus.IN_PROGRESS) {
+                    instance.setEndedAt(startedAt.plusMinutes(faker.number().numberBetween(5, 120)));
+                }
+
+                instance = quizInstanceRepo.save(instance);
+                List<QuizUserResponse> responses = buildResponses(instance, snapshot, status, startedAt);
+                quizUserResponseRepo.saveAll(responses);
+
+                if (status != QuizInstanceStatus.IN_PROGRESS) {
+                    long earned = responses.stream()
+                            .filter(QuizUserResponse::isCorrect)
+                            .mapToLong(QuizUserResponse::getPointsEarned)
+                            .sum();
+                    instance.setEarnedPoints(earned);
+                    quizInstanceRepo.save(instance);
+                }
+            }
+        }
+    }
+
+    private QuizQuestionSnapshot buildSnapshot(Quiz quiz) {
+        QuizQuestionSnapshot snapshot = new QuizQuestionSnapshot();
+        snapshot.setQuizId(quiz.getId());
+        snapshot.setGeneratedAt(LocalDateTime.now());
+        snapshot.setVersion(1);
+        snapshot.setDuration(quiz.getTimeLimitMinutes());
+        boolean shuffleQuestions = quiz.getConfig() != null
+                && Boolean.TRUE.equals(quiz.getConfig().getShuffleQuestions());
+        boolean shuffleAnswers = quiz.getConfig() != null
+                && Boolean.TRUE.equals(quiz.getConfig().getShuffleAnswers());
+        snapshot.setShuffledQuestions(shuffleQuestions);
+        snapshot.setShuffledAnswers(shuffleAnswers);
+
+        List<QuizQuestionLink> links = new ArrayList<>(quiz.getQuizQuestionLinks());
+        if (shuffleQuestions) {
+            Collections.shuffle(links);
+        } else {
+            links.sort(Comparator.comparing(link -> link.getQuestion().getId()));
+        }
+
+        List<QuestionSnapshot> questionSnapshots = new ArrayList<>();
+        long totalPoints = 0L;
+
+        for (int i = 0; i < links.size(); i++) {
+            QuizQuestionLink link = links.get(i);
+            Question question = link.getQuestion();
+            if (question == null) {
+                continue;
+            }
+
+            QuestionSnapshot qs = new QuestionSnapshot();
+            qs.setKey(UUID.randomUUID().toString());
+            qs.setContent(question.getQuestionName());
+            qs.setType(question.getType());
+            qs.setAnswerType(question.getAnswerType());
+            qs.setOrderIndex(i + 1);
+            long points = link.getPoints() != null ? link.getPoints() : 1L;
+            qs.setPoints(points);
+            totalPoints += points;
+
+            List<Answer> answers = new ArrayList<>(question.getAnswers());
+            if (shuffleAnswers) {
+                Collections.shuffle(answers);
+            } else {
+                answers.sort(Comparator.comparing(Answer::getId));
+            }
+
+            List<AnswerSnapshot> answerSnapshots = new ArrayList<>();
+            List<String> correctAnsIds = new ArrayList<>();
+
+            for (int j = 0; j < answers.size(); j++) {
+                Answer a = answers.get(j);
+                AnswerSnapshot as = new AnswerSnapshot();
+                as.setSnapshotId(UUID.randomUUID().toString());
+                as.setOriginalAnswerId(a.getId());
+                as.setContent(a.getAnswerName());
+                as.setOrderIndex(j + 1);
+                as.setType(a.getType());
+                answerSnapshots.add(as);
+
+                if (a.isAnswerCorrect()) {
+                    correctAnsIds.add(String.valueOf(j));
+                }
+            }
+            qs.setAnswers(answerSnapshots);
+            qs.setCorrectAnswerIds(correctAnsIds);
+            questionSnapshots.add(qs);
+        }
+
+        snapshot.setQuestions(questionSnapshots);
+        snapshot.setTotalPoints(totalPoints);
+        return snapshot;
+    }
+
+    private List<QuizUserResponse> buildResponses(
+            QuizInstance instance,
+            QuizQuestionSnapshot snapshot,
+            QuizInstanceStatus status,
+            LocalDateTime startedAt) {
+        List<QuizUserResponse> responses = new ArrayList<>();
+        for (int i = 0; i < snapshot.getQuestions().size(); i++) {
+            QuestionSnapshot qs = snapshot.getQuestions().get(i);
+            boolean skipped = status == QuizInstanceStatus.IN_PROGRESS && faker.random().nextInt(100) < 30;
+            if (qs.getAnswers() == null || qs.getAnswers().isEmpty()) {
+                skipped = true;
+            }
+            List<Long> selected = new ArrayList<>();
+            boolean isCorrect = false;
+
+            if (!skipped && qs.getAnswers() != null && !qs.getAnswers().isEmpty()) {
+                List<Integer> correctIndexes = qs.getCorrectAnswerIds().stream()
+                        .map(Integer::parseInt)
+                        .collect(Collectors.toList());
+                boolean chooseCorrect = faker.random().nextInt(100) < 60;
+                if (chooseCorrect && !correctIndexes.isEmpty()) {
+                    selected = correctIndexes.stream().map(Integer::longValue).collect(Collectors.toList());
+                    isCorrect = true;
+                } else {
+                    int answerCount = qs.getAnswers().size();
+                    int wrongIndex = answerCount > 1
+                            ? pickWrongIndex(answerCount, new HashSet<>(correctIndexes))
+                            : 0;
+                    selected = List.of((long) wrongIndex);
+                    isCorrect = false;
+                }
+            }
+
+            QuizUserResponse response = new QuizUserResponse();
+            response.setQuizInstance(instance);
+            response.setQuestionId(null);
+            response.setQuestionSnapshotKey(qs.getKey());
+            response.setSelectedAnswerIds(selected);
+            response.setSelectedAnswerId(selected.isEmpty() ? null : selected.get(0));
+            response.setCorrect(isCorrect);
+            response.setPointsEarned(isCorrect ? qs.getPoints() : 0L);
+            response.setResponseTimeSeconds(faker.number().numberBetween(3, 400));
+            response.setAnsweredAt(startedAt.plusSeconds(faker.number().numberBetween(5, 600)));
+            response.setSkipped(skipped);
+            responses.add(response);
+        }
+        return responses;
+    }
+
+    private int pickWrongIndex(int total, Set<Integer> correct) {
+        if (total <= 1) {
+            return 0;
+        }
+        int idx;
+        do {
+            idx = faker.random().nextInt(total);
+        } while (correct.contains(idx));
+        return idx;
     }
 }

@@ -4,6 +4,7 @@ import com.tomzxy.web_quiz.containts.ApiDefined;
 import com.tomzxy.web_quiz.configs.IdentityResolver;
 import com.tomzxy.web_quiz.dto.responses.DataResDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
+import com.tomzxy.web_quiz.dto.responses.Quiz.AttemptDetailResDTO;
 import com.tomzxy.web_quiz.dto.responses.Quiz.QuizResultDetailResDTO;
 import com.tomzxy.web_quiz.models.IdentityContext;
 import com.tomzxy.web_quiz.services.AttemptService;
@@ -15,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -38,13 +38,23 @@ public class AttemptController {
             @ApiResponse(responseCode = "403", description = "Forbidden - user does not have access to this quiz attempt detail"),
             @ApiResponse(responseCode = "404", description = "Not Found - quiz attempt not found")
     })
-    @GetMapping(ApiDefined.Attempt.ID)
-    @PreAuthorize("@attemptSecurity.canAccess(#quizInstanceId, authentication)")
-    public ResponseEntity<DataResDTO<QuizResultDetailResDTO>> getResultDetail(
-            @PathVariable Long quizInstanceId,
-            Authentication authentication) {
+    @GetMapping(ApiDefined.Attempt.ME_DETAIL)
+    @PreAuthorize("@attemptSecurity.isOwner(#quizInstanceId, authentication)")
+    public ResponseEntity<DataResDTO<AttemptDetailResDTO>> getResultDetail(
+            @PathVariable Long quizInstanceId) {
 
-        QuizResultDetailResDTO result = attemptService.getAttemptDetail(quizInstanceId, authentication);
+        AttemptDetailResDTO result = attemptService.getMyAttemptDetail(quizInstanceId);
+
+        return ResponseEntity.ok(DataResDTO.ok(result));
+    }
+    @GetMapping(ApiDefined.Attempt.SUBMISSION_DETAIL)
+    @PreAuthorize("@lobbySecurity.isHost(#groupId, authentication)")
+    public ResponseEntity<DataResDTO<AttemptDetailResDTO>> getSubmissionDetail(
+            @PathVariable Long groupId,
+            @PathVariable Long quizId,
+            @PathVariable Long quizInstanceId) {
+
+        AttemptDetailResDTO result = attemptService.getSubmissionDetail(groupId, quizId, quizInstanceId);
 
         return ResponseEntity.ok(DataResDTO.ok(result));
     }
