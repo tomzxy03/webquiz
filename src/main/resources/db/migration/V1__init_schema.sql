@@ -80,6 +80,8 @@ CREATE TABLE public.quiz_instances (
     guest_id varchar(255),
     answers_snapshot jsonb,
     earned_points bigint NOT NULL DEFAULT 0,
+    total_questions integer NOT NULL DEFAULT 0,
+    correct_answers integer NOT NULL DEFAULT 0,
     ended_at timestamp(6),
     snapshot jsonb,
     started_at timestamp(6) NOT NULL,

@@ -32,7 +32,7 @@ public class ConvertToPageResDTO {
 
     // user mapstruct
     public <T, R> PageResDTO<R> convertPageResponse(Page<T> entities, Pageable pageable, Function<T, R> mapper) {
-        List<R> dtoList = entities.stream()
+        List<R> dtoList = entities.getContent().stream()
                 .map(mapper)
                 .toList();
             
@@ -40,6 +40,7 @@ public class ConvertToPageResDTO {
                 .page(pageable.getPageNumber())
                 .size(pageable.getPageSize())
                 .total_page(entities.getTotalPages())
+                .total(entities.getTotalElements())
                 .items(dtoList)
                 .build();
     }

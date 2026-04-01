@@ -57,6 +57,7 @@ public interface LobbyService {
 
     // Quizzes within group
     PageResDTO<QuizResDTO> getGroupQuizzes(Long lobbyId, int page, int size);
+    PageResDTO<QuizResDTO> getGroupQuizzesOpened(Long lobbyId, int page, int size);
 
     LobbyQuizResDTO addQuizToGroup(Long lobbyId, QuizReqDTO quizReqDTO);
 

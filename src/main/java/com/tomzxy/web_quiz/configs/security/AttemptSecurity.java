@@ -17,21 +17,14 @@ import lombok.RequiredArgsConstructor;
 public class AttemptSecurity {
 
     private final QuizInstanceRepo quizInstanceRepo;
-    private final LobbySecurity lobbySecurity;
 
-    public boolean canAccess(Long quizInstanceId, Authentication auth) {
+    public boolean isOwner(Long quizInstanceId, Authentication auth) {
         CustomUserDetails principal = (CustomUserDetails) auth.getPrincipal();
         Long userId = principal.id();
 
-        QuizInstance instance = quizInstanceRepo.findFullById(quizInstanceId)
-            .orElseThrow(() -> new NotFoundException("Not found"));
+        Long ownerId = quizInstanceRepo.findOwnerIdById(quizInstanceId)
+                .orElseThrow(() -> new NotFoundException("Not found"));
 
-        boolean isOwner = instance.getUser() != null &&
-                          instance.getUser().getId().equals(userId);
-
-        Long groupId = instance.getQuiz().getLobby().getId();
-        boolean isHost = lobbySecurity.isHost(groupId, auth);
-
-        return isOwner || isHost;
+        return ownerId != null && ownerId.equals(userId);
     }
 }

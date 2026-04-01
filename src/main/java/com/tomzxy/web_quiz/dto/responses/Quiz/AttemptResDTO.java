@@ -14,14 +14,12 @@ public class AttemptResDTO {
     private Long id;
     private Long quizId;
     private Long userId;
-    private QuizResDTO quiz; // Optional quiz object
     private String title;
-    private String date;
-    private String score; // Percentage as string (e.g., "85%")
+    private Double score; // Percentage as double (e.g., 85.0 for 85%)
     private Integer totalQuestions;
     private Integer correctAnswers;
     private Long points;
-    private String duration; // Formatted duration string
+    private Long duration; // Duration in milliseconds
     private LocalDateTime completedAt;
     private List<String> badges;
     private List<String> badgeColors;

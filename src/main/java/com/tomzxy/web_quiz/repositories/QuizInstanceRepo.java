@@ -116,4 +116,6 @@ public interface QuizInstanceRepo extends JpaRepository<QuizInstance, Long> {
                             WHERE qi.id = :id
                         """)
         Optional<QuizInstance> findFullById(Long id);
+        @Query("SELECT qi.user.id FROM QuizInstance qi WHERE qi.id = :id")
+        Optional<Long> findOwnerIdById(Long id);
 }

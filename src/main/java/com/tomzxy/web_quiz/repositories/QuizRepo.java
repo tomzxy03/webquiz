@@ -2,6 +2,7 @@ package com.tomzxy.web_quiz.repositories;
 
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
 import com.tomzxy.web_quiz.enums.QuizVisibility;
+import com.tomzxy.web_quiz.enums.QuizStatus;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +29,11 @@ public interface QuizRepo extends JpaRepository<Quiz, Long>, JpaSpecificationExe
         // Find by group
         @Query("SELECT q FROM Quiz q WHERE q.lobby.id = :lobbyId AND q.isActive = true")
         Page<Quiz> findByLobbyId(@Param("lobbyId") Long lobbyId, Pageable pageable);
+
+        // Find by group and status
+        @Query("SELECT q FROM Quiz q WHERE q.lobby.id = :lobbyId AND q.status = :status AND q.isActive = true")
+        Page<Quiz> findByLobbyIdAndStatus(@Param("lobbyId") Long lobbyId, @Param("status") QuizStatus status,
+                        Pageable pageable);
 
         // Find popular quiz
         @Query("""

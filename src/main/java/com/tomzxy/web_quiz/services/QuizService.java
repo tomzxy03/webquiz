@@ -5,6 +5,8 @@ import com.tomzxy.web_quiz.dto.requests.quiz.QuizQuestionReqDTO;
 import com.tomzxy.web_quiz.dto.requests.quiz.QuizReqDTO;
 import com.tomzxy.web_quiz.dto.responses.PageResDTO;
 import com.tomzxy.web_quiz.dto.responses.Quiz.QuizResDTO;
+import com.tomzxy.web_quiz.dto.responses.question.QuestionResDTO;
+import com.tomzxy.web_quiz.dto.responses.question.QuizQuestionResDTO;
 import com.tomzxy.web_quiz.models.IdentityContext;
 import com.tomzxy.web_quiz.models.Quiz.Quiz;
 import org.springframework.data.domain.Page;
@@ -31,6 +33,7 @@ public interface QuizService {
 
     QuizResDTO create(QuizReqDTO dto);
     void create_Questions(Long quizId, List<QuizQuestionReqDTO> questionReqDTO);
+    List<QuizQuestionResDTO> get_Questions(Long quizId);
 
     QuizResDTO update(Long id, QuizReqDTO dto);
     void update_Questions(Long quizId, List<QuizQuestionReqDTO> questionReqDTO);
