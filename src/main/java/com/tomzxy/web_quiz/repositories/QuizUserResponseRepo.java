@@ -8,9 +8,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.tomzxy.web_quiz.enums.QuizInstanceStatus;
 import com.tomzxy.web_quiz.models.QuizUser.QuizUserResponse;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -83,12 +85,6 @@ public interface QuizUserResponseRepo extends JpaRepository<QuizUserResponse, Lo
         @Query("SELECT COUNT(qur) FROM QuizUserResponse qur WHERE qur.quizInstance.id = :quizInstanceId AND qur.isActive = true")
         long countByQuizInstanceId(@Param("quizInstanceId") Long quizInstanceId);
 
-        @Query("SELECT qur.quizInstance.id, COUNT(qur) FROM QuizUserResponse qur WHERE qur.quizInstance.id IN :quizInstanceIds AND qur.isActive = true GROUP BY qur.quizInstance.id")
-        List<Object[]> countByQuizInstanceIdIn(@Param("quizInstanceIds") List<Long> quizInstanceIds);
-
-        @Query("SELECT qur.quizInstance.id, COUNT(qur) FROM QuizUserResponse qur WHERE qur.quizInstance.id IN :quizInstanceIds AND qur.isCorrect = true AND qur.isActive = true GROUP BY qur.quizInstance.id")
-        List<Object[]> countCorrectByQuizInstanceIdIn(@Param("quizInstanceIds") List<Long> quizInstanceIds);
-
         // Count by quiz instance and user
         @Query("SELECT COUNT(qur) FROM QuizUserResponse qur WHERE qur.quizInstance.id = :quizInstanceId AND qur.quizInstance.user.id = :userId AND qur.isActive = true")
         long countByQuizInstanceIdAndUserId(@Param("quizInstanceId") Long quizInstanceId, @Param("userId") Long userId);
@@ -119,4 +115,10 @@ public interface QuizUserResponseRepo extends JpaRepository<QuizUserResponse, Lo
         @Modifying
         @Query("DELETE FROM QuizUserResponse r WHERE r.quizInstance.id = :quizInstanceId")
         int deleteByQuizInstanceId(@Param("quizInstanceId") Long quizInstanceId);
+
+        @Query("SELECT qur.quizInstance.id, COUNT(qur) FROM QuizUserResponse qur WHERE qur.quizInstance.id IN :quizInstanceIds AND qur.isCorrect = true AND qur.isActive = true GROUP BY qur.quizInstance.id")
+        List<Object[]> countCorrectByQuizInstanceIdIn(@Param("quizInstanceIds") List<Long> quizInstanceIds);
+
+        @Query("SELECT qur.quizInstance.id, COUNT(qur) FROM QuizUserResponse qur WHERE qur.quizInstance.id IN :quizInstanceIds AND qur.isActive = true GROUP BY qur.quizInstance.id")
+        List<Object[]> countByQuizInstanceIdIn(@Param("quizInstanceIds") List<Long> quizInstanceIds);
 }

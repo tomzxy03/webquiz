@@ -99,17 +99,15 @@ public interface QuizInstanceRepo extends JpaRepository<QuizInstance, Long> {
         List<QuizInstance> findRecentByUserIdAndStatusIn(@Param("userId") Long userId,
                         @Param("statuses") List<QuizInstanceStatus> statuses, Pageable pageable);
 
-        long countByQuizIdAndGuestIdAndStatusIn(Long quizId, String guestId, List<QuizInstanceStatus> of);
-
         @Modifying
         @Query("DELETE FROM QuizInstance i WHERE i.guestId IS NOT NULL AND (" +
                         "(i.status = 'IN_PROGRESS' AND i.updatedAt < :abandonedTime) OR " +
-                        "(i.status IN ('SUBMITTED', 'COMPLETED') AND i.updatedAt < :completedTime))") // Thêm SUBMITTED
-                                                                                                      // vào đây
+                        "(i.status IN ('SUBMITTED', 'COMPLETED') AND i.updatedAt < :completedTime))")     
         int deleteGuestInstancesByCriteria(
                         @Param("abandonedTime") LocalDateTime abandonedTime,
                         @Param("completedTime") LocalDateTime completedTime);
 
+        long countByQuizIdAndGuestIdAndStatusIn(Long quizId, String guestId, List<QuizInstanceStatus> of);
         @Query("""
                             SELECT qi FROM QuizInstance qi
                             JOIN FETCH qi.quiz q

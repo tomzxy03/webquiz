@@ -17,8 +17,7 @@ spring:
 
   data:
     redis:
-      host: ${SPRING_REDIS_HOST}
-      port: ${SPRING_REDIS_PORT}
+      url: ${REDIS_URL}
 
 logging:
   level:

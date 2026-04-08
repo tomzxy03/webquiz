@@ -34,6 +34,7 @@ public class WebConfig {
 
                 http
                                 .cors(cors -> {
+                                        cors.configurationSource(corsConfigurationSource());
                                 })
                                 .csrf(AbstractHttpConfigurer::disable)
 
@@ -106,8 +107,12 @@ public class WebConfig {
                 CorsConfiguration configuration = new CorsConfiguration();
 
                 configuration.setAllowCredentials(true);
-                configuration.setAllowedOrigins(
-                                List.of("http://localhost:8081", "http://localhost:8082", "http://localhost:8083", "https://quizory-nine.vercel.app/"));
+                configuration.setAllowedOriginPatterns(List.of(
+                        "http://localhost:8081",
+                        "http://localhost:5173",
+                        "https://*.vercel.app",
+                        "https://quizory-*.vercel.app"
+                ));
                 configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                 configuration.setAllowedHeaders(List.of("*"));
 
